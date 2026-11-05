@@ -25,7 +25,7 @@ const sender: MailSender = env.SMTP_HOST
 await boss.start();
 await boss.createQueue(MAIL_QUEUE, { retryLimit: 5, retryBackoff: true, retryDelay: 30 });
 
-// Job payloads hold links and addresses, so only the job id and template are logged.
+// Job data holds links and email addresses, so log only the job id and template.
 await boss.work<MailMessage>(MAIL_QUEUE, async ([job]) => {
   if (!job) return;
   const outcome = await deliverMail(pool, sender, job.data);

@@ -15,9 +15,9 @@ interface DueReminder {
 const BATCH_SIZE = 100;
 
 /**
- * Claims due reminders with SKIP LOCKED so parallel workers never take the same row. The
- * notification, the queued email and sent_at all commit together: a crash part way
- * rolls everything back, and the next tick simply picks the reminder up again.
+ * Picks up reminders that are due. SKIP LOCKED means two workers never take the same one.
+ * The notification, the email job and sent_at are saved together. If the worker crashes
+ * half way, nothing is saved and the next run picks up the reminder again.
  */
 export async function scanReminders(
   pool: pg.Pool,

@@ -4,7 +4,7 @@ import type { RequestUser } from './access.js';
 
 export const AUTH_LIMIT_KEY = 'hireflow:auth-limit';
 
-/** Applies the stricter per-IP limit used on credential endpoints. */
+/** Adds the stricter limit used on sign-in and similar routes. */
 export const AuthRateLimit = () => SetMetadata(AUTH_LIMIT_KEY, true);
 
 export function isAuthLimited(context: ExecutionContext): boolean {

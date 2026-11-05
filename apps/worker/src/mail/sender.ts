@@ -8,7 +8,7 @@ export interface MailSender {
   send(to: string, mail: RenderedMail): Promise<void>;
 }
 
-/** Writes each email to .mail-preview/ so development needs no mail account. */
+/** Saves each email to .mail-preview/, so you do not need a mail account in development. */
 export class PreviewSender implements MailSender {
   constructor(
     private readonly directory: string,

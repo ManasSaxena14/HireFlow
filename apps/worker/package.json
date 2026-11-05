@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "tsc -p tsconfig.build.json; tsc -p tsconfig.build.json --watch --preserveWatchOutput & node --watch dist/main.js",
+    "dev": "tsc -p tsconfig.build.json; tsc -p tsconfig.build.json --watch --preserveWatchOutput & node --watch-path=dist --watch-preserve-output dist/main.js",
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"

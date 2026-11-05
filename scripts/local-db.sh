@@ -1,13 +1,13 @@
 #!/bin/sh
-# Runs a private PostgreSQL cluster for development from .pgdata/ on port 5433,
-# so the project does not depend on (or touch) any system-wide database.
+# Runs a private PostgreSQL database for development from .pgdata/ on port 5433.
+# It does not touch any other database on your computer.
 set -e
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATA="$ROOT/.pgdata"
 PORT="${HIREFLOW_DB_PORT:-5433}"
 
-# macOS: the postmaster refuses to start without a valid locale in the environment.
+# On macOS, PostgreSQL will not start without a valid locale.
 export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 
 command -v pg_ctl >/dev/null 2>&1 || {

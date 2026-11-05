@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { MembershipRole } from '@hireflow/shared';
 import { Database, type Executor } from '../database/database.js';
 
-/** Every query takes companyId as a required argument, so it cannot cross tenants. */
+/** Every query needs a companyId, so one company can never reach another's data. */
 @Injectable()
 export class MembershipsRepository {
   constructor(private readonly db: Database) {}
@@ -42,7 +42,7 @@ export class MembershipsRepository {
       .executeTakeFirst();
   }
 
-  /** Locks the admin rows so two concurrent demotions cannot remove the last admin. */
+  /** Locks the admin rows, so two changes at once cannot remove the last admin. */
   async lockAdmins(companyId: string, executor: Executor): Promise<string[]> {
     const rows = await executor
       .selectFrom('memberships')

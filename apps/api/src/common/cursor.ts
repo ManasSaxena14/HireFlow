@@ -6,8 +6,8 @@ export interface Cursor {
 }
 
 /**
- * `at` holds created_at as PostgreSQL's own text. A JS Date would cut microseconds to
- * milliseconds, and the page boundary would then repeat rows.
+ * `at` keeps created_at as text from PostgreSQL. A JS Date would lose the microseconds,
+ * and the same rows would then show up again on the next page.
  */
 export const encodeCursor = (cursor: Cursor) =>
   Buffer.from(JSON.stringify(cursor)).toString('base64url');
@@ -19,7 +19,7 @@ export function decodeCursor(raw: string): Cursor {
       return { at: value.at, id: value.id };
     }
   } catch {
-    // Reported below with the same error as a well-formed but wrong payload.
+    // A broken cursor gets the same error as the one below.
   }
   throw new DomainError('VALIDATION_ERROR', 'That page link is not valid.');
 }

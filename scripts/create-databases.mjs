@@ -1,4 +1,4 @@
-// Creates the development and test databases named in .env if they do not exist yet.
+// Creates the databases named in .env if they do not exist yet.
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 

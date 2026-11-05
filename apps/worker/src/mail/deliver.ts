@@ -4,11 +4,11 @@ import type { MailSender } from './sender.js';
 import { renderMail } from './templates.js';
 
 /**
- * Sends a message at most once per dedupe key. The delivery row and the send share a
- * transaction: a failed send rolls the row back so the retry goes through, while a retry
- * of a message that already went out finds the committed row and stops. The one remaining
- * gap is a crash after SMTP accepted the mail but before the commit, which no SMTP
- * client can close.
+ * Sends each email only once. The delivery row and the send share a transaction:
+ * - If sending fails, the row is undone, so the retry can send it.
+ * - If the email was already sent, the retry finds the row and stops.
+ * One small gap is left: a crash right after the mail server accepts the email but before
+ * the row is saved. No mail client can fully fix this.
  */
 export async function deliverMail(
   pool: pg.Pool,

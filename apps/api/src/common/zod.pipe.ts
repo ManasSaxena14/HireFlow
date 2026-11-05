@@ -14,6 +14,6 @@ export class ZodPipe<T extends ZodType> implements PipeTransform<unknown, output
       path: issue.path.join('.'),
       message: issue.message,
     }));
-    throw new DomainError('VALIDATION_ERROR', 'Some fields need attention.', details);
+    throw new DomainError('VALIDATION_ERROR', 'Please check the fields below.', details);
   }
 }

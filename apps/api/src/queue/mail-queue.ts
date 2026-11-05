@@ -7,7 +7,7 @@ import { ConfigService } from '../config/config.service.js';
 import type { Executor } from '../database/database.js';
 
 export abstract class MailQueue {
-  /** Enqueues inside the caller's transaction, so a rollback also drops the email. */
+  /** Adds the email inside the same transaction, so an undo also cancels the email. */
   abstract enqueue(message: MailMessage, executor: Executor): Promise<void>;
 }
 
@@ -20,7 +20,7 @@ export class PgBossMailQueue extends MailQueue implements OnModuleInit, OnModule
     private readonly logger: PinoLogger,
   ) {
     super();
-    // Only the worker runs scheduling and maintenance; this instance just sends.
+    // The worker runs the schedules and clean-up. The API only adds jobs.
     this.boss = new PgBoss({
       connectionString: config.env.DATABASE_URL,
       schedule: false,

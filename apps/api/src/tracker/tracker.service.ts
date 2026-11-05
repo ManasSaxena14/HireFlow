@@ -25,7 +25,7 @@ const JOB_HASH_CONSTRAINT = 'tracked_applications_user_id_job_hash_key';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STATS_WEEKS = 8;
 
-/** Reaching one of these means the follow-up nudge no longer applies. */
+/** After one of these, there is no need for a follow-up reminder. */
 const CANCELS_FOLLOW_UP: readonly TrackerStatus[] = ['rejected', 'withdrawn', 'offer'];
 
 const FUNNEL_STAGES = ['applied', 'screening', 'interview', 'offer'] as const;
@@ -158,7 +158,7 @@ export class TrackerService {
     }
   }
 
-  /** Every status change writes history; moving to the current status changes nothing. */
+  /** Every status change is saved to history. Moving to the same status does nothing. */
   async move(userId: string, id: string, input: MoveApplication) {
     return this.db.transaction().execute(async (tx) => {
       const current = await this.findOwned(tx, userId, id, { lock: true });
@@ -310,8 +310,8 @@ export class TrackerService {
   }
 
   /**
-   * A card that jumped straight to a later stage still passed through the earlier ones,
-   * so each application counts towards every stage up to the furthest it reached.
+   * A card that jumped to a later step still counts for the steps before it.
+   * So each job counts for every step up to the furthest one it reached.
    */
   private summarizeFunnel(events: { id: string; toStatus: TrackerStatus }[]) {
     const furthest = new Map<string, number>();

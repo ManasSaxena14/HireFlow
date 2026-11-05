@@ -1,5 +1,5 @@
-// Runs the API and the worker side by side on a single host (free-tier hosting has
-// one process slot). If either exits, the other is stopped so the host restarts both.
+// Runs the API and the worker together, for free hosting that allows one process.
+// If one stops, this stops the other too, so the host restarts both.
 import { spawn } from 'node:child_process';
 
 const children = ['apps/worker/dist/main.js', 'apps/api/dist/main.js'].map((entry) =>

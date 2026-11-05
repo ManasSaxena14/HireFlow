@@ -13,7 +13,7 @@ function policyOf(reflector: Reflector, context: ExecutionContext): AccessPolicy
   ]);
 }
 
-/** Verifies the bearer token on every route that is not explicitly public. */
+/** Checks the login token on every route that is not marked as public. */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
@@ -33,14 +33,14 @@ export class AuthGuard implements CanActivate {
       request.user = { id: payload.sub };
       return true;
     } catch {
-      throw unauthenticated('Your session has expired.');
+      throw unauthenticated('Please sign in again.');
     }
   }
 }
 
 /**
- * Resolves :cid to the caller's membership. A non-member gets 404 rather than 403
- * so the response does not reveal whether the company exists.
+ * Finds the user's role in the company named by :cid. Someone who is not a member
+ * gets a 404, not a 403, so they cannot find out if the company exists.
  */
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -60,19 +60,19 @@ export class TenantGuard implements CanActivate {
   }
 }
 
-/** Deny by default: a route with no declared policy cannot be reached at all. */
+/** Blocks by default: nobody can reach a route that does not say who may use it. */
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const policy = policyOf(this.reflector, context);
-    if (!policy) throw new DomainError('FORBIDDEN', 'This route is not available.');
+    if (!policy) throw new DomainError('FORBIDDEN', 'This page is not available.');
     if (policy.kind !== 'roles') return true;
 
     const { tenant } = context.switchToHttp().getRequest<AppRequest>();
     if (!tenant || !policy.roles.includes(tenant.role)) {
-      throw new DomainError('FORBIDDEN', 'Your role does not allow this action.');
+      throw new DomainError('FORBIDDEN', 'You do not have permission to do this.');
     }
     return true;
   }

@@ -105,7 +105,7 @@ export class AuthController {
   @HttpCode(200)
   async forgotPassword(@Body(new ZodPipe(forgotPasswordSchema)) body: ForgotPasswordInput) {
     await this.auth.forgotPassword(body.email);
-    return { message: 'If that account exists, a reset link is on its way.' };
+    return { message: 'If this account exists, we sent a link to it.' };
   }
 
   @Post('reset-password')

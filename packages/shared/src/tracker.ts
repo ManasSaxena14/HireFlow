@@ -4,7 +4,7 @@ import { TRACKER_STATUSES, type TrackerStatus } from './enums.js';
 
 const status = z.enum(TRACKER_STATUSES);
 
-/** Blank form inputs become null so "cleared" and "never set" are stored the same way. */
+/** An empty form field becomes null, so "cleared" and "never set" are saved the same way. */
 const optionalText = (max: number) =>
   z
     .string()
@@ -18,7 +18,10 @@ const jobUrl = z
   .string()
   .trim()
   .max(2000)
-  .refine((value) => value === '' || /^https?:\/\/\S+$/i.test(value), 'Enter a full http(s) link')
+  .refine(
+    (value) => value === '' || /^https?:\/\/\S+$/i.test(value),
+    'Enter a full link starting with https://',
+  )
   .transform((value) => (value === '' ? null : value))
   .nullable()
   .optional();
@@ -31,7 +34,7 @@ const salaryOrder = (value: { salaryMin?: number | null; salaryMax?: number | nu
   value.salaryMin == null || value.salaryMax == null || value.salaryMin <= value.salaryMax;
 const salaryOrderIssue = {
   path: ['salaryMax'],
-  message: 'Must be at least the minimum salary',
+  message: 'Must be higher than the lowest salary',
 };
 
 const applicationFields = {
@@ -93,7 +96,7 @@ export const createReminderSchema = z.object({
   remindAt: z.iso
     .datetime({ offset: true, error: 'Choose a date and time' })
     .refine((value) => new Date(value).getTime() > Date.now(), 'Choose a time in the future'),
-  message: z.string().trim().min(1, 'Say what to remind you about').max(500),
+  message: z.string().trim().min(1, 'Write what the reminder is for').max(500),
 });
 export type CreateReminder = z.output<typeof createReminderSchema>;
 

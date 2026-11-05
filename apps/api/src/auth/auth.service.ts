@@ -34,7 +34,7 @@ export interface Session {
 
 @Injectable()
 export class AuthService implements OnModuleInit {
-  /** Verified when the email is unknown, so both login paths take the same time. */
+  /** Checked when the email is unknown, so both cases take the same time. */
   private decoyHash = '';
 
   constructor(
@@ -114,7 +114,7 @@ export class AuthService implements OnModuleInit {
     const valid = await argon2.verify(user?.passwordHash ?? this.decoyHash, input.password);
     if (!user || !valid || !user.isActive) {
       if (user) await this.recordLoginFailure(user.id, meta.ip);
-      throw unauthenticated('Incorrect email or password.');
+      throw unauthenticated('Wrong email or password.');
     }
 
     const { passwordHash: _, isActive: __, ...profile } = user;
@@ -122,7 +122,7 @@ export class AuthService implements OnModuleInit {
     return { accessToken: await this.signAccessToken(user.id), refreshToken, user: profile };
   }
 
-  /** Failures are aggregated: one audit entry per account per window, not one per attempt. */
+  /** Saves one log entry per account every 15 minutes, not one for every failed try. */
   private async recordLoginFailure(userId: string, ip: string | null) {
     const recent = await this.db
       .selectFrom('auditLogs')
@@ -144,13 +144,13 @@ export class AuthService implements OnModuleInit {
   }
 
   /**
-   * Rotates the refresh token. Presenting one that was already rotated means it leaked
-   * or was replayed, so the whole family is revoked and every holder must sign in again.
+   * Swaps the refresh token for a new one. If someone uses a token that was already
+   * swapped, it may be stolen, so every token in that family is cancelled.
    *
-   * The exception is a token rotated moments ago: a page reload can cancel the response
-   * after the server has rotated, leaving the browser holding the old cookie. That token is
-   * accepted once more and the unseen successor is dropped. If it really was a thief, the
-   * real user's next refresh presents a dead token outside the window and trips detection.
+   * There is one exception. A page reload can cancel the response after the server has
+   * made the swap, and the browser keeps the old cookie. So a token swapped in the last
+   * few seconds works one more time, and the new token nobody received is cancelled.
+   * If it really was a thief, the real user's next refresh will fail and catch it.
    */
   async refresh(token: string, meta: RequestMeta): Promise<Session> {
     const tokenHash = this.hashRefresh(token);
@@ -194,7 +194,7 @@ export class AuthService implements OnModuleInit {
         .updateTable('refreshTokens')
         .set({ revokedAt: new Date() })
         .where('id', '=', current.id)
-        // Keeps the original time on a replay, so repeat attempts cannot extend the window.
+        // Keeps the first time, so trying again and again cannot make the window longer.
         .where('revokedAt', 'is', null)
         .execute();
       const refreshToken = await this.issueRefreshToken(tx, user.id, current.familyId, meta);
@@ -202,7 +202,7 @@ export class AuthService implements OnModuleInit {
       return { kind: 'ok' as const, refreshToken, user: profile };
     });
 
-    if (outcome.kind === 'invalid') throw unauthenticated('Your session has expired.');
+    if (outcome.kind === 'invalid') throw unauthenticated('Please sign in again.');
     return {
       accessToken: await this.signAccessToken(outcome.user.id),
       refreshToken: outcome.refreshToken,
@@ -210,14 +210,14 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  /** True when this token was rotated (not signed out) within the grace window. */
+  /** True if this token was replaced (not signed out) in the last few seconds. */
   private async isLostResponse(
     tx: Executor,
     token: { familyId: string; revokedAt: Date | null },
   ): Promise<boolean> {
     if (!token.revokedAt) return false;
     if (Date.now() - token.revokedAt.getTime() >= REFRESH_REUSE_GRACE_MS) return false;
-    // Logout revokes without a successor, so a live token in the family means rotation.
+    // Signing out leaves no newer token, so a live token here means it was replaced.
     const successor = await tx
       .selectFrom('refreshTokens')
       .select('id')
@@ -309,7 +309,7 @@ export class AuthService implements OnModuleInit {
     token: string,
     purpose: 'verify_email' | 'reset_password',
   ): Promise<string> {
-    // The conditional update is atomic, so a token can only ever be used once.
+    // This update runs as one step, so a token can only ever be used once.
     const row = await tx
       .updateTable('emailTokens')
       .set({ usedAt: new Date() })
@@ -319,7 +319,7 @@ export class AuthService implements OnModuleInit {
       .where('expiresAt', '>', new Date())
       .returning('userId')
       .executeTakeFirst();
-    if (!row) throw new DomainError('VALIDATION_ERROR', 'This link is invalid or has expired.');
+    if (!row) throw new DomainError('VALIDATION_ERROR', 'This link does not work any more.');
     return row.userId;
   }
 

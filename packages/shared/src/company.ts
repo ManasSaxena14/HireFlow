@@ -5,7 +5,7 @@ const slug = z
   .string()
   .trim()
   .toLowerCase()
-  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Use lowercase letters, numbers and dashes')
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Use only small letters, numbers and dashes')
   .min(2)
   .max(60);
 

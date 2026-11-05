@@ -1,4 +1,4 @@
-// Drops, recreates and migrates a throwaway test database.
+// Deletes a test database, creates it again and runs the migrations.
 import { execFileSync } from 'node:child_process';
 import { rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -27,8 +27,7 @@ export async function resetTestDb(connectionString) {
   });
 }
 
-// Run directly before the end-to-end suite, which needs the database in place
-// before Playwright starts the servers.
+// Run this before the browser tests, because Playwright starts the servers first.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await resetTestDb(
     process.env.E2E_DATABASE_URL ?? 'postgresql://hireflow@localhost:5433/hireflow_e2e',

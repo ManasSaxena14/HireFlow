@@ -65,7 +65,7 @@ describe('auth', () => {
         .post('/api/v1/auth/login')
         .send({ email: user.email, password: 'definitely-wrong' })
         .expect(401);
-      expect(response.body.error.message).toBe('Incorrect email or password.');
+      expect(response.body.error.message).toBe('Wrong email or password.');
     });
 
     it('gives an unknown email the same response', async () => {
@@ -74,7 +74,7 @@ describe('auth', () => {
         .post('/api/v1/auth/login')
         .send({ email: 'ghost@example.com', password: 'definitely-wrong' })
         .expect(401);
-      expect(response.body.error.message).toBe('Incorrect email or password.');
+      expect(response.body.error.message).toBe('Wrong email or password.');
     });
 
     it('sets the refresh token as an httpOnly cookie, not in the body', async () => {

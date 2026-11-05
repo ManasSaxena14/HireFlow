@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-/** Loads the repository's .env when one exists; real environment variables win. */
+/** Loads the .env file if there is one. Variables that are already set are kept. */
 export function loadEnvFile(start = process.cwd()): void {
   let dir = start;
   for (;;) {
