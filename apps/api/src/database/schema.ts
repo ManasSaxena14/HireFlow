@@ -1,5 +1,11 @@
 import type { Generated, Insertable } from 'kysely';
-import type { MembershipRole, TrackerStatus } from '@hireflow/shared';
+import type {
+  JobStatus,
+  MembershipRole,
+  Recommendation,
+  StageKind,
+  TrackerStatus,
+} from '@hireflow/shared';
 
 export interface UsersTable {
   id: Generated<string>;
@@ -121,6 +127,110 @@ export interface NotificationsTable {
   createdAt: Generated<Date>;
 }
 
+export interface FilesTable {
+  id: Generated<string>;
+  ownerUserId: string | null;
+  companyId: string | null;
+  storageKey: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  sha256: string;
+  createdAt: Generated<Date>;
+}
+
+export interface JobsTable {
+  id: Generated<string>;
+  companyId: string;
+  title: string;
+  slug: string;
+  description: string;
+  location: string | null;
+  employmentType: string | null;
+  remote: Generated<boolean>;
+  skills: Generated<string[]>;
+  status: Generated<JobStatus>;
+  createdBy: string;
+  publishedAt: Date | null;
+  closedAt: Date | null;
+  createdAt: Generated<Date>;
+}
+
+export interface PipelineStagesTable {
+  id: Generated<string>;
+  companyId: string;
+  jobId: string;
+  name: string;
+  position: number;
+  kind: StageKind;
+  emailSubject: string | null;
+  emailBody: string | null;
+}
+
+export interface CandidatesTable {
+  id: Generated<string>;
+  companyId: string;
+  userId: string | null;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  resumeFileId: string | null;
+  source: string | null;
+  createdAt: Generated<Date>;
+}
+
+export interface ApplicationsTable {
+  id: Generated<string>;
+  companyId: string;
+  jobId: string;
+  candidateId: string;
+  stageId: string;
+  resumeFileId: string | null;
+  /** PostgreSQL sends numeric values as text, so this is a string here. */
+  score: string | null;
+  rejectionReason: string | null;
+  appliedAt: Generated<Date>;
+  decidedAt: Date | null;
+}
+
+export interface ApplicationStageEventsTable {
+  id: Generated<string>;
+  companyId: string;
+  applicationId: string;
+  fromStageId: string | null;
+  toStageId: string;
+  actorId: string | null;
+  createdAt: Generated<Date>;
+}
+
+export interface ScorecardsTable {
+  id: Generated<string>;
+  companyId: string;
+  applicationId: string;
+  interviewerId: string;
+  rating: number;
+  recommendation: Recommendation;
+  comments: string | null;
+  createdAt: Generated<Date>;
+}
+
+export interface CommentsTable {
+  id: Generated<string>;
+  companyId: string;
+  applicationId: string;
+  authorId: string;
+  body: string;
+  createdAt: Generated<Date>;
+}
+
+export interface ApplicationAssignmentsTable {
+  companyId: string;
+  applicationId: string;
+  userId: string;
+  assignedBy: string | null;
+  createdAt: Generated<Date>;
+}
+
 export interface DB {
   users: UsersTable;
   companies: CompaniesTable;
@@ -133,6 +243,15 @@ export interface DB {
   applicationNotes: ApplicationNotesTable;
   reminders: RemindersTable;
   notifications: NotificationsTable;
+  files: FilesTable;
+  jobs: JobsTable;
+  pipelineStages: PipelineStagesTable;
+  candidates: CandidatesTable;
+  applications: ApplicationsTable;
+  applicationStageEvents: ApplicationStageEventsTable;
+  scorecards: ScorecardsTable;
+  comments: CommentsTable;
+  applicationAssignments: ApplicationAssignmentsTable;
 }
 
 export type NewAuditLog = Insertable<AuditLogsTable>;

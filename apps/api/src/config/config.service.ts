@@ -20,6 +20,7 @@ const envSchema = z.object({
   RATE_LIMIT_USER_PER_MIN: z.coerce.number().int().positive().default(100),
   RATE_LIMIT_AUTH_PER_MIN: z.coerce.number().int().positive().default(10),
   FOLLOW_UP_DAYS: z.coerce.number().int().positive().default(7),
+  UPLOAD_DIR: z.string().min(1).default('uploads'),
 });
 
 export type Env = z.infer<typeof envSchema>;
