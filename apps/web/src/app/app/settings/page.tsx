@@ -6,6 +6,7 @@ import {
   createCompanySchema,
   updateProfileSchema,
 } from '@hireflow/shared';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -15,14 +16,8 @@ import { FormError, SelectField, TextField } from '@/components/ui/field';
 import { useToast } from '@/components/ui/toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { ROLE_LABELS } from '@/lib/ats';
 import { applyServerErrors } from '@/lib/forms';
-
-const ROLE_LABELS = {
-  admin: 'Admin',
-  recruiter: 'Recruiter',
-  hiring_manager: 'Hiring manager',
-  interviewer: 'Interviewer',
-} as const;
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(1, 'Enter your name').max(120),
@@ -40,12 +35,10 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="grid gap-x-12 gap-y-5 border-t border-line py-8 md:grid-cols-[220px_minmax(0,1fr)]">
-      <div>
-        <h2 className="text-[15px] font-semibold">{title}</h2>
-        <p className="mt-1 text-[13px] leading-relaxed text-muted">{intro}</p>
-      </div>
-      <div className="max-w-md">{children}</div>
+    <section className="rounded-[24px] border border-line bg-raised/60 p-6 sm:p-8">
+      <h2 className="font-display text-3xl font-extrabold tracking-tight">{title}</h2>
+      <p className="mt-1.5 mb-6 text-[15px] leading-relaxed text-muted">{intro}</p>
+      {children}
     </section>
   );
 }
@@ -83,7 +76,7 @@ function ProfileForm() {
       <TextField label="Email" value={profile?.email ?? ''} disabled readOnly />
       <SelectField
         label="Time zone"
-        hint="Used for reminder times."
+        hint="We use this to show reminder times."
         error={errors.timezone?.message}
         {...register('timezone')}
       >
@@ -130,22 +123,27 @@ function Companies() {
   return (
     <div className="space-y-6">
       {profile?.memberships.length ? (
-        <ul className="divide-y divide-line rounded-panel border border-line">
+        <ul className="divide-y divide-line rounded-2xl border border-line">
           {profile.memberships.map((membership) => (
             <li
               key={membership.companyId}
               className="flex items-center justify-between gap-4 px-4 py-3"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{membership.name}</p>
-                <p className="truncate font-mono text-xs text-muted">/c/{membership.slug}</p>
+                <Link
+                  href={`/company/${membership.companyId}/jobs`}
+                  className="block truncate text-sm font-medium hover:text-accent"
+                >
+                  {membership.name}
+                </Link>
+                <p className="truncate text-xs text-muted">/c/{membership.slug}</p>
               </div>
               <span className="shrink-0 text-xs text-muted">{ROLE_LABELS[membership.role]}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted">You are not part of a company yet.</p>
+        <p className="text-[15px] text-muted">You are not in a company yet.</p>
       )}
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         <FormError>{formError}</FormError>
@@ -171,13 +169,13 @@ function Sessions() {
       router.replace('/login');
     } catch {
       setBusy(false);
-      toast('Could not sign out. Please try again.', 'error');
+      toast('We could not sign you out. Please try again.', 'error');
     }
   };
 
   return (
     <Button variant="danger" loading={busy} onClick={endAll}>
-      Sign out of all devices
+      Sign out on all devices
     </Button>
   );
 }
@@ -185,22 +183,34 @@ function Sessions() {
 export default function SettingsPage() {
   const { profile } = useAuth();
   return (
-    <div className="mx-auto max-w-4xl px-5 py-8 sm:px-8">
-      <h1 className="mb-8 text-2xl font-semibold tracking-tight">Settings</h1>
+    <div className="flex min-h-full flex-col p-4 sm:p-6">
+      <h1 className="font-display mb-6 text-4xl font-extrabold tracking-tight sm:text-5xl">
+        Settings
+      </h1>
       {!profile?.emailVerifiedAt && (
-        <p className="mb-8 rounded-control border border-line-strong bg-raised px-4 py-3 text-[13px] text-muted">
-          Your email is not confirmed yet. Use the link we sent to {profile?.email}.
+        <p className="mb-4 rounded-2xl border border-status-screening/40 bg-status-screening/10 px-5 py-4 text-[15px] font-medium">
+          Please confirm your email. We sent a link to {profile?.email}.
         </p>
       )}
-      <Section title="Profile" intro="How you appear to the teams you work with.">
-        <ProfileForm />
-      </Section>
-      <Section title="Companies" intro="Workspaces you belong to, and the role you hold in each.">
-        <Companies />
-      </Section>
-      <Section title="Sessions" intro="Ends every session, including this one.">
-        <Sessions />
-      </Section>
+      <div className="grid flex-1 gap-4 xl:grid-cols-2">
+        <Section title="Your profile" intro="Your name and your time zone.">
+          <ProfileForm />
+        </Section>
+        <div className="space-y-4">
+          <Section
+            title="Companies"
+            intro="The companies you belong to, and your role in each one."
+          >
+            <Companies />
+          </Section>
+          <Section
+            title="Sign out everywhere"
+            intro="This signs you out on all your devices, including this one."
+          >
+            <Sessions />
+          </Section>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,16 @@
 'use client';
 
 import { clsx } from 'clsx';
-import { Bell, KanbanSquare, LogOut, Menu, Settings, type LucideIcon, X } from 'lucide-react';
+import {
+  Bell,
+  Building2,
+  KanbanSquare,
+  LogOut,
+  type LucideIcon,
+  Menu,
+  Settings,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -10,36 +19,57 @@ import { useNotifications } from '@/lib/tracker';
 import { Logo } from './logo';
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: '/app/tracker', label: 'Applications', icon: KanbanSquare },
+  { href: '/app/tracker', label: 'Job board', icon: KanbanSquare },
+  { href: '/company', label: 'Hiring', icon: Building2 },
   { href: '/app/notifications', label: 'Notifications', icon: Bell },
   { href: '/app/settings', label: 'Settings', icon: Settings },
 ];
+
+const NAV_ITEM_STEP = 54;
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { data: notifications } = useNotifications();
   const unread = notifications?.unreadCount ?? 0;
+  const activeIndex = NAV.findIndex(({ href }) => pathname.startsWith(href));
   return (
-    <ul className="space-y-0.5">
-      {NAV.map(({ href, label, icon: Icon }) => {
-        const active = pathname.startsWith(href);
+    <ul className="relative space-y-1.5">
+      {activeIndex >= 0 && (
+        <li
+          aria-hidden
+          className="glow-button absolute inset-x-0 top-0 h-12 rounded-xl bg-accent duration-500"
+          style={{ transform: `translateY(${activeIndex * NAV_ITEM_STEP}px)` }}
+        />
+      )}
+      {NAV.map(({ href, label, icon: Icon }, index) => {
+        const active = index === activeIndex;
         return (
-          <li key={href}>
+          <li key={href} className="relative">
             <Link
               href={href}
               onClick={onNavigate}
               aria-current={active ? 'page' : undefined}
               className={clsx(
-                'flex h-9 items-center gap-2.5 rounded-control px-2.5 text-sm transition-colors',
-                active
-                  ? 'bg-overlay font-medium text-fg'
-                  : 'text-muted hover:bg-raised hover:text-fg',
+                'flex h-12 items-center gap-3 rounded-xl px-3.5 text-[15px] font-semibold transition',
+                active ? 'text-on-accent' : 'text-muted hover:bg-raised hover:text-fg',
               )}
             >
-              <Icon aria-hidden className={clsx('size-4', active && 'text-accent')} />
+              <Icon
+                aria-hidden
+                className={clsx(
+                  'size-5',
+                  href === '/app/notifications' && unread > 0 && 'animate-ring',
+                )}
+              />
               {label}
               {href === '/app/notifications' && unread > 0 && (
-                <span className="ml-auto rounded-full bg-accent px-1.5 font-mono text-[11px] font-medium text-on-accent">
+                <span
+                  key={unread}
+                  className={clsx(
+                    'animate-pop ml-auto rounded-full px-2 py-0.5 text-xs font-bold',
+                    active ? 'bg-on-accent text-fg' : 'bg-accent text-on-accent',
+                  )}
+                >
                   {unread}
                   <span className="sr-only"> unread</span>
                 </span>
@@ -56,9 +86,15 @@ function UserBlock() {
   const { profile, signOut } = useAuth();
   const router = useRouter();
   return (
-    <div className="flex items-center gap-2 border-t border-line pt-3">
-      <div className="min-w-0 flex-1 px-1">
-        <p className="truncate text-[13px] font-medium">{profile?.fullName}</p>
+    <div className="flex items-center gap-3 rounded-2xl border border-line bg-raised p-2.5">
+      <span
+        aria-hidden
+        className="font-display grid size-10 shrink-0 place-items-center rounded-xl bg-overlay text-lg font-extrabold text-accent"
+      >
+        {profile?.fullName.charAt(0).toUpperCase()}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold">{profile?.fullName}</p>
         <p className="truncate text-xs text-muted">{profile?.email}</p>
       </div>
       <button
@@ -66,7 +102,7 @@ function UserBlock() {
         aria-label="Sign out"
         title="Sign out"
         onClick={() => signOut().then(() => router.replace('/login'))}
-        className="grid size-8 shrink-0 place-items-center rounded-control text-muted hover:bg-raised hover:text-fg"
+        className="grid size-9 shrink-0 place-items-center rounded-control text-muted hover:bg-overlay hover:text-fg"
       >
         <LogOut aria-hidden className="size-4" />
       </button>
@@ -85,9 +121,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [menuOpen]);
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[232px_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line bg-sunken p-3 lg:flex">
-        <Link href="/app" className="mb-5 px-2 pt-1.5 text-base">
+    <div className="min-h-dvh lg:grid lg:h-dvh lg:grid-cols-[272px_minmax(0,1fr)]">
+      <aside className="hidden h-dvh flex-col border-r border-line bg-sunken p-4 lg:flex">
+        <Link href="/app" className="mb-8 px-2 pt-2 text-2xl">
           <Logo />
         </Link>
         <nav aria-label="Main" className="flex-1">
@@ -96,8 +132,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <UserBlock />
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-13 items-center justify-between border-b border-line bg-sunken px-4 lg:hidden">
-        <Link href="/app" className="text-base">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-line bg-sunken px-4 lg:hidden">
+        <Link href="/app" className="text-lg">
           <Logo />
         </Link>
         <button
@@ -105,18 +141,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
-          className="grid size-9 place-items-center rounded-control text-muted hover:text-fg"
+          className="grid size-10 place-items-center rounded-control text-muted hover:text-fg"
         >
           {menuOpen ? (
-            <X aria-hidden className="size-5" />
+            <X aria-hidden className="size-6" />
           ) : (
-            <Menu aria-hidden className="size-5" />
+            <Menu aria-hidden className="size-6" />
           )}
         </button>
       </header>
 
       {menuOpen && (
-        <div className="fixed inset-x-0 top-13 bottom-0 z-30 flex flex-col bg-sunken p-3 lg:hidden">
+        <div className="fixed inset-x-0 top-16 bottom-0 z-30 flex flex-col bg-sunken p-4 lg:hidden">
           <nav aria-label="Main" className="flex-1">
             <NavLinks onNavigate={() => setMenuOpen(false)} />
           </nav>
@@ -124,7 +160,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <main className="min-w-0">{children}</main>
+      <main className="relative min-w-0 overflow-x-hidden lg:h-dvh lg:overflow-y-auto">
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="orb animate-drift absolute -top-64 -right-32 size-[44rem] text-accent/15" />
+        </div>
+        <div className="relative lg:h-full">{children}</div>
+      </main>
     </div>
   );
 }
