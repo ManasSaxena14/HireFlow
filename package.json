@@ -1,0 +1,55 @@
+{
+  "name": "hireflow",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Two-sided hiring platform",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @hireflow/shared build && pnpm --parallel --filter \"./apps/*\" --filter @hireflow/shared dev",
+    "build": "pnpm -r build",
+    "start": "node scripts/start-production.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter @hireflow/shared build && pnpm -r typecheck",
+    "test": "pnpm --filter @hireflow/shared build && pnpm -r --workspace-concurrency=1 test",
+    "test:e2e": "pnpm --filter @hireflow/web test:e2e",
+    "db:start": "sh scripts/local-db.sh start",
+    "db:stop": "sh scripts/local-db.sh stop",
+    "db:create": "node scripts/create-databases.mjs",
+    "db:migrate": "pnpm --filter @hireflow/api migrate up",
+    "db:rollback": "pnpm --filter @hireflow/api migrate down",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css}": "prettier --write"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@swc/core",
+      "argon2",
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}

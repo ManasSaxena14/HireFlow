@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# env files (only the example is tracked)
+.env
+.env.*
+!.env.example
+
+# local data
+.pgdata/
+uploads/
+.mail-preview/
+
+# test output
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# logs
+*.log
+logs/
+
+# editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+
+# scratch
+tmp/
+.tmp/
+*.local
