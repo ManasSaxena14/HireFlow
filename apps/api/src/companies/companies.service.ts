@@ -2,23 +2,16 @@ import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import type {
   AddMemberInput,
+  CompanyMember,
   CreateCompanyInput,
   UpdateCompanyInput,
   UpdateMemberInput,
 } from '@hireflow/shared';
 import { AuditService } from '../common/audit.service.js';
 import { DomainError, notFound } from '../common/domain-error.js';
+import { slugify } from '../common/slug.js';
 import { Database, type Executor, isUniqueViolation } from '../database/database.js';
 import { MembershipsRepository } from './memberships.repository.js';
-
-function slugify(name: string): string {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 50);
-  return slug.length >= 2 ? slug : `company-${randomBytes(2).toString('hex')}`;
-}
 
 @Injectable()
 export class CompaniesService {
@@ -29,18 +22,18 @@ export class CompaniesService {
   ) {}
 
   async create(input: CreateCompanyInput, userId: string, ip: string | null) {
-    const base = input.slug ?? slugify(input.name);
-    // When the caller did not choose a slug, a clash just means trying a suffixed one.
+    const base = input.slug ?? slugify(input.name, 'company');
+    // If the user did not pick a link and this one is taken, add a few letters and try again.
     for (let attempt = 0; attempt < 4; attempt++) {
       const slug = attempt === 0 ? base : `${base}-${randomBytes(2).toString('hex')}`;
       try {
         return await this.insert(input.name, slug, userId, ip);
       } catch (error) {
         if (!isUniqueViolation(error, 'companies_slug_key')) throw error;
-        if (input.slug) throw new DomainError('CONFLICT', 'That company URL is already taken.');
+        if (input.slug) throw new DomainError('CONFLICT', 'This company link is already taken.');
       }
     }
-    throw new DomainError('CONFLICT', 'Could not generate a unique company URL.');
+    throw new DomainError('CONFLICT', 'Please choose a different company link.');
   }
 
   private insert(name: string, slug: string, userId: string, ip: string | null) {
@@ -100,6 +93,16 @@ export class CompaniesService {
     });
   }
 
+  listMembers(companyId: string): Promise<CompanyMember[]> {
+    return this.db
+      .selectFrom('memberships')
+      .innerJoin('users', 'users.id', 'memberships.userId')
+      .select(['users.id as userId', 'users.fullName', 'users.email', 'memberships.role'])
+      .where('memberships.companyId', '=', companyId)
+      .orderBy('users.fullName')
+      .execute();
+  }
+
   async addMember(companyId: string, input: AddMemberInput, actorId: string, ip: string | null) {
     const user = await this.db
       .selectFrom('users')
@@ -148,6 +151,12 @@ export class CompaniesService {
       await this.assertNotLastAdmin(companyId, userId, tx);
       const result = await this.memberships.remove(companyId, userId, tx);
       if (result.numDeletedRows === 0n) throw notFound('Member');
+      // If this person joins again later, they should not get their old candidates back.
+      await tx
+        .deleteFrom('applicationAssignments')
+        .where('companyId', '=', companyId)
+        .where('userId', '=', userId)
+        .execute();
       await this.recordRoleChange(tx, companyId, actorId, userId, 'member.removed', ip);
     });
   }

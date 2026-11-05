@@ -6,6 +6,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { ACCESS_TOKEN_TTL_SECONDS } from './auth/tokens.js';
+import { AtsModule } from './ats/ats.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
 import { AuditService } from './common/audit.service.js';
@@ -47,7 +48,7 @@ const ONE_MINUTE_MS = 60_000;
             res.setHeader('x-request-id', id);
             return id;
           },
-          // Only method, path and status are logged: headers carry tokens and cookies.
+          // Log only the method, path and status. Headers hold tokens and cookies.
           serializers: {
             req: (req: { id: string; method: string; url: string }) => ({
               id: req.id,
@@ -91,11 +92,12 @@ const ONE_MINUTE_MS = 60_000;
     AuthModule,
     CompaniesModule,
     TrackerModule,
+    AtsModule,
   ],
   controllers: [UsersController, NotificationsController, HealthController],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
-    // Order matters: identify the caller, throttle, then resolve tenant and role.
+    // The order matters: find the user, check rate limits, then check company and role.
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: AppThrottlerGuard },
     { provide: APP_GUARD, useClass: TenantGuard },

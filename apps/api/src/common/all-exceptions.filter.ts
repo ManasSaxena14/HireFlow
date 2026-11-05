@@ -48,19 +48,28 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return {
         status: 429,
         code: 'RATE_LIMITED' as const,
-        message: 'Too many requests. Please slow down.',
+        message: 'Too many tries. Please wait a minute and try again.',
         details: [],
       };
     }
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
+      if (status === 413) {
+        const message = 'This file is too big. The limit is 5 MB.';
+        return {
+          status,
+          code: 'VALIDATION_ERROR' as const,
+          message,
+          details: [{ path: 'resume', message }],
+        };
+      }
       const code = CODE_BY_STATUS[status];
       if (code) return { status, code, message: exception.message, details: [] };
     }
     return {
       status: ERROR_STATUS.INTERNAL,
       code: 'INTERNAL' as const,
-      message: 'Something went wrong on our side.',
+      message: 'Something went wrong. Please try again.',
       details: [],
     };
   }

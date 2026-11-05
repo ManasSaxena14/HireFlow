@@ -24,6 +24,7 @@ import {
   Authenticated,
   ClientIp,
   CurrentUser,
+  HiringTeam,
   type RequestTenant,
   type RequestUser,
   Roles,
@@ -61,6 +62,12 @@ export class CompaniesController {
     @ClientIp() ip: string | null,
   ) {
     return this.companies.update(tenant.companyId, body, user.id, ip);
+  }
+
+  @Get(':cid/members')
+  @HiringTeam()
+  listMembers(@Tenant() tenant: RequestTenant) {
+    return this.companies.listMembers(tenant.companyId);
   }
 
   @Post(':cid/members')
