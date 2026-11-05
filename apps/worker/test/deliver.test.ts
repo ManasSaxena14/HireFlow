@@ -84,3 +84,35 @@ describe('renderMail', () => {
     expect(text).toContain('http://localhost:3000/app/tracker/1');
   });
 });
+
+describe('hiring emails', () => {
+  it('confirms an application in simple words', () => {
+    const mail = renderMail({
+      template: 'application-received',
+      to: 'asha@example.com',
+      dedupeKey: 'application-received:1',
+      name: 'Asha',
+      jobTitle: 'Designer',
+      companyName: 'Northwind',
+      link: 'http://localhost:3000/c/northwind/jobs/designer',
+    });
+    expect(mail.subject).toBe('We got your application for Designer');
+    expect(mail.text).toContain('Northwind got your application');
+  });
+
+  it('sends the words of a step email safely, one paragraph at a time', () => {
+    const mail = renderMail({
+      template: 'stage-update',
+      to: 'asha@example.com',
+      dedupeKey: 'stage-update:1',
+      subject: 'Next step',
+      body: 'Hi Asha,\n\nWe <b>liked</b> your work.',
+      companyName: 'Northwind',
+      link: 'http://localhost:3000/c/northwind/jobs/designer',
+    });
+    expect(mail.subject).toBe('Next step');
+    expect(mail.html).toContain('We &lt;b&gt;liked&lt;/b&gt; your work.');
+    expect(mail.html).not.toContain('<b>liked');
+    expect(mail.html.match(/<p /g)).toHaveLength(2);
+  });
+});

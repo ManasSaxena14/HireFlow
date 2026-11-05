@@ -11,4 +11,22 @@ export type MailMessage =
       name: string;
       message: string;
       link: string;
+    }
+  | {
+      template: 'application-received';
+      to: string;
+      dedupeKey: string;
+      name: string;
+      jobTitle: string;
+      companyName: string;
+      link: string;
+    }
+  | {
+      template: 'stage-update';
+      to: string;
+      dedupeKey: string;
+      subject: string;
+      body: string;
+      companyName: string;
+      link: string;
     };

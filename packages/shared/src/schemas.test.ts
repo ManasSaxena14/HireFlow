@@ -1,3 +1,4 @@
+import { applyToJobSchema, listCandidatesSchema, replaceStagesSchema } from './ats.js';
 import { describe, expect, it } from 'vitest';
 import { registerSchema, updateProfileSchema } from './auth.js';
 import { createCompanySchema } from './company.js';
@@ -97,5 +98,59 @@ describe('listApplicationsSchema', () => {
     expect(listApplicationsSchema.parse({}).limit).toBe(20);
     expect(listApplicationsSchema.parse({ archived: 'true' }).archived).toBe(true);
     expect(listApplicationsSchema.safeParse({ limit: '101' }).success).toBe(false);
+  });
+});
+
+describe('hiring schemas', () => {
+  const stages = (kinds: string[]) => ({
+    stages: kinds.map((kind, index) => ({ name: `Step ${index}`, kind })),
+  });
+
+  it('needs a first step for new people, a hired step and a rejected step', () => {
+    expect(replaceStagesSchema.safeParse(stages(['applied', 'hired', 'rejected'])).success).toBe(
+      true,
+    );
+    expect(replaceStagesSchema.safeParse(stages(['hired', 'applied', 'rejected'])).success).toBe(
+      false,
+    );
+    expect(
+      replaceStagesSchema.safeParse(stages(['applied', 'screening', 'rejected'])).success,
+    ).toBe(false);
+    expect(replaceStagesSchema.safeParse(stages(['applied', 'hired', 'offer'])).success).toBe(
+      false,
+    );
+  });
+
+  it('needs both parts of a step email, on one subject line', () => {
+    const withEmail = (emailSubject: string | null, emailBody: string | null) => ({
+      stages: [
+        { name: 'New', kind: 'applied', emailSubject, emailBody },
+        { name: 'Hired', kind: 'hired' },
+        { name: 'No', kind: 'rejected' },
+      ],
+    });
+    expect(replaceStagesSchema.safeParse(withEmail('Hello', 'Body')).success).toBe(true);
+    expect(replaceStagesSchema.safeParse(withEmail('Hello', null)).success).toBe(false);
+    expect(replaceStagesSchema.safeParse(withEmail(null, 'Body')).success).toBe(false);
+    expect(replaceStagesSchema.safeParse(withEmail('Two\nlines', 'Body')).success).toBe(false);
+  });
+
+  it('cleans up the apply form', () => {
+    const parsed = applyToJobSchema.parse({
+      fullName: ' Asha Rao ',
+      email: ' ASHA@Example.com ',
+      phone: '',
+    });
+    expect(parsed).toEqual({
+      fullName: 'Asha Rao',
+      email: 'asha@example.com',
+      phone: null,
+      source: null,
+    });
+  });
+
+  it('turns a typed-in score filter into a number and limits it', () => {
+    expect(listCandidatesSchema.parse({ minScore: '3.5' }).minScore).toBe(3.5);
+    expect(listCandidatesSchema.safeParse({ minScore: '9' }).success).toBe(false);
   });
 });

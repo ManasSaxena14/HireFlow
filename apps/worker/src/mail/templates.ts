@@ -28,7 +28,7 @@ function layout(heading: string, lines: string[], action: { label: string; href:
       <tr><td style="padding:32px">
         <h1 style="margin:0 0 16px;font-size:20px;color:#17191c">${escapeHtml(heading)}</h1>
         ${paragraphs}
-        <a href="${escapeHtml(action.href)}" style="display:inline-block;margin-top:8px;padding:11px 20px;background:#ff4b32;border-radius:6px;font-size:14px;font-weight:600;color:#17191c;text-decoration:none">${escapeHtml(action.label)}</a>
+        <a href="${escapeHtml(action.href)}" style="display:inline-block;margin-top:8px;padding:11px 20px;background:#ff4b32;border-radius:10px;font-size:14px;font-weight:600;color:#17191c;text-decoration:none">${escapeHtml(action.label)}</a>
       </td></tr>
     </table>
   </body>
@@ -56,7 +56,7 @@ export function renderMail(message: MailMessage): RenderedMail {
         'Confirm your email',
         [
           `Hi ${message.name},`,
-          'Please confirm this address so we can send you reminders. The link works for 24 hours.',
+          'Please confirm your email so we can send you reminders. This link works for 24 hours.',
         ],
         { label: 'Confirm email', href: message.link },
       );
@@ -66,16 +66,31 @@ export function renderMail(message: MailMessage): RenderedMail {
         'Reset your password',
         [
           `Hi ${message.name},`,
-          'Use the button below to choose a new password. The link works for one hour. If you did not ask for this, you can ignore this email.',
+          'Click the button below to set a new password. This link works for one hour. If you did not ask for this, you can ignore this email.',
         ],
-        { label: 'Choose a new password', href: message.link },
+        { label: 'Set a new password', href: message.link },
       );
     case 'reminder':
       return compose(
-        'A reminder from HireFlow',
+        'Your HireFlow reminder',
         'Reminder',
         [`Hi ${message.name},`, message.message],
-        { label: 'Open application', href: message.link },
+        { label: 'Open this job', href: message.link },
       );
+    case 'application-received':
+      return compose(
+        `We got your application for ${message.jobTitle}`,
+        'Thank you for applying',
+        [
+          `Hi ${message.name},`,
+          `${message.companyName} got your application for ${message.jobTitle}. The team will look at it and contact you about the next step.`,
+        ],
+        { label: 'See the job', href: message.link },
+      );
+    case 'stage-update':
+      return compose(message.subject, message.companyName, message.body.split(/\n\s*\n/), {
+        label: 'See the job',
+        href: message.link,
+      });
   }
 }
