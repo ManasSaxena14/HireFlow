@@ -1,0 +1,72 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  /* Midnight charcoal surfaces, darkest to lightest */
+  --color-sunken: #101214;
+  --color-canvas: #17191c;
+  --color-raised: #1e2125;
+  --color-overlay: #262a2f;
+
+  --color-line: #2c3036;
+  --color-line-strong: #3f454c;
+
+  /* Text on charcoal, with cool steel as the secondary voice */
+  --color-fg: #f2f3f5;
+  --color-muted: #929da7;
+  --color-subtle: #6f7983;
+
+  /* Coral is reserved for primary actions and the current state */
+  --color-accent: #ff4b32;
+  --color-accent-hover: #ff6652;
+  --color-on-accent: #17191c;
+
+  --color-success: #6fcf9f;
+  --color-danger: #ff8a7a;
+  --color-danger-soft: #3a1f1c;
+
+  --radius-control: 6px;
+  --radius-panel: 10px;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-canvas);
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-canvas);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01';
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
