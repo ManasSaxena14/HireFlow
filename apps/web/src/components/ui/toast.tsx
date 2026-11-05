@@ -44,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <p
             key={toast.id}
             className={clsx(
-              'max-w-sm rounded-control border bg-overlay px-4 py-2.5 text-sm shadow-lg shadow-black/30',
+              'animate-toast-in max-w-sm rounded-control border bg-overlay px-4 py-2.5 text-sm shadow-lg shadow-black/30',
               toast.tone === 'error'
                 ? 'border-danger/50 text-danger'
                 : 'border-line-strong text-fg',

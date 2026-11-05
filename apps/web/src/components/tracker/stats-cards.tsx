@@ -1,74 +1,118 @@
 'use client';
 
+import { CalendarDays, Rocket } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import { Skeleton } from '@/components/ui/states';
-import { useStats } from '@/lib/tracker';
+import { useCountUp } from '@/lib/motion';
+import { STATUS_COLORS, useStats } from '@/lib/tracker';
 
-const FUNNEL_LABELS = {
-  applied: 'Applied',
-  screening: 'Screening',
-  interview: 'Interview',
-  offer: 'Offer',
-} as const;
+const STEPS = [
+  { key: 'applied', label: 'Applied' },
+  { key: 'screening', label: 'First round' },
+  { key: 'interview', label: 'Interview' },
+  { key: 'offer', label: 'Offer' },
+] as const;
 
-function Stat({
-  label,
-  value,
-  note,
-  className,
-}: {
-  label: string;
-  value: string;
-  note?: string;
-  className?: string;
-}) {
-  return (
-    <div className={`bg-sunken px-4 py-3.5 ${className ?? ''}`}>
-      <p className="text-xs text-muted">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
-      {note && <p className="mt-0.5 text-[11px] text-subtle">{note}</p>}
-    </div>
-  );
-}
+const Count = ({ value }: { value: number }) => <>{useCountUp(value)}</>;
 
 export function StatsCards() {
   const { data, isPending, isError } = useStats();
 
   if (isError) return null;
-  if (isPending || !data) return <Skeleton className="h-27" />;
+  if (isPending || !data) return <Skeleton className="h-36 rounded-[20px]" />;
 
   const { byStatus, perWeek, responseRate, funnel } = data;
   const active = byStatus.applied + byStatus.screening + byStatus.interview + byStatus.offer;
   const thisWeek = perWeek.at(-1)?.count ?? 0;
   const lastWeek = perWeek.at(-2)?.count ?? 0;
+  const tallest = Math.max(...perWeek.map((week) => week.count), 1);
   const widest = Math.max(funnel.applied, 1);
+  const percent = responseRate === null ? null : Math.round(responseRate * 100);
 
   return (
     <div
       data-testid="stats"
-      className="grid grid-cols-2 gap-px overflow-hidden rounded-panel border border-line bg-line lg:grid-cols-[1fr_1fr_1fr_minmax(0,1.8fr)]"
+      className="grid grid-cols-2 gap-3 xl:grid-cols-[1fr_1.25fr_1fr_1.75fr]"
     >
-      <Stat label="In progress" value={String(active)} note={`${byStatus.saved} saved to apply`} />
-      <Stat label="Applied this week" value={String(thisWeek)} note={`${lastWeek} last week`} />
-      <Stat
-        label="Response rate"
-        className="col-span-2 lg:col-span-1"
-        value={responseRate === null ? '—' : `${Math.round(responseRate * 100)}%`}
-        note={responseRate === null ? 'Apply to see this' : 'Of everything applied to'}
-      />
-      <div className="col-span-2 bg-sunken px-4 py-3.5 lg:col-span-1">
-        <p className="text-xs text-muted">Funnel</p>
-        <dl className="mt-2 space-y-1">
-          {(Object.keys(FUNNEL_LABELS) as (keyof typeof FUNNEL_LABELS)[]).map((stage) => (
-            <div key={stage} className="flex items-center gap-2 text-[11px]">
-              <dt className="w-14 shrink-0 text-muted">{FUNNEL_LABELS[stage]}</dt>
-              <dd className="flex min-w-0 flex-1 items-center gap-2">
-                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-overlay">
+      <div className="glow-button animate-fade-up card-lift flex min-h-36 flex-col justify-between rounded-[20px] bg-accent p-5 text-on-accent">
+        <p className="flex items-center gap-2 text-sm font-bold">
+          <Rocket aria-hidden className="size-4" />
+          Active jobs
+        </p>
+        <div>
+          <p className="font-display text-6xl leading-none font-extrabold tabular-nums">
+            <Count value={active} />
+          </p>
+          <p className="mt-1 text-[13px] font-semibold">{byStatus.saved} saved for later</p>
+        </div>
+      </div>
+
+      <div className="spot animate-fade-up card-lift flex min-h-36 flex-col justify-between rounded-[20px] border border-line bg-raised p-5 [animation-delay:70ms]">
+        <p className="flex items-center gap-2 text-sm font-semibold text-muted">
+          <CalendarDays aria-hidden className="size-4" />
+          Applied this week
+        </p>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="font-display text-6xl leading-none font-extrabold tabular-nums">
+              <Count value={thisWeek} />
+            </p>
+            <p className="mt-1 text-[13px] text-muted">{lastWeek} last week</p>
+          </div>
+          <div aria-hidden className="hidden h-16 flex-1 items-end justify-end gap-1 sm:flex">
+            {perWeek.map((week, index) => (
+              <span
+                key={week.weekStart}
+                className={`w-2.5 rounded-full transition-[height] duration-700 ${index === perWeek.length - 1 ? 'bg-accent' : 'bg-line-strong'}`}
+                style={{ height: `${Math.max((week.count / tallest) * 100, 10)}%` }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="spot animate-fade-up card-lift col-span-2 flex min-h-36 items-center justify-between gap-3 rounded-[20px] border border-line bg-raised p-5 [animation-delay:140ms] xl:col-span-1">
+        <div>
+          <p className="text-sm font-semibold text-muted">Reply rate</p>
+          <p className="mt-2 text-[13px] leading-snug text-muted">
+            {percent === null ? 'Apply to a job to see this' : 'Companies that replied to you'}
+          </p>
+        </div>
+        <div
+          className="ring-chart grid size-24 shrink-0 place-items-center rounded-full"
+          style={{ '--ring': `${percent ?? 0}%` } as CSSProperties}
+        >
+          <span className="font-display grid size-[4.75rem] place-items-center rounded-full bg-raised text-2xl font-extrabold">
+            {percent === null ? (
+              '–'
+            ) : (
+              <>
+                <Count value={percent} />%
+              </>
+            )}
+          </span>
+        </div>
+      </div>
+
+      <div className="spot animate-fade-up card-lift col-span-2 flex min-h-36 flex-col justify-between rounded-[20px] border border-line bg-raised p-5 [animation-delay:210ms] xl:col-span-1">
+        <p className="text-sm font-semibold text-muted">How far you got</p>
+        <dl className="mt-3 space-y-2">
+          {STEPS.map(({ key, label }) => (
+            <div key={key} className="flex items-center gap-3 text-[13px]">
+              <dt className="w-20 shrink-0 font-medium text-muted">{label}</dt>
+              <dd className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="h-2 flex-1 overflow-hidden rounded-full bg-overlay">
                   <span
-                    className="block h-full rounded-full bg-accent"
-                    style={{ width: `${(funnel[stage] / widest) * 100}%` }}
+                    className="animate-grow block h-full rounded-full transition-[width] duration-700"
+                    style={{
+                      width: `${(funnel[key] / widest) * 100}%`,
+                      background: STATUS_COLORS[key],
+                    }}
                   />
                 </span>
-                <span className="w-5 text-right font-mono text-fg">{funnel[stage]}</span>
+                <span className="w-5 text-right font-bold tabular-nums">
+                  <Count value={funnel[key]} />
+                </span>
               </dd>
             </div>
           ))}

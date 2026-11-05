@@ -30,7 +30,7 @@ test('a session survives a reload, and signing out ends it', async ({ page }) =>
   const email = await registerNewUser(page);
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My job board' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/login$/);
@@ -40,7 +40,7 @@ test('a session survives a reload, and signing out ends it', async ({ page }) =>
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill('wrong-password-here');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText('Incorrect email or password.')).toBeVisible();
+  await expect(page.getByText('Wrong email or password.')).toBeVisible();
 
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
@@ -52,13 +52,13 @@ test('reloading while a refresh is in flight keeps the session', async ({ page }
   // Each reload cancels the refresh the previous load started.
   for (let i = 0; i < 4; i++) await page.reload({ waitUntil: 'commit' });
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My job board' })).toBeVisible();
 });
 
 test('two tabs refreshing together do not kill the session', async ({ page, context }) => {
   await registerNewUser(page);
   const second = await context.newPage();
   await Promise.all([page.reload(), second.goto('/app/tracker')]);
-  await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible();
-  await expect(second.getByRole('heading', { name: 'Applications' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My job board' })).toBeVisible();
+  await expect(second.getByRole('heading', { name: 'My job board' })).toBeVisible();
 });

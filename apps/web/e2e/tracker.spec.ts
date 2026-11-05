@@ -12,13 +12,14 @@ test('candidate journey: add a job, move it to applied, see the reminder', async
   await registerNewUser(page);
   await expect(page.getByText('Your board is empty')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Add your first application' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Add application' });
+  await page.getByRole('button', { name: 'Add your first job' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Add a job' });
   await dialog.getByLabel('Job title').fill('Platform Engineer');
   await dialog.getByLabel('Company').fill('Northwind');
   await dialog.getByLabel('Location').fill('Bengaluru');
   await dialog.getByLabel('Tags').fill('remote, infra');
   await dialog.getByRole('button', { name: 'Add to board' }).click();
+  await expect(dialog).toBeHidden();
 
   await expect(cardIn(page, 'saved', 'Platform Engineer')).toBeVisible();
 
@@ -29,7 +30,7 @@ test('candidate journey: add a job, move it to applied, see the reminder', async
   await card(page, 'Platform Engineer')
     .getByRole('button', { name: 'Platform Engineer', exact: true })
     .click();
-  const sheet = page.getByRole('dialog', { name: 'Application' });
+  const sheet = page.getByRole('dialog', { name: 'Job details' });
   await expect(sheet.getByTestId('reminders')).toContainText(
     'Time to follow up on Platform Engineer at Northwind.',
   );
@@ -58,14 +59,14 @@ test('adding a duplicate opens the existing card', async ({ page }) => {
   await registerNewUser(page);
   await addJob(page, 'Site Reliability Engineer', 'Meridian');
 
-  await page.getByRole('button', { name: 'Add application', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Add application' });
+  await page.getByRole('button', { name: 'Add a job', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Add a job' });
   await dialog.getByLabel('Job title').fill('site reliability engineer');
   await dialog.getByLabel('Company').fill('MERIDIAN');
   await dialog.getByRole('button', { name: 'Add to board' }).click();
 
   await expect(page.getByText('Already on your board')).toBeVisible();
-  await expect(page.getByRole('dialog', { name: 'Application' })).toContainText(
+  await expect(page.getByRole('dialog', { name: 'Job details' })).toContainText(
     'Site Reliability Engineer',
   );
   await expect(page.getByTestId('board-card')).toHaveCount(1);
@@ -85,7 +86,7 @@ test('searching and archiving', async ({ page }) => {
     .getByRole('button', { name: 'Backend Developer', exact: true })
     .click();
   await page
-    .getByRole('dialog', { name: 'Application' })
+    .getByRole('dialog', { name: 'Job details' })
     .getByRole('button', { name: 'Archive' })
     .click();
   await expect(card(page, 'Backend Developer')).toBeHidden();

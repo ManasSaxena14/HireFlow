@@ -33,8 +33,8 @@ export default function ForgotPasswordPage() {
   if (sentTo) {
     return (
       <AuthFrame
-        title="Check your inbox"
-        intro={`If ${sentTo} has an account, a reset link is on its way. It works for one hour.`}
+        title="Check your email"
+        intro={`If ${sentTo} has an account, we sent a link to it. The link works for one hour.`}
         footer={<TextLink href="/login">Back to sign in</TextLink>}
       >
         {null}
@@ -44,8 +44,8 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthFrame
-      title="Reset your password"
-      intro="Enter your email and we will send you a link."
+      title="Forgot your password?"
+      intro="Enter your email. We will send you a link to set a new password."
       footer={<TextLink href="/login">Back to sign in</TextLink>}
     >
       <form onSubmit={onSubmit} noValidate className="space-y-5">
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
           {...register('email')}
         />
         <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
-          Send reset link
+          Send me a link
         </Button>
       </form>
     </AuthFrame>

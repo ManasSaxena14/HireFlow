@@ -9,7 +9,7 @@ import type {
 import { useId } from 'react';
 
 const CONTROL =
-  'w-full rounded-control border bg-sunken px-3 text-sm text-fg placeholder:text-subtle transition-colors focus:outline-none focus:border-muted aria-invalid:border-danger disabled:opacity-60';
+  'w-full rounded-control border bg-sunken px-3.5 text-[15px] text-fg placeholder:text-subtle transition-all focus:outline-none focus:border-accent focus:ring-3 focus:ring-accent/25 aria-invalid:border-danger disabled:opacity-60';
 
 interface FieldShellProps {
   label: string;
@@ -28,7 +28,7 @@ function FieldShell({ label, error, hint, children }: FieldShellProps) {
   const noteId = `${id}-note`;
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-[13px] font-medium text-fg">
+      <label htmlFor={id} className="mb-2 block text-sm font-semibold text-fg">
         {label}
       </label>
       {children({
@@ -38,7 +38,7 @@ function FieldShell({ label, error, hint, children }: FieldShellProps) {
         className: clsx(CONTROL, error ? 'border-danger' : 'border-line-strong'),
       })}
       {(error || hint) && (
-        <p id={noteId} className={clsx('mt-1.5 text-xs', error ? 'text-danger' : 'text-muted')}>
+        <p id={noteId} className={clsx('mt-1.5 text-[13px]', error ? 'text-danger' : 'text-muted')}>
           {error ?? hint}
         </p>
       )}
@@ -61,7 +61,7 @@ export function TextField({ label, error, hint, className, ref, ...rest }: TextF
           ref={ref}
           {...rest}
           {...props}
-          className={clsx(props.className, 'h-10', className)}
+          className={clsx(props.className, 'h-12', className)}
         />
       )}
     </FieldShell>
@@ -84,7 +84,7 @@ export function TextAreaField({ label, error, hint, className, ref, ...rest }: T
           rows={3}
           {...rest}
           {...props}
-          className={clsx(props.className, 'py-2.5 leading-relaxed', className)}
+          className={clsx(props.className, 'py-3 leading-relaxed', className)}
         />
       )}
     </FieldShell>
@@ -110,7 +110,7 @@ export function SelectField({
   return (
     <FieldShell label={label} error={error} hint={hint}>
       {(props) => (
-        <select ref={ref} {...rest} {...props} className={clsx(props.className, 'h-10', className)}>
+        <select ref={ref} {...rest} {...props} className={clsx(props.className, 'h-12', className)}>
           {children}
         </select>
       )}
@@ -121,7 +121,10 @@ export function SelectField({
 export function FormError({ children }: { children: ReactNode }) {
   if (!children) return null;
   return (
-    <p role="alert" className="rounded-control bg-danger-soft px-3 py-2.5 text-[13px] text-danger">
+    <p
+      role="alert"
+      className="rounded-control bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
+    >
       {children}
     </p>
   );

@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { JetBrains_Mono, Schibsted_Grotesk } from 'next/font/google';
+import { Bricolage_Grotesque, JetBrains_Mono, Schibsted_Grotesk } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { Providers } from '@/components/providers';
 import './globals.css';
 
 const schibsted = Schibsted_Grotesk({ subsets: ['latin'], variable: '--font-schibsted' });
+const bricolage = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-bricolage' });
 const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains' });
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${schibsted.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${schibsted.variable} ${bricolage.variable} ${jetbrains.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>

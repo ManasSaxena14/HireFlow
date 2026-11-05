@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 function VerifyEmail() {
   const token = useSearchParams().get('token');
   const [state, setState] = useState<'working' | 'done' | 'failed'>(token ? 'working' : 'failed');
-  // Tokens are single use, so this must not fire twice under Strict Mode.
+  // A token works only once, so this must not run twice in Strict Mode.
   const attempted = useRef(false);
 
   useEffect(() => {
@@ -19,12 +19,12 @@ function VerifyEmail() {
       .catch(() => setState('failed'));
   }, [token]);
 
-  if (state === 'working') return <AuthFrame title="Confirming your email…">{null}</AuthFrame>;
+  if (state === 'working') return <AuthFrame title="Checking your link…">{null}</AuthFrame>;
   if (state === 'done') {
     return (
       <AuthFrame
-        title="Email confirmed"
-        intro="Thanks. Reminders will now reach you at this address."
+        title="Email confirmed!"
+        intro="Thank you. We will send your reminders to this email."
         footer={<TextLink href="/app">Open HireFlow</TextLink>}
       >
         {null}
@@ -33,8 +33,8 @@ function VerifyEmail() {
   }
   return (
     <AuthFrame
-      title="This link no longer works"
-      intro="It may have expired or already been used."
+      title="This link does not work"
+      intro="It may be too old, or you may have used it already."
       footer={<TextLink href="/login">Back to sign in</TextLink>}
     >
       {null}

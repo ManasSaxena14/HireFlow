@@ -43,8 +43,8 @@ function ResetForm() {
   if (done) {
     return (
       <AuthFrame
-        title="Password updated"
-        intro="All other sessions were signed out. You can sign in with your new password."
+        title="Password changed"
+        intro="You can now sign in with your new password."
         footer={<TextLink href="/login">Go to sign in</TextLink>}
       >
         {null}
@@ -54,8 +54,8 @@ function ResetForm() {
 
   return (
     <AuthFrame
-      title="Choose a new password"
-      footer={<TextLink href="/forgot-password">Request a new link</TextLink>}
+      title="Set a new password"
+      footer={<TextLink href="/forgot-password">Get a new link</TextLink>}
     >
       <form onSubmit={onSubmit} noValidate className="space-y-5">
         <FormError>{formError}</FormError>
@@ -68,7 +68,7 @@ function ResetForm() {
           {...register('password')}
         />
         <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
-          Update password
+          Save new password
         </Button>
       </form>
     </AuthFrame>

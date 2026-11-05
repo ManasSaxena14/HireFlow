@@ -14,7 +14,6 @@ export function timeAgo(iso: string): string {
   return 'just now';
 }
 
-/** Absolute times always carry the zone, so nobody has to guess whose clock it is. */
 export function formatDateTime(iso: string, timeZone: string): string {
   return new Intl.DateTimeFormat('en', {
     timeZone,
@@ -35,4 +34,12 @@ export function formatSalary(
       ? `${amount(min)} – ${amount(max)}`
       : amount((min ?? max) as number);
   return currency ? `${range} ${currency}` : range;
+}
+
+const AVATAR_COLORS = ['#ff4b32', '#5cb8ff', '#ffc24b', '#3ddc97', '#ff6b8a', '#f6f7f8'];
+
+export function avatarColor(name: string): string {
+  let total = 0;
+  for (const letter of name) total += letter.charCodeAt(0);
+  return AVATAR_COLORS[total % AVATAR_COLORS.length] as string;
 }

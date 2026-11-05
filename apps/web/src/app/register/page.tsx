@@ -41,8 +41,8 @@ export default function RegisterPage() {
 
   return (
     <AuthFrame
-      title="Create your account"
-      intro="Free to use. We will send one email to confirm your address."
+      title="Start for free"
+      intro="It is free. We will send you one email to confirm your address."
       footer={
         <>
           Already have an account? <TextLink href="/login">Sign in</TextLink>

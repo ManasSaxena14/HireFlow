@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ReactNode, useState } from 'react';
 import { ApiError } from '@/lib/api';
 import { AuthProvider } from '@/lib/auth';
+import { PointerGlow } from './pointer-glow';
 import { ToastProvider } from './ui/toast';
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -23,7 +24,10 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <AuthProvider>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <PointerGlow />
+          {children}
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

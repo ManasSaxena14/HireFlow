@@ -19,11 +19,21 @@ import { api, ApiError } from './api';
 export const STATUS_LABELS: Record<TrackerStatus, string> = {
   saved: 'Saved',
   applied: 'Applied',
-  screening: 'Screening',
+  screening: 'First round',
   interview: 'Interview',
   offer: 'Offer',
   rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
+  withdrawn: 'Dropped',
+};
+
+export const STATUS_COLORS: Record<TrackerStatus, string> = {
+  saved: 'var(--color-status-saved)',
+  applied: 'var(--color-status-applied)',
+  screening: 'var(--color-status-screening)',
+  interview: 'var(--color-status-interview)',
+  offer: 'var(--color-status-offer)',
+  rejected: 'var(--color-status-rejected)',
+  withdrawn: 'var(--color-status-withdrawn)',
 };
 
 export interface BoardFilters {
@@ -115,7 +125,7 @@ export function useArchiveApplication() {
   });
 }
 
-/** Moves the card on screen straight away and puts it back if the server refuses. */
+/** Moves the card on screen right away, and puts it back if the server says no. */
 export function useMoveApplication() {
   const client = useQueryClient();
   const toast = useToast();
@@ -140,7 +150,7 @@ export function useMoveApplication() {
     },
     onError: (error, _variables, context) => {
       for (const [key, items] of context?.boards ?? []) client.setQueryData(key, items);
-      toast(error instanceof ApiError ? error.message : 'Could not move that card.', 'error');
+      toast(error instanceof ApiError ? error.message : 'Could not move this card.', 'error');
     },
     onSettled: () => client.invalidateQueries({ queryKey: keys.all }),
   });

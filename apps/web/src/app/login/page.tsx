@@ -35,7 +35,7 @@ export default function LoginPage() {
   return (
     <AuthFrame
       title="Sign in"
-      intro="Pick up where you left off."
+      intro="Welcome back. Your board is waiting."
       footer={
         <>
           New to HireFlow? <TextLink href="/register">Create an account</TextLink>

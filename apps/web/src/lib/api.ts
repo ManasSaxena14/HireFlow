@@ -21,11 +21,11 @@ export class ApiError extends Error {
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   body?: unknown;
-  /** Set to false for endpoints that must not trigger a session refresh on 401. */
+  /** Set to false for routes that should not try to refresh the session on a 401. */
   auth?: boolean;
 }
 
-// The access token lives only in memory, out of reach of anything persisted to disk.
+// The access token is kept only in memory and is never saved to disk.
 let accessToken: string | null = null;
 let refreshInFlight: Promise<SessionPayload | null> | null = null;
 
@@ -40,13 +40,19 @@ export const setAccessToken = (token: string | null) => {
 
 async function send(path: string, options: RequestOptions): Promise<Response> {
   const headers: Record<string, string> = {};
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+  const isForm = options.body instanceof FormData;
+  // The browser sets the type itself for a form, because it has to add the boundary.
+  if (options.body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   return fetch(`/api/v1${path}`, {
     method: options.method ?? 'GET',
     headers,
     credentials: 'same-origin',
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body: isForm
+      ? (options.body as FormData)
+      : options.body === undefined
+        ? undefined
+        : JSON.stringify(options.body),
   });
 }
 
@@ -59,19 +65,30 @@ async function toError(response: Response): Promise<ApiError> {
   }
 }
 
+const REFRESH_ATTEMPTS = 5;
+const RETRY_DELAY_MS = 1500;
+
 async function requestRefresh(): Promise<SessionPayload | null> {
-  const response = await fetch('/api/v1/auth/refresh', {
-    method: 'POST',
-    credentials: 'same-origin',
-  });
-  if (!response.ok) return null;
-  return (await response.json()) as SessionPayload;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const response = await fetch('/api/v1/auth/refresh', {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+      if (response.ok) return (await response.json()) as SessionPayload;
+      // Only a clear "no" from the server ends the session. A 5xx means it is starting up.
+      if (response.status < 500 || attempt === REFRESH_ATTEMPTS) return null;
+    } catch (error) {
+      if (attempt === REFRESH_ATTEMPTS) throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+  }
 }
 
 /**
- * Exchanges the refresh cookie for a new access token. Refresh tokens are single use and
- * replaying one revokes the session, so concurrent callers share one request and open
- * tabs take turns through a Web Lock.
+ * Gets a new access token using the refresh cookie. A refresh token works only once, and
+ * using an old one can end the session. So calls in one tab share a single request, and
+ * open tabs take turns using a Web Lock.
  */
 export function refreshSession(): Promise<SessionPayload | null> {
   refreshInFlight ??= (async () => {

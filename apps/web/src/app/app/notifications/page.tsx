@@ -1,6 +1,7 @@
 'use client';
 
 import { clsx } from 'clsx';
+import { BellRing } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/states';
@@ -17,9 +18,11 @@ export default function NotificationsPage() {
   const markAll = useMarkAllNotificationsRead();
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-8">
+    <div className="flex min-h-full flex-col p-4 sm:p-6">
       <header className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Notifications</h1>
+        <h1 className="font-display text-4xl font-extrabold tracking-tight sm:text-5xl">
+          Notifications
+        </h1>
         {Boolean(data?.unreadCount) && (
           <Button variant="secondary" size="sm" onClick={() => markAll.mutate()}>
             Mark all as read
@@ -30,13 +33,17 @@ export default function NotificationsPage() {
       {isPending ? (
         <Skeleton className="h-32" />
       ) : isError ? (
-        <ErrorState message="Notifications could not be loaded." onRetry={() => refetch()} />
+        <ErrorState message="We could not load your notifications." onRetry={() => refetch()} />
       ) : data.items.length === 0 ? (
-        <EmptyState title="Nothing here yet">
-          Reminders appear here when they are due, and we email them to you as well.
+        <EmptyState
+          className="flex-1"
+          title="Nothing here yet"
+          icon={<BellRing aria-hidden className="size-9" />}
+        >
+          Your reminders will show here when it is time. We will also email them to you.
         </EmptyState>
       ) : (
-        <ul className="divide-y divide-line rounded-panel border border-line">
+        <ul className="grid gap-2.5">
           {data.items.map((notification) => {
             const applicationId = notification.payload.trackedApplicationId;
             const content = (
@@ -44,13 +51,15 @@ export default function NotificationsPage() {
                 <span
                   aria-hidden
                   className={clsx(
-                    'mt-1.5 size-2 shrink-0 rounded-full',
+                    'mt-2 size-2.5 shrink-0 rounded-full',
                     notification.readAt ? 'bg-transparent' : 'bg-accent',
                   )}
                 />
                 <span className="min-w-0">
-                  <span className="block text-sm">{notification.payload.message}</span>
-                  <span className="mt-0.5 block font-mono text-[11px] text-subtle">
+                  <span className="block text-[15px] font-medium">
+                    {notification.payload.message}
+                  </span>
+                  <span className="mt-1 block text-xs text-subtle">
                     {timeAgo(notification.createdAt)}
                     {!notification.readAt && <span className="sr-only"> (unread)</span>}
                   </span>
@@ -61,12 +70,12 @@ export default function NotificationsPage() {
               if (!notification.readAt) markRead.mutate(notification);
             };
             return (
-              <li key={notification.id}>
+              <li key={notification.id} className="animate-card-in">
                 {applicationId ? (
                   <Link
                     href={`/app/tracker/${applicationId}`}
                     onClick={markAsRead}
-                    className="flex gap-3 px-4 py-3 hover:bg-raised"
+                    className="card-lift flex gap-4 rounded-2xl border border-line bg-raised p-4 hover:border-accent"
                   >
                     {content}
                   </Link>
@@ -74,7 +83,7 @@ export default function NotificationsPage() {
                   <button
                     type="button"
                     onClick={markAsRead}
-                    className="flex w-full gap-3 px-4 py-3 text-left hover:bg-raised"
+                    className="card-lift flex w-full gap-4 rounded-2xl border border-line bg-raised p-4 text-left hover:border-accent"
                   >
                     {content}
                   </button>

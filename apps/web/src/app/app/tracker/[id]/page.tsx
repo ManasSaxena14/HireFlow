@@ -10,16 +10,20 @@ export default function ApplicationPage() {
   const router = useRouter();
 
   return (
-    <div className="mx-auto max-w-2xl py-6">
+    <div className="p-4 sm:p-6">
       <Link
         href="/app/tracker"
-        className="mx-5 inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-fg"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-muted hover:text-fg"
       >
-        <ArrowLeft aria-hidden className="size-3.5" />
-        All applications
+        <ArrowLeft aria-hidden className="size-4" />
+        Back to my board
       </Link>
-      <div className="mt-3">
-        <ApplicationDetails id={id} onArchived={() => router.replace('/app/tracker')} />
+      <div className="mt-4">
+        <ApplicationDetails
+          id={id}
+          layout="page"
+          onArchived={() => router.replace('/app/tracker')}
+        />
       </div>
     </div>
   );

@@ -94,7 +94,7 @@ export function ApplicationForm({
   });
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-4 p-5">
+    <form onSubmit={submit} noValidate className="space-y-4 p-6">
       <FormError>{formError}</FormError>
       <TextField label="Job title" autoFocus error={errors.title?.message} {...register('title')} />
       <TextField label="Company" error={errors.companyName?.message} {...register('companyName')} />
@@ -102,13 +102,13 @@ export function ApplicationForm({
         <TextField label="Location" error={errors.location?.message} {...register('location')} />
         <TextField
           label="Found on"
-          placeholder="LinkedIn, referral…"
+          placeholder="LinkedIn, a friend…"
           error={errors.source?.message}
           {...register('source')}
         />
       </div>
       <TextField
-        label="Job link"
+        label="Link to the job"
         type="url"
         placeholder="https://"
         error={errors.jobUrl?.message}
@@ -116,13 +116,13 @@ export function ApplicationForm({
       />
       <div className="grid grid-cols-[1fr_1fr_88px] gap-3">
         <TextField
-          label="Salary from"
+          label="Lowest salary"
           inputMode="numeric"
           error={errors.salaryMin?.message}
           {...register('salaryMin')}
         />
         <TextField
-          label="Salary to"
+          label="Highest salary"
           inputMode="numeric"
           error={errors.salaryMax?.message}
           {...register('salaryMax')}
@@ -137,7 +137,7 @@ export function ApplicationForm({
       </div>
       <TextField
         label="Tags"
-        hint="Separate with commas."
+        hint="Put a comma between tags."
         error={errors.tags?.message}
         {...register('tags')}
       />
