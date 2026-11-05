@@ -1,19 +1,24 @@
 'use client';
 
 import { clsx } from 'clsx';
-import { LogOut, Menu, Settings, type LucideIcon, X } from 'lucide-react';
+import { Bell, KanbanSquare, LogOut, Menu, Settings, type LucideIcon, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
+import { useNotifications } from '@/lib/tracker';
 import { Logo } from './logo';
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
+  { href: '/app/tracker', label: 'Applications', icon: KanbanSquare },
+  { href: '/app/notifications', label: 'Notifications', icon: Bell },
   { href: '/app/settings', label: 'Settings', icon: Settings },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { data: notifications } = useNotifications();
+  const unread = notifications?.unreadCount ?? 0;
   return (
     <ul className="space-y-0.5">
       {NAV.map(({ href, label, icon: Icon }) => {
@@ -33,6 +38,12 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             >
               <Icon aria-hidden className={clsx('size-4', active && 'text-accent')} />
               {label}
+              {href === '/app/notifications' && unread > 0 && (
+                <span className="ml-auto rounded-full bg-accent px-1.5 font-mono text-[11px] font-medium text-on-accent">
+                  {unread}
+                  <span className="sr-only"> unread</span>
+                </span>
+              )}
             </Link>
           </li>
         );
