@@ -1,5 +1,5 @@
 import type { Generated, Insertable } from 'kysely';
-import type { MembershipRole } from '@hireflow/shared';
+import type { MembershipRole, TrackerStatus } from '@hireflow/shared';
 
 export interface UsersTable {
   id: Generated<string>;
@@ -61,6 +61,66 @@ export interface AuditLogsTable {
   createdAt: Generated<Date>;
 }
 
+export interface TrackedApplicationsTable {
+  id: Generated<string>;
+  userId: string;
+  title: string;
+  companyName: string;
+  jobUrl: string | null;
+  location: string | null;
+  source: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  currency: string | null;
+  status: TrackerStatus;
+  appliedAt: Date | null;
+  skills: string[];
+  description: string | null;
+  tags: string[];
+  jobHash: string;
+  resumeId: string | null;
+  archivedAt: Date | null;
+  createdAt: Generated<Date>;
+  updatedAt: Generated<Date>;
+}
+
+export interface ApplicationEventsTable {
+  id: Generated<string>;
+  trackedApplicationId: string;
+  fromStatus: TrackerStatus | null;
+  toStatus: TrackerStatus;
+  note: string | null;
+  createdAt: Generated<Date>;
+}
+
+export interface ApplicationNotesTable {
+  id: Generated<string>;
+  trackedApplicationId: string;
+  body: string;
+  createdAt: Generated<Date>;
+}
+
+export interface RemindersTable {
+  id: Generated<string>;
+  userId: string;
+  trackedApplicationId: string | null;
+  interviewId: string | null;
+  kind: 'follow_up' | 'custom' | 'interview';
+  remindAt: Date;
+  message: string;
+  sentAt: Date | null;
+  createdAt: Generated<Date>;
+}
+
+export interface NotificationsTable {
+  id: Generated<string>;
+  userId: string;
+  type: string;
+  payload: unknown;
+  readAt: Date | null;
+  createdAt: Generated<Date>;
+}
+
 export interface DB {
   users: UsersTable;
   companies: CompaniesTable;
@@ -68,6 +128,11 @@ export interface DB {
   refreshTokens: RefreshTokensTable;
   emailTokens: EmailTokensTable;
   auditLogs: AuditLogsTable;
+  trackedApplications: TrackedApplicationsTable;
+  applicationEvents: ApplicationEventsTable;
+  applicationNotes: ApplicationNotesTable;
+  reminders: RemindersTable;
+  notifications: NotificationsTable;
 }
 
 export type NewAuditLog = Insertable<AuditLogsTable>;
