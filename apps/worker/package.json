@@ -1,0 +1,29 @@
+{
+  "name": "@hireflow/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json; tsc -p tsconfig.build.json --watch --preserveWatchOutput & node --watch dist/main.js",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hireflow/shared": "workspace:*",
+    "nodemailer": "^10.3.1",
+    "pg": "^8.23.1",
+    "pg-boss": "^12.38.0",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@hireflow/config": "workspace:*",
+    "@types/node": "^26.6.6",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}
