@@ -1,9 +1,9 @@
-# 001: Run natively, and keep the queue in PostgreSQL
+# 001: No Docker, and the job queue lives in PostgreSQL
 
 **Status:** accepted
 
-The project should run on a laptop and on free hosting without extra services.
+The project should run on a laptop and on free hosting, with no extra services.
 
-- **No containers.** `scripts/local-db.sh` runs a private PostgreSQL cluster from `.pgdata/`, so a new developer needs only Node and PostgreSQL, and nothing touches their system database. CI uses a Postgres service container because GitHub provides one.
-- **pg-boss instead of Redis and BullMQ.** Jobs enqueue inside the same transaction as the change that caused them, which removes a whole category of "row saved, job lost" bugs. It is also one less service to pay for. If job volume ever outgrows Postgres, the queue sits behind a small interface and can be swapped.
-- **In-memory rate limits and cache.** Enough for one API instance. A shared store becomes necessary at the same moment a second instance does.
+- **No Docker.** `scripts/local-db.sh` runs a private database from `.pgdata/`. A new developer needs only Node and PostgreSQL, and no other database on their computer is touched. CI uses a Postgres container because GitHub provides one for free.
+- **pg-boss, not Redis and BullMQ.** A job can be added in the same transaction as the change that caused it, so a saved change can never lose its job. It is also one less service to pay for. If there are ever too many jobs for Postgres, the queue can be swapped because it sits behind a small interface.
+- **Rate limits in memory.** This is enough for one API server. A shared store is only needed when there is a second server.

@@ -1,9 +1,9 @@
-# 002: Small schema additions
+# 002: Small additions to the database
 
 **Status:** accepted
 
-Three things were added beyond the planned schema, each because a rule could not be expressed without it.
+We added three things that were not in the first plan. Each one was needed to make a rule work.
 
-- **`reminders.kind`** (`follow_up`, `custom`, `interview`). Moving a card to rejected, withdrawn or offer must cancel the automatic follow-up but leave reminders the user wrote. Matching on message text would be fragile. A partial unique index also guarantees one pending follow-up per card.
-- **`email_deliveries`.** Queue retries are at-least-once, but a reminder must arrive once. This table records what has gone out, keyed by a dedupe key.
-- **Audit log trigger.** The plan was to `REVOKE UPDATE, DELETE` from the application role. A trigger holds regardless of which role connects, which matters on hosted databases where the app often connects as the owner.
+- **`reminders.kind`** (`follow_up`, `custom`, `interview`). Moving a job to rejected, dropped or offer must cancel the automatic follow-up, but keep the reminders the user wrote. Matching on the message text would break easily. A database rule also makes sure each job has only one waiting follow-up.
+- **`email_deliveries`.** The queue can run a job more than once, but a reminder must be sent only once. This table remembers what was sent.
+- **A trigger on the audit log.** The first plan was to block changes with `REVOKE`. A trigger works no matter which database user connects, which matters on hosted databases.

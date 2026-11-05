@@ -1,20 +1,23 @@
 # HireFlow
 
-**Two-sided hiring platform.** Job seekers keep a clear record of every application. Hiring teams get a shared pipeline they can trust.
+**Two-sided hiring platform.** Job seekers can keep track of every job they apply for. Companies can post jobs and hire the right people.
 
-This repository currently contains the platform foundation and the candidate job tracker. The hiring team features are under active development, see [Roadmap](#roadmap).
+Right now this project has the job seeker side and the main company side. Interview booking and the other parts are still being built. See [What is coming next](#what-is-coming-next).
 
 ## What works today
 
-| Area        | Features                                                                                                                        |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Accounts    | Registration, email verification, password reset, sessions that survive a reload, sign out everywhere                           |
-| Job tracker | Kanban board with drag and drop, a move menu for keyboard and touch, duplicate detection, notes, tags, search, archive, history |
-| Reminders   | Automatic follow-up seven days after applying, custom reminders, in-app notifications and email                                 |
-| Insights    | Applications per week, response rate and a stage funnel from your own data                                                      |
-| Companies   | Workspaces with admin, recruiter, hiring manager and interviewer roles, plus an append-only audit log                           |
+| Area         | What you can do                                                                          |
+| ------------ | ---------------------------------------------------------------------------------------- |
+| Account      | Sign up, sign in, confirm your email, reset your password, sign out on all devices       |
+| Job board    | Add jobs, drag them between steps, add notes and tags, search, archive, see the history  |
+| Reminders    | Get a follow-up reminder 7 days after you apply, add your own, get them in app and email |
+| Your numbers | See how many jobs you applied for each week, your reply rate and how far you got         |
+| Companies    | Create a company and add members as admin, recruiter, hiring manager or interviewer      |
+| Hiring       | Post jobs, set your own steps, move people across a board, reject with a reason          |
+| Careers page | Share one public page with all your open jobs, where people apply with a resume          |
+| Team work    | Comment, send scores, and give interviewers only the people they should see              |
 
-## Architecture
+## How it fits together
 
 ```mermaid
 flowchart LR
@@ -22,28 +25,28 @@ flowchart LR
   W -- /api/v1 --> A[NestJS API]
   A --> P[(PostgreSQL)]
   Q[Worker] --> P
-  Q --> M[SMTP]
+  Q --> M[Mail server]
 ```
 
-The API owns every business rule, and the browser only ever talks to the API. PostgreSQL holds the data as well as the job queue, so there is no second datastore to run. More detail in [docs/architecture.md](docs/architecture.md).
+The API holds all the business rules, and the browser only talks to the API. PostgreSQL stores the data and the job queue, so there is no second database to run. You can read more in [docs/architecture.md](docs/architecture.md).
 
-## Tech stack
+## Tools used
 
-| Tool                          | Why                                                                    |
-| ----------------------------- | ---------------------------------------------------------------------- |
-| TypeScript (strict)           | One language across web, API, worker and shared code                   |
-| Next.js, React, Tailwind      | App Router for routing, utility CSS over a small set of design tokens  |
-| TanStack Query, dnd-kit       | Optimistic board updates; accessible drag and drop                     |
-| NestJS                        | Clear module boundaries and guards for auth and tenancy                |
-| PostgreSQL                    | Source of truth; constraints do the work that app code would get wrong |
-| Kysely, node-pg-migrate       | Typed queries over hand-written, reversible SQL migrations             |
-| pg-boss                       | Reliable jobs in Postgres, so they can commit in the same transaction  |
-| zod                           | One set of schemas shared by the forms and the API                     |
-| Vitest, Supertest, Playwright | Unit, API and end-to-end tests against a real database                 |
+| Tool                          | Why we use it                                                    |
+| ----------------------------- | ---------------------------------------------------------------- |
+| TypeScript                    | One language for the web app, API, worker and shared code        |
+| Next.js, React, Tailwind      | Pages and styling                                                |
+| TanStack Query, dnd-kit       | Instant board updates, and drag and drop that works for everyone |
+| NestJS                        | Keeps the API split into clear modules                           |
+| PostgreSQL                    | Stores the data, and its rules stop bad data from being saved    |
+| Kysely, node-pg-migrate       | Typed queries, and database changes written in plain SQL         |
+| pg-boss                       | Background jobs stored in PostgreSQL                             |
+| zod                           | One set of checks shared by the forms and the API                |
+| Vitest, Supertest, Playwright | Tests for code, API and the browser, using a real database       |
 
-## Getting started
+## How to run it
 
-You need Node 22+, Corepack (`corepack enable`) and PostgreSQL 15+ on your `PATH`. No containers are involved.
+You need Node 22 or newer, Corepack (run `corepack enable`) and PostgreSQL 15 or newer. You do not need Docker.
 
 ```bash
 pnpm install
@@ -56,59 +59,72 @@ pnpm dev
 
 Then open http://localhost:3000.
 
-- `pnpm db:start` runs a private database cluster from `.pgdata/` on port 5433. To use another server, change `DATABASE_URL` and skip that step.
-- Set the two `JWT_*` values in `.env` to long random strings (`openssl rand -base64 48`).
-- With `SMTP_HOST` empty, emails are written to `.mail-preview/` as HTML files, so you can follow verification and reset links without a mail account.
+To see the hiring side with data in it, add the demo company:
 
-## Tests
+```bash
+pnpm db:seed
+```
+
+It prints the demo accounts and their password, and it only runs in development.
+
+- `pnpm db:start` runs a private database from the `.pgdata/` folder on port 5433. To use a different database, change `DATABASE_URL` and skip this step.
+- In `.env`, set both `JWT_` values to long random text. You can make it with `openssl rand -base64 48`.
+- If `SMTP_HOST` is empty, emails are not sent. They are saved as HTML files in `.mail-preview/`, and you can click the links from there.
+
+## How to test it
+
+Code and API tests:
 
 ```bash
 pnpm test
 ```
 
+Browser tests (stop `pnpm dev` first, because they use the same ports):
+
 ```bash
 pnpm build && pnpm test:e2e
 ```
 
-The first command runs the unit and API tests. The second runs the browser suite against the real API, worker and database; stop `pnpm dev` first because it uses the same ports.
+Good tests to read first:
 
-Worth reading if you want to see the harder guarantees being tested:
+- `apps/api/test/auth.test.ts`: login tokens and how stolen tokens are caught
+- `apps/api/test/companies.test.ts`: roles, and keeping each company's data apart
+- `apps/api/test/ats.test.ts`: every hiring route with every role, other companies and bad uploads
+- `apps/worker/test/reminders.test.ts`: reminders when workers crash or run at the same time
+- `apps/web/e2e/tracker.spec.ts`: the full job seeker journey in a real browser
+- `apps/web/e2e/hiring.spec.ts`: the full company journey in a real browser
 
-- `apps/api/test/auth.test.ts`: refresh token rotation and reuse detection
-- `apps/api/test/companies.test.ts`: role checks and tenant isolation
-- `apps/worker/test/reminders.test.ts`: reminders under parallel workers, crashes and restarts
-- `apps/web/e2e/tracker.spec.ts`: the whole journey, including a real reminder reaching the inbox once
+## Settings
 
-## Environment variables
+All settings are listed in [.env.example](.env.example). The API and the worker check them when they start, and they will not run if one is missing.
 
-All of them are listed with comments in [.env.example](.env.example). The API and the worker validate their configuration on startup and refuse to run if something is missing.
-
-## Project layout
+## Folders
 
 ```
 apps/
-  api/        NestJS API, SQL migrations, API tests
-  web/        Next.js app, Playwright tests
-  worker/     Background jobs: mail, reminders
+  api/        NestJS API, database changes and API tests
+  web/        Next.js web app and browser tests
+  worker/     Background jobs for emails and reminders
 packages/
-  shared/     zod schemas, enums and types used by every app
+  shared/     Checks and types used by all the apps
   config/     Shared TypeScript settings
-docs/         Architecture, API reference, decisions, runbook
-scripts/      Local database and start-up helpers
+docs/         How it works, API list, decisions and help for problems
+scripts/      Helpers for the local database and for starting the app
 ```
 
-## Roadmap
+## What is coming next
 
-- Applicant tracking: job posts, careers pages, pipelines, scorecards
-- Interview scheduling with database-enforced protection against double booking
-- Job feed and alerts from public job boards
-- Resume upload with an explainable match score
-- Interview practice log with spaced repetition
-- Hiring analytics
-- Hardening, load testing and public deployment
+- Interview booking that never double-books anyone
+- A job feed and job alerts from public job boards
+- Resume upload with a clear match score
+- A log for interview practice, with smart review dates
+- Hiring numbers for companies
+- Speed and security checks, then a public launch
 
-## Known limitations
+## Known limits
 
-- Rate limits are held in memory, so they apply per API instance. That is fine for one instance and would need a shared store beyond it.
-- A crash in the moment between the mail server accepting a message and the delivery being recorded can send that one email twice. No SMTP client can fully close that gap.
-- Weekly statistics use UTC week boundaries rather than the viewer's time zone.
+- Rate limits are kept in memory, so they work per API server. This is fine for one server. More servers would need a shared store.
+- If the worker crashes right after the mail server accepts an email, that one email could be sent twice. No mail client can fully stop this.
+- Weekly numbers use UTC weeks, not your own time zone.
+- Resumes are saved on the server's disk. A host with a disk that is wiped on restart needs a lasting folder for `UPLOAD_DIR`, or a new storage class.
+- Until interview booking is built, people are given to interviewers by hand on the candidate page.

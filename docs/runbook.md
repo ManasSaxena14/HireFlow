@@ -1,39 +1,43 @@
-# Runbook
+# Help for running the app
 
-## Processes
+## What runs
 
-| Process      | Command                             | Notes                              |
-| ------------ | ----------------------------------- | ---------------------------------- |
-| Web          | `pnpm --filter @hireflow/web start` | Needs `API_URL` at build           |
-| API          | `node apps/api/dist/main.js`        | Reads `PORT`                       |
-| Worker       | `node apps/worker/dist/main.js`     | Requires `SMTP_HOST` in production |
-| API + worker | `pnpm start`                        | For hosts with one process slot    |
+| Part           | Command                             | Notes                               |
+| -------------- | ----------------------------------- | ----------------------------------- |
+| Web app        | `pnpm --filter @hireflow/web start` | Needs `API_URL` when you build it   |
+| API            | `node apps/api/dist/main.js`        | Uses `PORT`                         |
+| Worker         | `node apps/worker/dist/main.js`     | Needs `SMTP_HOST` in production     |
+| API and worker | `pnpm start`                        | For hosting that allows one process |
 
-## Releasing
+## Where resumes are saved
 
-Run migrations before starting the new API version:
+Resumes are files in the `UPLOAD_DIR` folder, and the database only keeps their names. Back up this folder together with the database. On a host that wipes its disk when it restarts, point `UPLOAD_DIR` at a lasting disk.
+
+## Releasing a new version
+
+Run the database changes before you start the new API:
 
 ```bash
 pnpm db:migrate
 ```
 
-To undo the most recent migration:
+To undo the last database change:
 
 ```bash
 pnpm db:rollback
 ```
 
-## Checks
+## Checking the app
 
-- `GET /api/v1/health` answers while the process is up.
-- `GET /api/v1/ready` also checks the database. A 503 here means the API is up but cannot reach PostgreSQL.
+- `GET /api/v1/health` answers if the app is running.
+- `GET /api/v1/ready` also checks the database. A 503 means the app is running but cannot reach PostgreSQL.
 
 ## Common problems
 
-**Emails are not arriving.** Check the worker log for `mail job done`. Failed sends retry five times with backoff. To see what is stuck, query `pgboss.job` where `name = 'mail'`.
+**Emails are not arriving.** Look for `mail job done` in the worker log. A failed email is tried five more times, with longer waits. To see stuck emails, look in `pgboss.job` where `name = 'mail'`.
 
-**Reminders are late.** The scan runs once a minute inside the worker. If the worker is down, reminders wait and go out when it returns, in order and only once.
+**Reminders are late.** The worker checks for reminders once a minute. If the worker was down, reminders go out when it comes back, once each.
 
-**A user keeps being signed out.** Look for `auth.refresh_reuse_detected` in `audit_logs`. It means an already-used refresh token was presented, usually a stolen cookie or a client bypassing the browser's refresh lock.
+**Someone keeps getting signed out.** Look for `auth.refresh_reuse_detected` in `audit_logs`. It means an old login token was used, which can mean a stolen cookie.
 
-**PostgreSQL will not start locally on macOS.** See `.pgdata/server.log`. A locale error means `LC_ALL` is unset or invalid; `scripts/local-db.sh` sets a default.
+**PostgreSQL will not start on a Mac.** Read `.pgdata/server.log`. A locale error means `LC_ALL` is not set correctly. `scripts/local-db.sh` sets a default for you.

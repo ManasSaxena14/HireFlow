@@ -1,6 +1,6 @@
-# Architecture
+# How HireFlow works
 
-## Overview
+## The big picture
 
 ```mermaid
 flowchart TB
@@ -11,7 +11,7 @@ flowchart TB
     N[Next.js]
   end
   subgraph API[NestJS API]
-    G[Guards: auth, rate limit, tenant, role]
+    G[Checks: login, rate limit, company, role]
     M[Modules: auth, users, companies, tracker, notifications]
     G --> M
   end
@@ -23,45 +23,54 @@ flowchart TB
   SMTP[Mail server]
 
   B --> N
-  N -- rewrite /api/v1 --> API
+  N -- /api/v1 --> API
   M --> DB
   S --> DB
   E --> DB
   E --> SMTP
 ```
 
-The API is a modular monolith. Each feature is a NestJS module, and only the API and worker touch the database.
+The API is one app split into modules, one for each feature. Only the API and the worker can touch the database.
 
-## Requests
+## What happens on each request
 
-Every request passes the same guards, in order:
+Every request goes through the same checks, in this order:
 
-1. **AuthGuard** verifies the bearer token unless the route is marked `@Public()`.
-2. **AppThrottlerGuard** applies the per-user limit, and the stricter per-IP limit on credential routes.
-3. **TenantGuard** runs when the route has `:cid`. It loads the caller's membership. A non-member gets a 404, so company ids cannot be probed.
-4. **RolesGuard** checks the route's declared policy. A route with no policy is refused, which makes access deny-by-default. A test also walks every controller to confirm each route declares one.
+1. **AuthGuard** checks the login token, unless the route is marked `@Public()`.
+2. **AppThrottlerGuard** checks the rate limit. Sign-in routes have a stricter limit.
+3. **TenantGuard** runs when the route has `:cid`. It finds the user's role in that company. If they are not a member, they get a 404, so they cannot find out which companies exist.
+4. **RolesGuard** checks if this role may use the route. A route that does not say who may use it is blocked. A test also checks that every route says this.
 
-Errors leave through one filter in a single format, with a request id that matches the logs.
+All errors have the same format and include a request id that matches the logs.
 
-## Sessions
+## How login works
 
-- The access token is a 15-minute JWT, held only in memory in the browser.
-- The refresh token is random, stored as an HMAC, sent as an `httpOnly` cookie scoped to `/api/v1/auth`, and rotated on each use.
-- Presenting an already-rotated token revokes the whole family, because it means the token leaked or was replayed. A token rotated in the last 10 seconds is the one exception, see [decision 003](decisions/003-access-behaviour.md).
-- The browser serialises refresh calls with a Web Lock. Without it, two tabs waking at once would look like a replay and sign the user out.
-- The web app proxies `/api/v1` through Next.js rewrites, so the cookie stays first-party even with the API on another domain.
+- The access token lasts 15 minutes. The browser keeps it only in memory.
+- The refresh token is a random value. The database stores only a hash of it. The browser keeps it in an `httpOnly` cookie that scripts cannot read.
+- Each time the refresh token is used, it is swapped for a new one.
+- If an old token is used again, it may be stolen, so all tokens in that family are cancelled. A token swapped in the last 10 seconds is the one exception. See [decision 003](decisions/003-access-behaviour.md).
+- Browser tabs take turns refreshing, using a Web Lock. Otherwise two tabs at once would look like a stolen token.
+- The web app sends `/api/v1` calls through Next.js, so the cookie keeps working even when the API is on another domain.
 
-## Jobs and email
+## Background jobs and email
 
-Jobs live in PostgreSQL through pg-boss, which has one large benefit over a separate broker: a job can be enqueued inside the transaction that caused it. A rolled-back registration can never send a verification email.
+Jobs are stored in PostgreSQL using pg-boss. The big benefit is that a job can be added in the same transaction as the change that caused it. If a sign-up fails and is undone, its email is cancelled too.
 
-**Reminders** are claimed with `FOR UPDATE SKIP LOCKED`, so parallel workers never take the same row. The notification, the queued email and `sent_at` commit together. If the worker dies part way, everything rolls back and the next tick retries.
+**Reminders:** the worker picks up due reminders with `FOR UPDATE SKIP LOCKED`, so two workers never take the same one. The notification, the email job and `sent_at` are saved together. If the worker crashes half way, nothing is saved and the next run tries again.
 
-**Email** runs through `email_deliveries`, keyed by a dedupe key. The row and the send share a transaction: a failed send rolls back so the retry goes through, and a re-run of a job that already sent finds the row and stops.
+**Email:** the `email_deliveries` table remembers what was sent. If sending fails, the row is undone so a retry can send it. If the email already went out, the retry stops.
 
 ## Data rules
 
-- UUID primary keys; `timestamptz` everywhere, stored in UTC and converted at the UI edge.
-- Schema changes go through numbered, reversible SQL migrations. CI applies them, rolls them back and applies them again.
-- Every company-owned table carries `company_id`, and repositories for those tables take it as a required argument.
-- `audit_logs` is append-only, enforced by a trigger.
+- IDs are UUIDs. Times are saved in UTC and changed to the user's time zone only on screen.
+- Database changes are numbered SQL files that can be undone. CI runs them, undoes them and runs them again.
+- Every table owned by a company has a `company_id`, and the code that reads it must be given one.
+- Nobody can change or delete rows in `audit_logs`. A database trigger stops it.
+
+## How hiring works
+
+- Each company table has `company_id`, and every query filters on it. The company comes from the signed-in person's membership, never from the request body.
+- A person moves through the steps of one job. Each move writes a history row and an audit log entry in the same transaction, and any step email is added to the queue in that transaction too.
+- Interviewers are limited in one place: `findVisible` in `applications.service.ts`. It gives a 404 for anyone not given to them.
+- The apply route checks the rate limit first, then keeps the file in memory with a 5 MB limit, then checks its bytes. The file is saved under a random name before the transaction, and it is removed again if the transaction fails.
+- Resumes are downloaded through short-lived signed links, so the browser can save the file without sending the login token.
