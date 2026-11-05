@@ -16,6 +16,8 @@ import { ConfigService } from './config/config.service.js';
 import { Database } from './database/database.js';
 import { HealthController } from './health/health.controller.js';
 import { MailQueue, PgBossMailQueue } from './queue/mail-queue.js';
+import { NotificationsController } from './notifications/notifications.controller.js';
+import { TrackerModule } from './tracker/tracker.module.js';
 import { UsersController } from './users/users.controller.js';
 
 @Global()
@@ -88,8 +90,9 @@ const ONE_MINUTE_MS = 60_000;
     }),
     AuthModule,
     CompaniesModule,
+    TrackerModule,
   ],
-  controllers: [UsersController, HealthController],
+  controllers: [UsersController, NotificationsController, HealthController],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     // Order matters: identify the caller, throttle, then resolve tenant and role.
