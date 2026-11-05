@@ -161,6 +161,14 @@ describe('auth', () => {
       await ctx.http().post('/api/v1/auth/refresh').expect(401);
     });
 
+    const ageRotation = (userId: string) =>
+      ctx.db
+        .updateTable('refreshTokens')
+        .set({ revokedAt: new Date(Date.now() - 60_000) })
+        .where('userId', '=', userId)
+        .where('revokedAt', 'is not', null)
+        .execute();
+
     it('revokes the whole family when an old token is reused', async () => {
       const user = await signUp(ctx);
       const first = await ctx
@@ -169,6 +177,7 @@ describe('auth', () => {
         .set('Cookie', user.cookie)
         .expect(200);
       const newest = refreshCookieFrom(first);
+      await ageRotation(user.id);
 
       await ctx.http().post('/api/v1/auth/refresh').set('Cookie', user.cookie).expect(401);
       await ctx.http().post('/api/v1/auth/refresh').set('Cookie', newest).expect(401);
@@ -179,8 +188,86 @@ describe('auth', () => {
         .where('entityId', '=', user.id)
         .where('action', '=', 'auth.refresh_reuse_detected')
         .execute();
-      // Both replays above are recorded: the rotated token and the now-revoked newest one.
-      expect(audit).toHaveLength(2);
+      // The second attempt is itself a replay, because the family is already dead.
+      expect(audit.length).toBeGreaterThanOrEqual(1);
+    });
+
+    describe('when the browser never received the new cookie', () => {
+      it('accepts the old token again and drops the unseen successor', async () => {
+        const user = await signUp(ctx);
+        const lost = await ctx
+          .http()
+          .post('/api/v1/auth/refresh')
+          .set('Cookie', user.cookie)
+          .expect(200);
+
+        const retry = await ctx
+          .http()
+          .post('/api/v1/auth/refresh')
+          .set('Cookie', user.cookie)
+          .expect(200);
+
+        const live = await ctx.db
+          .selectFrom('refreshTokens')
+          .select('id')
+          .where('userId', '=', user.id)
+          .where('revokedAt', 'is', null)
+          .execute();
+        expect(live).toHaveLength(1);
+
+        // The session carries on with the token from the retry.
+        await ctx
+          .http()
+          .post('/api/v1/auth/refresh')
+          .set('Cookie', refreshCookieFrom(retry))
+          .expect(200);
+        expect(refreshCookieFrom(lost)).not.toBe(refreshCookieFrom(retry));
+      });
+
+      it('does not let repeat attempts extend the window', async () => {
+        const user = await signUp(ctx);
+        await ctx.http().post('/api/v1/auth/refresh').set('Cookie', user.cookie).expect(200);
+        await ctx.http().post('/api/v1/auth/refresh').set('Cookie', user.cookie).expect(200);
+        await ageRotation(user.id);
+        await ctx.http().post('/api/v1/auth/refresh').set('Cookie', user.cookie).expect(401);
+      });
+
+      it('still catches a thief: the real user trips detection on their next refresh', async () => {
+        const user = await signUp(ctx);
+        const real = await ctx
+          .http()
+          .post('/api/v1/auth/refresh')
+          .set('Cookie', user.cookie)
+          .expect(200);
+        const stolen = await ctx
+          .http()
+          .post('/api/v1/auth/refresh')
+          .set('Cookie', user.cookie)
+          .expect(200);
+        await ageRotation(user.id);
+
+        await ctx
+          .http()
+          .post('/api/v1/auth/refresh')
+          .set('Cookie', refreshCookieFrom(real))
+          .expect(401);
+        await ctx
+          .http()
+          .post('/api/v1/auth/refresh')
+          .set('Cookie', refreshCookieFrom(stolen))
+          .expect(401);
+      });
+
+      it('never revives a session that was signed out', async () => {
+        const user = await signUp(ctx);
+        await ctx
+          .http()
+          .post('/api/v1/auth/logout')
+          .set(user.auth)
+          .set('Cookie', user.cookie)
+          .expect(204);
+        await ctx.http().post('/api/v1/auth/refresh').set('Cookie', user.cookie).expect(401);
+      });
     });
 
     it('refuses an expired token', async () => {

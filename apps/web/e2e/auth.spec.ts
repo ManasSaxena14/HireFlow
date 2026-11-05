@@ -47,6 +47,14 @@ test('a session survives a reload, and signing out ends it', async ({ page }) =>
   await expect(page).toHaveURL(/\/app\/tracker$/);
 });
 
+test('reloading while a refresh is in flight keeps the session', async ({ page }) => {
+  await registerNewUser(page);
+  // Each reload cancels the refresh the previous load started.
+  for (let i = 0; i < 4; i++) await page.reload({ waitUntil: 'commit' });
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible();
+});
+
 test('two tabs refreshing together do not kill the session', async ({ page, context }) => {
   await registerNewUser(page);
   const second = await context.newPage();

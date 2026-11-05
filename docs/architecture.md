@@ -47,7 +47,7 @@ Errors leave through one filter in a single format, with a request id that match
 
 - The access token is a 15-minute JWT, held only in memory in the browser.
 - The refresh token is random, stored as an HMAC, sent as an `httpOnly` cookie scoped to `/api/v1/auth`, and rotated on each use.
-- Presenting an already-rotated token revokes the whole family, because it means the token leaked or was replayed.
+- Presenting an already-rotated token revokes the whole family, because it means the token leaked or was replayed. A token rotated in the last 10 seconds is the one exception, see [decision 003](decisions/003-access-behaviour.md).
 - The browser serialises refresh calls with a Web Lock. Without it, two tabs waking at once would look like a replay and sign the user out.
 - The web app proxies `/api/v1` through Next.js rewrites, so the cookie stays first-party even with the API on another domain.
 

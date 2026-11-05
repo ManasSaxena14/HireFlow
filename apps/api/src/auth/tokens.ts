@@ -3,6 +3,8 @@ import { createHash, createHmac, randomBytes } from 'node:crypto';
 export const REFRESH_COOKIE = 'hf_refresh';
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 export const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** How long a just-rotated refresh token may be presented again, see AuthService.refresh. */
+export const REFRESH_REUSE_GRACE_MS = 10_000;
 export const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 export const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 

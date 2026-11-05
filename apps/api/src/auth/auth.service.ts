@@ -12,6 +12,7 @@ import { MailQueue } from '../queue/mail-queue.js';
 import {
   hashRefreshToken,
   randomToken,
+  REFRESH_REUSE_GRACE_MS,
   REFRESH_TOKEN_TTL_MS,
   RESET_TOKEN_TTL_MS,
   sha256,
@@ -145,6 +146,11 @@ export class AuthService implements OnModuleInit {
   /**
    * Rotates the refresh token. Presenting one that was already rotated means it leaked
    * or was replayed, so the whole family is revoked and every holder must sign in again.
+   *
+   * The exception is a token rotated moments ago: a page reload can cancel the response
+   * after the server has rotated, leaving the browser holding the old cookie. That token is
+   * accepted once more and the unseen successor is dropped. If it really was a thief, the
+   * real user's next refresh presents a dead token outside the window and trips detection.
    */
   async refresh(token: string, meta: RequestMeta): Promise<Session> {
     const tokenHash = this.hashRefresh(token);
@@ -159,18 +165,21 @@ export class AuthService implements OnModuleInit {
       if (!current) return { kind: 'invalid' as const };
 
       if (current.revokedAt) {
+        const lostResponse = await this.isLostResponse(tx, current);
         await this.revokeWhere(tx, 'familyId', current.familyId);
-        await this.audit.record(
-          {
-            actorId: current.userId,
-            action: 'auth.refresh_reuse_detected',
-            entityType: 'user',
-            entityId: current.userId,
-            ip: meta.ip,
-          },
-          tx,
-        );
-        return { kind: 'invalid' as const };
+        if (!lostResponse) {
+          await this.audit.record(
+            {
+              actorId: current.userId,
+              action: 'auth.refresh_reuse_detected',
+              entityType: 'user',
+              entityId: current.userId,
+              ip: meta.ip,
+            },
+            tx,
+          );
+          return { kind: 'invalid' as const };
+        }
       }
       if (current.expiresAt.getTime() <= Date.now()) return { kind: 'invalid' as const };
 
@@ -185,6 +194,8 @@ export class AuthService implements OnModuleInit {
         .updateTable('refreshTokens')
         .set({ revokedAt: new Date() })
         .where('id', '=', current.id)
+        // Keeps the original time on a replay, so repeat attempts cannot extend the window.
+        .where('revokedAt', 'is', null)
         .execute();
       const refreshToken = await this.issueRefreshToken(tx, user.id, current.familyId, meta);
       const { isActive: _, ...profile } = user;
@@ -197,6 +208,24 @@ export class AuthService implements OnModuleInit {
       refreshToken: outcome.refreshToken,
       user: outcome.user,
     };
+  }
+
+  /** True when this token was rotated (not signed out) within the grace window. */
+  private async isLostResponse(
+    tx: Executor,
+    token: { familyId: string; revokedAt: Date | null },
+  ): Promise<boolean> {
+    if (!token.revokedAt) return false;
+    if (Date.now() - token.revokedAt.getTime() >= REFRESH_REUSE_GRACE_MS) return false;
+    // Logout revokes without a successor, so a live token in the family means rotation.
+    const successor = await tx
+      .selectFrom('refreshTokens')
+      .select('id')
+      .where('familyId', '=', token.familyId)
+      .where('revokedAt', 'is', null)
+      .limit(1)
+      .executeTakeFirst();
+    return Boolean(successor);
   }
 
   async logout(token: string | undefined): Promise<void> {
