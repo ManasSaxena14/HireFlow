@@ -43,3 +43,25 @@ export function avatarColor(name: string): string {
   for (const letter of name) total += letter.charCodeAt(0);
   return AVATAR_COLORS[total % AVATAR_COLORS.length] as string;
 }
+
+export const zoneLabel = (timeZone: string) => timeZone.replaceAll('_', ' ');
+
+export function formatTime(iso: string, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(new Date(iso));
+}
+
+export function dayParts(iso: string, timeZone: string) {
+  const part = (options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat('en-GB', { timeZone, ...options }).format(new Date(iso));
+  return {
+    weekday: part({ weekday: 'short' }),
+    day: part({ day: 'numeric' }),
+    month: part({ month: 'short' }),
+    long: part({ weekday: 'long', day: 'numeric', month: 'long' }),
+  };
+}

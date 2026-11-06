@@ -12,10 +12,17 @@ type Membership = Profile['memberships'][number];
 export function CompanyNav({ membership, many }: { membership: Membership; many: boolean }) {
   const pathname = usePathname();
   const base = `/company/${membership.companyId}`;
+  const inSection = (name: string) => pathname.startsWith(`${base}/${name}`);
   const tabs = [
-    { href: `${base}/jobs`, label: 'Jobs', active: !pathname.startsWith(`${base}/team`) },
+    {
+      href: `${base}/jobs`,
+      label: 'Jobs',
+      active: !inSection('team') && !inSection('interviews') && !inSection('availability'),
+    },
+    { href: `${base}/interviews`, label: 'Interviews', active: inSection('interviews') },
+    { href: `${base}/availability`, label: 'My hours', active: inSection('availability') },
     ...(membership.role === 'admin'
-      ? [{ href: `${base}/team`, label: 'Team', active: pathname.startsWith(`${base}/team`) }]
+      ? [{ href: `${base}/team`, label: 'Team', active: inSection('team') }]
       : []),
   ];
 

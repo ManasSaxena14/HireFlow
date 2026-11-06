@@ -111,7 +111,7 @@ export const useMembers = (cid: string, enabled = true) =>
     enabled,
   });
 
-function useCompanyMutation<Input, Output = unknown>(
+export function useCompanyMutation<Input, Output = unknown>(
   cid: string,
   mutationFn: (input: Input) => Promise<Output>,
 ) {

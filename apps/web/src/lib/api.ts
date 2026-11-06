@@ -105,7 +105,7 @@ export function refreshSession(): Promise<SessionPayload | null> {
   return refreshInFlight;
 }
 
-export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function request(path: string, options: RequestOptions): Promise<Response> {
   let response = await send(path, options);
 
   if (response.status === 401 && options.auth !== false) {
@@ -114,6 +114,16 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   }
 
   if (!response.ok) throw await toError(response);
+  return response;
+}
+
+/** For routes that send back a file and not JSON. */
+export async function apiText(path: string): Promise<string> {
+  return (await request(path, {})).text();
+}
+
+export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await request(path, options);
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }

@@ -34,6 +34,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { avatarColor, formatDateTime, timeAgo } from '@/lib/format';
 import { errorMessage } from '@/lib/forms';
+import { CandidateInterviews } from '../scheduler/candidate-interviews';
 import { RejectDialog } from './reject-dialog';
 
 function Block({
@@ -542,6 +543,7 @@ export function CandidateDetails({
         Back to {data.jobTitle}
       </Link>
       <Overview cid={cid} data={data} canMove={runsHiring} />
+      <CandidateInterviews cid={cid} data={data} runsHiring={runsHiring} />
       <div className="grid items-start gap-4 xl:grid-cols-3">
         <Block title="Scores" delay={70} testId="scores-block">
           <Scorecards cid={cid} data={data} />

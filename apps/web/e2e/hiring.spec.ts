@@ -131,7 +131,7 @@ test('recruiter journey: post a job, take applications and run the board', async
   await cardInStage(page, 'Interview', 'Asha Rao').click();
   await expect(page.getByRole('heading', { name: 'Asha Rao' })).toBeVisible();
 
-  await page.getByRole('radio', { name: '4 out of 5' }).check({ force: true });
+  await page.locator('label', { has: page.getByRole('radio', { name: '4 out of 5' }) }).click();
   await page.getByLabel('Notes').fill('Very clear thinker.');
   await page.getByRole('button', { name: 'Send my score' }).click();
   await expect(page.getByTestId('scorecards')).toContainText('Very clear thinker.');
@@ -204,7 +204,9 @@ test('an interviewer sees only the people given to them', async ({ page, browser
 
   await cardInStage(interviewer, 'New', 'Given Person').click();
   await expect(interviewer.getByRole('button', { name: 'First call' })).toBeDisabled();
-  await interviewer.getByRole('radio', { name: '3 out of 5' }).check({ force: true });
+  await interviewer
+    .locator('label', { has: interviewer.getByRole('radio', { name: '3 out of 5' }) })
+    .click();
   await interviewer.getByRole('button', { name: 'Send my score' }).click();
   await expect(interviewer.getByTestId('scorecards')).toContainText('Riya Menon');
   await otherContext.close();

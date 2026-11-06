@@ -46,6 +46,8 @@ export default function NotificationsPage() {
         <ul className="grid gap-2.5">
           {data.items.map((notification) => {
             const applicationId = notification.payload.trackedApplicationId;
+            const href =
+              notification.payload.link ?? (applicationId ? `/app/tracker/${applicationId}` : null);
             const content = (
               <>
                 <span
@@ -71,9 +73,9 @@ export default function NotificationsPage() {
             };
             return (
               <li key={notification.id} className="animate-card-in">
-                {applicationId ? (
+                {href ? (
                   <Link
-                    href={`/app/tracker/${applicationId}`}
+                    href={href}
                     onClick={markAsRead}
                     className="card-lift flex gap-4 rounded-2xl border border-line bg-raised p-4 hover:border-accent"
                   >
