@@ -156,7 +156,7 @@ export interface TrackerStats {
 export interface AppNotification {
   id: string;
   type: string;
-  payload: { message?: string; trackedApplicationId?: string | null };
+  payload: { message?: string; trackedApplicationId?: string | null; link?: string };
   readAt: string | null;
   createdAt: string;
 }

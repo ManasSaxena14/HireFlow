@@ -527,6 +527,12 @@ export class ApplicationsService {
         (fileId): fileId is string => fileId !== null,
       );
 
+      // Their reminders go with the interviews.
+      await tx
+        .deleteFrom('interviews')
+        .where('companyId', '=', viewer.companyId)
+        .where('candidateId', '=', candidateId)
+        .execute();
       await tx
         .deleteFrom('candidates')
         .where('companyId', '=', viewer.companyId)

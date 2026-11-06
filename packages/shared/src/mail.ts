@@ -29,4 +29,30 @@ export type MailMessage =
       body: string;
       companyName: string;
       link: string;
+    }
+  | {
+      template: 'interview';
+      kind: 'booked' | 'moved' | 'cancelled' | 'reminder';
+      to: string;
+      dedupeKey: string;
+      name: string;
+      jobTitle: string;
+      companyName: string;
+      /** The time, already written in the time zone of the person getting this email. */
+      when: string;
+      withName: string;
+      meetingUrl: string | null;
+      link: string;
+      linkLabel: string;
+    }
+  | {
+      template: 'interview-offer';
+      to: string;
+      dedupeKey: string;
+      name: string;
+      jobTitle: string;
+      companyName: string;
+      durationMin: number;
+      expires: string;
+      link: string;
     };

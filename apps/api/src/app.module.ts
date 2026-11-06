@@ -18,6 +18,7 @@ import { Database } from './database/database.js';
 import { HealthController } from './health/health.controller.js';
 import { MailQueue, PgBossMailQueue } from './queue/mail-queue.js';
 import { NotificationsController } from './notifications/notifications.controller.js';
+import { SchedulerModule } from './scheduler/scheduler.module.js';
 import { TrackerModule } from './tracker/tracker.module.js';
 import { UsersController } from './users/users.controller.js';
 
@@ -53,7 +54,8 @@ const ONE_MINUTE_MS = 60_000;
             req: (req: { id: string; method: string; url: string }) => ({
               id: req.id,
               method: req.method,
-              path: req.url.split('?')[0],
+              // A booking link works like a password, so it must never reach the logs.
+              path: req.url.split('?')[0]?.replace(/(\/interview-offers\/)[^/]+/, '$1[hidden]'),
             }),
             res: (res: { statusCode: number }) => ({ statusCode: res.statusCode }),
           },
@@ -93,6 +95,7 @@ const ONE_MINUTE_MS = 60_000;
     CompaniesModule,
     TrackerModule,
     AtsModule,
+    SchedulerModule,
   ],
   controllers: [UsersController, NotificationsController, HealthController],
   providers: [

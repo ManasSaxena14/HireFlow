@@ -1,5 +1,6 @@
-import type { Generated, Insertable } from 'kysely';
+import type { ColumnType, Generated, Insertable } from 'kysely';
 import type {
+  InterviewStatus,
   JobStatus,
   MembershipRole,
   Recommendation,
@@ -231,6 +232,57 @@ export interface ApplicationAssignmentsTable {
   createdAt: Generated<Date>;
 }
 
+export interface AvailabilityRulesTable {
+  id: Generated<string>;
+  companyId: string;
+  userId: string;
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  timezone: string;
+  validFrom: string | null;
+  validTo: string | null;
+}
+
+export interface AvailabilityBlocksTable {
+  id: Generated<string>;
+  companyId: string;
+  userId: string;
+  during: string;
+  reason: string | null;
+}
+
+export interface InterviewsTable {
+  id: Generated<string>;
+  companyId: string;
+  applicationId: string;
+  candidateId: string;
+  interviewerId: string;
+  during: string;
+  status: Generated<InterviewStatus>;
+  meetingUrl: string | null;
+  notes: string | null;
+  candidateTimezone: string | null;
+  createdBy: string;
+  createdAt: Generated<Date>;
+}
+
+export interface InterviewOffersTable {
+  id: Generated<string>;
+  companyId: string;
+  applicationId: string;
+  interviewerId: string;
+  durationMin: number;
+  slots: ColumnType<Date[], string[], string[]>;
+  meetingUrl: string | null;
+  notes: string | null;
+  expiresAt: Date;
+  withdrawnAt: Date | null;
+  interviewId: string | null;
+  createdBy: string;
+  createdAt: Generated<Date>;
+}
+
 export interface DB {
   users: UsersTable;
   companies: CompaniesTable;
@@ -252,6 +304,10 @@ export interface DB {
   scorecards: ScorecardsTable;
   comments: CommentsTable;
   applicationAssignments: ApplicationAssignmentsTable;
+  availabilityRules: AvailabilityRulesTable;
+  availabilityBlocks: AvailabilityBlocksTable;
+  interviews: InterviewsTable;
+  interviewOffers: InterviewOffersTable;
 }
 
 export type NewAuditLog = Insertable<AuditLogsTable>;

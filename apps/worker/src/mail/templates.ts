@@ -48,6 +48,44 @@ function compose(
   };
 }
 
+function renderInterview(message: Extract<MailMessage, { template: 'interview' }>): RenderedMail {
+  const about = `${message.jobTitle} at ${message.companyName}`;
+  const meeting = message.meetingUrl ? [`Join here: ${message.meetingUrl}`] : [];
+  const action = { label: message.linkLabel, href: message.link };
+  const greeting = `Hi ${message.name},`;
+  const person = `with ${message.withName}`;
+  switch (message.kind) {
+    case 'booked':
+      return compose(
+        `Interview booked: ${message.jobTitle}`,
+        'Your interview is booked',
+        [greeting, `Your interview ${person} for ${about} is on ${message.when}.`, ...meeting],
+        action,
+      );
+    case 'moved':
+      return compose(
+        `New time for your interview: ${message.jobTitle}`,
+        'Your interview has a new time',
+        [greeting, `Your interview ${person} for ${about} is now on ${message.when}.`, ...meeting],
+        action,
+      );
+    case 'cancelled':
+      return compose(
+        `Interview cancelled: ${message.jobTitle}`,
+        'Your interview is cancelled',
+        [greeting, `Your interview ${person} for ${about} on ${message.when} is cancelled.`],
+        action,
+      );
+    case 'reminder':
+      return compose(
+        `Reminder: interview on ${message.when}`,
+        'Your interview is coming up',
+        [greeting, `Your interview ${person} for ${about} is on ${message.when}.`, ...meeting],
+        action,
+      );
+  }
+}
+
 export function renderMail(message: MailMessage): RenderedMail {
   switch (message.template) {
     case 'verify-email':
@@ -75,7 +113,7 @@ export function renderMail(message: MailMessage): RenderedMail {
         'Your HireFlow reminder',
         'Reminder',
         [`Hi ${message.name},`, message.message],
-        { label: 'Open this job', href: message.link },
+        { label: 'Open', href: message.link },
       );
     case 'application-received':
       return compose(
@@ -92,5 +130,18 @@ export function renderMail(message: MailMessage): RenderedMail {
         label: 'See the job',
         href: message.link,
       });
+    case 'interview-offer':
+      return compose(
+        `Choose a time for your interview at ${message.companyName}`,
+        'Choose your interview time',
+        [
+          `Hi ${message.name},`,
+          `${message.companyName} would like to meet you about ${message.jobTitle}. The interview takes ${message.durationMin} minutes. Please pick the time that suits you best.`,
+          `This link works until ${message.expires}. Please do not share it, because anyone with the link can book the time.`,
+        ],
+        { label: 'Choose a time', href: message.link },
+      );
+    case 'interview':
+      return renderInterview(message);
   }
 }

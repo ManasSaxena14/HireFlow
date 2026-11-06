@@ -14,6 +14,20 @@ export function isUniqueViolation(error: unknown, constraint?: string): boolean 
   return pgError?.code === UNIQUE_VIOLATION && (!constraint || pgError.constraint === constraint);
 }
 
+const EXCLUSION_VIOLATION = '23P01';
+const DEADLOCK_DETECTED = '40P01';
+
+/**
+ * Says which booking rule stopped a save. Two inserts racing for the same time can wait on each
+ * other. PostgreSQL then ends one of them with a deadlock error, which means the same thing.
+ */
+export function bookingClash(error: unknown): 'interviewer' | 'candidate' | null {
+  const pgError = error as { code?: string; constraint?: string };
+  if (pgError?.code === DEADLOCK_DETECTED) return 'interviewer';
+  if (pgError?.code !== EXCLUSION_VIOLATION) return null;
+  return pgError.constraint === 'no_candidate_overlap' ? 'candidate' : 'interviewer';
+}
+
 @Injectable()
 export class Database extends Kysely<DB> implements OnModuleDestroy {
   constructor(config: ConfigService) {

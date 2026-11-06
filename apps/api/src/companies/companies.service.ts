@@ -7,6 +7,7 @@ import type {
   UpdateCompanyInput,
   UpdateMemberInput,
 } from '@hireflow/shared';
+import { sql } from 'kysely';
 import { AuditService } from '../common/audit.service.js';
 import { DomainError, notFound } from '../common/domain-error.js';
 import { slugify } from '../common/slug.js';
@@ -149,8 +150,33 @@ export class CompaniesService {
   async removeMember(companyId: string, userId: string, actorId: string, ip: string | null) {
     await this.db.transaction().execute(async (tx) => {
       await this.assertNotLastAdmin(companyId, userId, tx);
+      const upcoming = await tx
+        .selectFrom('interviews')
+        .select('id')
+        .where('companyId', '=', companyId)
+        .where('interviewerId', '=', userId)
+        .where('status', '=', 'scheduled')
+        .where(sql<boolean>`upper(during) > now()`)
+        .limit(1)
+        .executeTakeFirst();
+      if (upcoming) {
+        throw new DomainError(
+          'CONFLICT',
+          'This person has interviews coming up. Please cancel them or change them first.',
+        );
+      }
       const result = await this.memberships.remove(companyId, userId, tx);
       if (result.numDeletedRows === 0n) throw notFound('Member');
+      await tx
+        .deleteFrom('availabilityRules')
+        .where('companyId', '=', companyId)
+        .where('userId', '=', userId)
+        .execute();
+      await tx
+        .deleteFrom('availabilityBlocks')
+        .where('companyId', '=', companyId)
+        .where('userId', '=', userId)
+        .execute();
       // If this person joins again later, they should not get their old candidates back.
       await tx
         .deleteFrom('applicationAssignments')
