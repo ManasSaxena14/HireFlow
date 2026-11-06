@@ -2,7 +2,7 @@
 
 **Two-sided hiring platform.** Job seekers can keep track of every job they apply for. Companies can post jobs and hire the right people.
 
-Right now this project has the job seeker side and the main company side. Interview booking and the other parts are still being built. See [What is coming next](#what-is-coming-next).
+Right now this project has the job seeker side, the main company side and interview booking. The other parts are still being built. See [What is coming next](#what-is-coming-next).
 
 ## What works today
 
@@ -16,6 +16,8 @@ Right now this project has the job seeker side and the main company side. Interv
 | Hiring       | Post jobs, set your own steps, move people across a board, reject with a reason          |
 | Careers page | Share one public page with all your open jobs, where people apply with a resume          |
 | Team work    | Comment, send scores, and give interviewers only the people they should see              |
+| Interviews   | Set working hours, book a free time or let the candidate choose, never double-book       |
+| Calendar     | Add interviews to any calendar, and get reminders a day and an hour before               |
 
 ## How it fits together
 
@@ -90,9 +92,12 @@ Good tests to read first:
 - `apps/api/test/auth.test.ts`: login tokens and how stolen tokens are caught
 - `apps/api/test/companies.test.ts`: roles, and keeping each company's data apart
 - `apps/api/test/ats.test.ts`: every hiring route with every role, other companies and bad uploads
+- `apps/api/test/scheduler.test.ts`: 20 requests racing for one time, moving and cancelling interviews
+- `apps/api/test/slots.test.ts`: free times across clock changes in London and New York
 - `apps/worker/test/reminders.test.ts`: reminders when workers crash or run at the same time
 - `apps/web/e2e/tracker.spec.ts`: the full job seeker journey in a real browser
 - `apps/web/e2e/hiring.spec.ts`: the full company journey in a real browser
+- `apps/web/e2e/scheduler.spec.ts`: booking an interview, and a candidate picking their own time
 
 ## Settings
 
@@ -114,7 +119,6 @@ scripts/      Helpers for the local database and for starting the app
 
 ## What is coming next
 
-- Interview booking that never double-books anyone
 - A job feed and job alerts from public job boards
 - Resume upload with a clear match score
 - A log for interview practice, with smart review dates
@@ -127,4 +131,5 @@ scripts/      Helpers for the local database and for starting the app
 - If the worker crashes right after the mail server accepts an email, that one email could be sent twice. No mail client can fully stop this.
 - Weekly numbers use UTC weeks, not your own time zone.
 - Resumes are saved on the server's disk. A host with a disk that is wiped on restart needs a lasting folder for `UPLOAD_DIR`, or a new storage class.
-- Until interview booking is built, people are given to interviewers by hand on the candidate page.
+- An interview has one interviewer. Free times can be checked for up to five people, but panel interviews are not built yet.
+- If you reject someone who has an interview coming up, the interview stays booked until you cancel it.

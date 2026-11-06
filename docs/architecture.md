@@ -74,3 +74,12 @@ Jobs are stored in PostgreSQL using pg-boss. The big benefit is that a job can b
 - Interviewers are limited in one place: `findVisible` in `applications.service.ts`. It gives a 404 for anyone not given to them.
 - The apply route checks the rate limit first, then keeps the file in memory with a 5 MB limit, then checks its bytes. The file is saved under a random name before the transaction, and it is removed again if the transaction fails.
 - Resumes are downloaded through short-lived signed links, so the browser can save the file without sending the login token.
+
+## How interview booking works
+
+- **The database stops double booking.** Two rules on the `interviews` table refuse overlapping times for one interviewer or one candidate. The code never checks first and then saves, because two requests can both pass a check at the same moment. It just saves, and turns a refusal into `SLOT_TAKEN`. Two saves racing can also end in a deadlock error from PostgreSQL, which means the same thing.
+- **Free times** come from `slots.ts`, which has no database code, so it is easy to test. It works out each person's hours date by date in their own zone, removes days off and other interviews, keeps the time everyone shares, and cuts it into start times on the quarter hour.
+- **Clock changes:** times are saved in UTC and worked out in the person's zone with Luxon. So 9 o'clock stays 9 o'clock on their clock. An interview across the change keeps its real length.
+- **Booking in one transaction:** the interview, the interviewer's access to the candidate, the reminders, the emails and the audit entry are saved together.
+- **Reminders:** each interview gets one row a day before and one an hour before. The worker turns a row into a notification and an email for the interviewer, and an email for the candidate. Moving or cancelling removes the rows that were not sent.
+- **Candidates have no account**, so a signed link lets them book. The offer row holds the times. It can be booked only once, because the save only works while the offer has no interview on it. The link is hidden from the logs and the page tells search engines to stay away.

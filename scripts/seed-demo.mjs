@@ -110,9 +110,81 @@ await client.connect();
 
 const one = async (text, values) => (await client.query(text, values)).rows[0];
 
+/** Working hours for the team and one booked interview. Added once, even to an older demo. */
+async function addDemoSchedule(companyId) {
+  const { count } = await one('SELECT count(*) FROM availability_rules WHERE company_id = $1', [
+    companyId,
+  ]);
+  if (Number(count) > 0) return false;
+
+  const members = await client.query('SELECT user_id FROM memberships WHERE company_id = $1', [
+    companyId,
+  ]);
+  for (const { user_id: userId } of members.rows) {
+    await client.query(`UPDATE users SET timezone = 'Asia/Kolkata' WHERE id = $1`, [userId]);
+    for (const weekday of [1, 2, 3, 4, 5]) {
+      await client.query(
+        `INSERT INTO availability_rules (company_id, user_id, weekday, start_time, end_time, timezone)
+         VALUES ($1, $2, $3, '09:00', '18:00', 'Asia/Kolkata')`,
+        [companyId, userId, weekday],
+      );
+    }
+  }
+
+  const person = await one(
+    `SELECT a.id, a.candidate_id, c.full_name
+       FROM applications a
+       JOIN candidates c ON c.id = a.candidate_id
+       JOIN pipeline_stages s ON s.id = a.stage_id
+      WHERE a.company_id = $1 AND c.full_name = ANY($2) AND s.kind NOT IN ('rejected', 'hired')
+      ORDER BY c.full_name
+      LIMIT 1`,
+    [companyId, INTERVIEWER_GETS],
+  );
+  const interviewer = await one('SELECT id FROM users WHERE lower(email) = lower($1)', [
+    TEAM.find((member) => member.key === 'interviewer').email,
+  ]);
+  const recruiter = await one('SELECT id FROM users WHERE lower(email) = lower($1)', [
+    TEAM.find((member) => member.key === 'recruiter').email,
+  ]);
+  if (!person) return true;
+
+  // 05:30 UTC is 11:00 in India, at least two days from now on a work day.
+  const start = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+  while ([0, 6].includes(start.getUTCDay())) start.setUTCDate(start.getUTCDate() + 1);
+  start.setUTCHours(5, 30, 0, 0);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  const interview = await one(
+    `INSERT INTO interviews (company_id, application_id, candidate_id, interviewer_id, during,
+                             meeting_url, notes, created_by)
+     VALUES ($1, $2, $3, $4, tstzrange($5, $6, '[)'), 'https://meet.example.com/demo',
+             'Ask about the last project on the resume.', $7)
+     RETURNING id`,
+    [companyId, person.id, person.candidate_id, interviewer.id, start, end, recruiter.id],
+  );
+  for (const hours of [24, 1]) {
+    await client.query(
+      `INSERT INTO reminders (user_id, interview_id, kind, remind_at, message)
+       VALUES ($1, $2, 'interview', $3, $4)`,
+      [
+        interviewer.id,
+        interview.id,
+        new Date(start.getTime() - hours * 60 * 60 * 1000),
+        `Interview with ${person.full_name}.`,
+      ],
+    );
+  }
+  return true;
+}
+
 const existing = await one('SELECT id FROM companies WHERE slug = $1', [COMPANY.slug]);
 if (existing) {
-  console.log('The demo company is already there. Nothing to do.');
+  const added = await addDemoSchedule(existing.id);
+  console.log(
+    added
+      ? 'Added working hours and an interview to the demo company.'
+      : 'The demo company is already there. Nothing to do.',
+  );
   await client.end();
   process.exit(0);
 }
@@ -254,6 +326,7 @@ try {
     }
   }
 
+  await addDemoSchedule(company.id);
   await client.query('COMMIT');
   console.log(`Demo data added. Careers page: /c/${COMPANY.slug}`);
   console.log(`Sign in with any of these. The password is ${PASSWORD}`);

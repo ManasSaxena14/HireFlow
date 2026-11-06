@@ -25,6 +25,7 @@ Who can use a route: **Public** (anyone), **User** (signed in), **Member** (in t
 | `NOT_FOUND`        | 404    |
 | `CONFLICT`         | 409    |
 | `DUPLICATE_JOB`    | 409    |
+| `SLOT_TAKEN`       | 409    |
 | `RATE_LIMITED`     | 429    |
 | `INTERNAL`         | 500    |
 
@@ -102,6 +103,26 @@ Everything below starts with `/companies/:cid`. Someone from another company alw
 | DELETE | `/candidates/:id`                   | Admin  | Removes the person and their files for good                                      |
 
 Interviewers only see the applications given to them, and the jobs those belong to. They see their own score only, and never the average.
+
+## Interviews
+
+| Method | Path                                            | Who    | What it does                                                                      |
+| ------ | ----------------------------------------------- | ------ | --------------------------------------------------------------------------------- |
+| GET    | `/me/availability?companyId=`                   | Member | Your weekly hours and days off in that company                                    |
+| PUT    | `/me/availability?companyId=`                   | Member | Body `{ timezone, rules[], blocks[] }`. Replaces them all                         |
+| GET    | `/me/interviews`                                | User   | Your interviews coming up, as interviewer or candidate                            |
+| GET    | `/interviews/:id/ics`                           | User   | Calendar file. Only for the people in the interview                               |
+| GET    | `/companies/:cid/interviews`                    | Member | `scope=upcoming` or `past`. Interviewers see only their own                       |
+| POST   | `/companies/:cid/interviews/suggest-slots`      | Team   | Body `{ applicationId, interviewerIds[], durationMin, from, to }`. Up to 50 times |
+| POST   | `/companies/:cid/interviews`                    | Team   | Books a time. `SLOT_TAKEN` if someone is already busy                             |
+| POST   | `/companies/:cid/interviews/:id/reschedule`     | Team   | Body `{ start, durationMin? }`. Same rules as booking                             |
+| POST   | `/companies/:cid/interviews/:id/cancel`         | Team   | Cancels, removes reminders that were not sent and tells everyone                  |
+| GET    | `/companies/:cid/applications/:id/interviews`   | Member | Interviews and offers for one person. Interviewers do not see offers              |
+| POST   | `/companies/:cid/interview-offers`              | Team   | Emails the candidate a link to choose from up to 10 times                         |
+| POST   | `/companies/:cid/interview-offers/:id/withdraw` | Team   | Stops the link working                                                            |
+| GET    | `/interview-offers/:token`                      | Public | What the booking page shows                                                       |
+| POST   | `/interview-offers/:token/book`                 | Public | Body `{ start, timezone? }`. Rate limited                                         |
+| GET    | `/public/interviews/:id/calendar?signature=`    | Public | Calendar file for the signed link in a candidate's email                          |
 
 ## Careers pages
 
