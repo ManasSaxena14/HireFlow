@@ -448,6 +448,9 @@ export class InterviewsService {
     if (row.status !== 'scheduled') {
       throw new DomainError('CONFLICT', 'This interview is no longer going ahead.');
     }
+    if (row.endsAt.getTime() <= Date.now()) {
+      throw new DomainError('CONFLICT', 'This interview has already happened.');
+    }
     return row;
   }
 
@@ -500,27 +503,122 @@ export class InterviewsService {
   async cancel(viewer: Viewer, id: string, ip: string | null): Promise<Interview> {
     return this.db.transaction().execute(async (tx) => {
       await this.findScheduled(tx, viewer.companyId, id);
-      await tx
-        .updateTable('interviews')
-        .set({ status: 'cancelled' })
-        .where('id', '=', id)
-        .execute();
-      await this.removeUnsentReminders(tx, id);
-      const facts = await this.factsById(tx, id);
-      await this.tell(tx, facts, 'cancelled');
-      await this.audit.record(
+      return this.toInterview(await this.markCancelled(tx, viewer, id, ip));
+    });
+  }
+
+  private async markCancelled(tx: Tx, viewer: Viewer, id: string, ip: string | null) {
+    await tx.updateTable('interviews').set({ status: 'cancelled' }).where('id', '=', id).execute();
+    await this.removeUnsentReminders(tx, id);
+    const facts = await this.factsById(tx, id);
+    await this.tell(tx, facts, 'cancelled');
+    await this.audit.record(
+      {
+        companyId: viewer.companyId,
+        actorId: viewer.userId,
+        action: 'interview.cancelled',
+        entityType: 'interview',
+        entityId: id,
+        ip,
+      },
+      tx,
+    );
+    return facts;
+  }
+
+  /**
+   * Runs when someone is rejected or hired. Without this they would keep getting reminders
+   * for an interview that no longer makes sense, and could still use an old booking link.
+   */
+  async closeForDecision(tx: Tx, viewer: Viewer, applicationId: string, ip: string | null) {
+    const upcoming = await tx
+      .selectFrom('interviews')
+      .select('id')
+      .where('companyId', '=', viewer.companyId)
+      .where('applicationId', '=', applicationId)
+      .where('status', '=', 'scheduled')
+      .where(sql<boolean>`upper(during) > now()`)
+      .forUpdate()
+      .execute();
+    for (const { id } of upcoming) await this.markCancelled(tx, viewer, id, ip);
+    await tx
+      .updateTable('interviewOffers')
+      .set({ withdrawnAt: new Date() })
+      .where('companyId', '=', viewer.companyId)
+      .where('applicationId', '=', applicationId)
+      .where('interviewId', 'is', null)
+      .where('withdrawnAt', 'is', null)
+      .execute();
+  }
+
+  /**
+   * Runs when a candidate's data is deleted. The interviewer still needs to know their time
+   * is free, but the message leaves out the person. Older messages that name them are removed.
+   */
+  async removeForDeletedCandidate(
+    tx: Tx,
+    companyId: string,
+    candidateId: string,
+    applicationIds: string[],
+  ) {
+    const upcoming = await this.facts(tx)
+      .where('i.companyId', '=', companyId)
+      .where('i.candidateId', '=', candidateId)
+      .where('i.status', '=', 'scheduled')
+      .where(sql<boolean>`upper(i.during) > now()`)
+      .execute();
+    const appUrl = this.config.env.APP_URL;
+    for (const facts of upcoming) {
+      const when = formatInterviewTime(facts.startsAt, facts.interviewerTimezone);
+      await this.mail.enqueue(
         {
-          companyId: viewer.companyId,
-          actorId: viewer.userId,
-          action: 'interview.cancelled',
-          entityType: 'interview',
-          entityId: id,
-          ip,
+          template: 'interview',
+          kind: 'cancelled',
+          to: facts.interviewerEmail,
+          dedupeKey: `interview:${facts.id}:deleted:interviewer`,
+          name: facts.interviewerName,
+          jobTitle: facts.jobTitle,
+          companyName: facts.companyName,
+          when,
+          withName: 'the candidate',
+          meetingUrl: null,
+          link: `${appUrl}/company/${companyId}/interviews`,
+          linkLabel: 'See interviews',
         },
         tx,
       );
-      return this.toInterview(facts);
-    });
+    }
+    if (applicationIds.length > 0) {
+      const links = applicationIds.map((id) => `/company/${companyId}/candidates/${id}`);
+      await tx
+        .deleteFrom('notifications')
+        .where(sql<string>`payload->>'link'`, 'in', links)
+        .execute();
+    }
+    if (upcoming.length > 0) {
+      await tx
+        .insertInto('notifications')
+        .values(
+          upcoming.map((facts) => ({
+            userId: facts.interviewerId,
+            type: 'interview',
+            payload: JSON.stringify({
+              message: `Interview cancelled: ${facts.jobTitle}, ${formatInterviewTime(
+                facts.startsAt,
+                facts.interviewerTimezone,
+              )}.`,
+              link: `/company/${companyId}/interviews`,
+            }),
+          })),
+        )
+        .execute();
+    }
+    // Their reminders go with the interviews.
+    await tx
+      .deleteFrom('interviews')
+      .where('companyId', '=', companyId)
+      .where('candidateId', '=', candidateId)
+      .execute();
   }
 
   /** Interviewers only see the interviews they will run. */

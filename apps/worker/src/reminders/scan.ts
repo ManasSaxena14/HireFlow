@@ -21,6 +21,7 @@ interface DueReminder {
   candidate_timezone: string | null;
   meeting_url: string | null;
   starts_at: Date | null;
+  interview_status: string | null;
 }
 
 const BATCH_SIZE = 100;
@@ -43,7 +44,7 @@ export async function scanReminders(
               i.company_id, co.name AS company_name, co.slug AS company_slug,
               i.application_id, j.title AS job_title,
               c.full_name AS candidate_name, c.email AS candidate_email,
-              i.candidate_timezone, i.meeting_url, lower(i.during) AS starts_at
+              i.candidate_timezone, i.meeting_url, lower(i.during) AS starts_at, i.status AS interview_status
          FROM reminders r
          JOIN users u ON u.id = r.user_id
          LEFT JOIN interviews i ON i.id = r.interview_id
@@ -59,6 +60,14 @@ export async function scanReminders(
     );
 
     for (const reminder of rows) {
+      // If the worker was down, a reminder for an interview that has gone by only confuses.
+      if (
+        reminder.starts_at &&
+        (reminder.interview_status !== 'scheduled' || reminder.starts_at.getTime() <= Date.now())
+      ) {
+        await client.query('UPDATE reminders SET sent_at = now() WHERE id = $1', [reminder.id]);
+        continue;
+      }
       const path = reminder.application_id
         ? `/company/${reminder.company_id}/candidates/${reminder.application_id}`
         : reminder.tracked_application_id

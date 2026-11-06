@@ -1,10 +1,16 @@
 import { fileURLToPath } from 'node:url';
-import { MAIL_QUEUE, type MailMessage, REMINDERS_SCAN_QUEUE } from '@hireflow/shared';
+import {
+  CLEANUP_QUEUE,
+  MAIL_QUEUE,
+  type MailMessage,
+  REMINDERS_SCAN_QUEUE,
+} from '@hireflow/shared';
 import { loadEnvFile } from '@hireflow/shared/node';
 import pg from 'pg';
 import { PgBoss } from 'pg-boss';
 import { pino } from 'pino';
 import { loadConfig } from './config.js';
+import { cleanUp } from './cleanup.js';
 import { deliverMail } from './mail/deliver.js';
 import { type MailSender, PreviewSender, SmtpSender } from './mail/sender.js';
 import { type EnqueueMail, scanReminders } from './reminders/scan.js';
@@ -48,6 +54,12 @@ await boss.schedule(REMINDERS_SCAN_QUEUE, '* * * * *');
 await boss.work(REMINDERS_SCAN_QUEUE, async () => {
   const count = await scanReminders(pool, enqueueInTransaction, env.APP_URL);
   if (count > 0) log.info({ count }, 'reminders processed');
+});
+
+await boss.createQueue(CLEANUP_QUEUE);
+await boss.schedule(CLEANUP_QUEUE, '0 3 * * *');
+await boss.work(CLEANUP_QUEUE, async () => {
+  log.info(await cleanUp(pool), 'old rows removed');
 });
 
 log.info('worker started');

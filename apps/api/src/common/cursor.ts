@@ -1,3 +1,4 @@
+import { uuidSchema } from '@hireflow/shared';
 import { DomainError } from './domain-error.js';
 
 export interface Cursor {
@@ -15,7 +16,13 @@ export const encodeCursor = (cursor: Cursor) =>
 export function decodeCursor(raw: string): Cursor {
   try {
     const value = JSON.parse(Buffer.from(raw, 'base64url').toString()) as Partial<Cursor>;
-    if (typeof value.at === 'string' && typeof value.id === 'string') {
+    // Both go into a query, so a changed cursor must not reach the database as bad input.
+    if (
+      typeof value.at === 'string' &&
+      typeof value.id === 'string' &&
+      !Number.isNaN(Date.parse(value.at.replace(' ', 'T').replace(/([+-]\d\d)$/, '$1:00'))) &&
+      uuidSchema.safeParse(value.id).success
+    ) {
       return { at: value.at, id: value.id };
     }
   } catch {

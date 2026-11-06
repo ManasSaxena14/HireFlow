@@ -4,7 +4,7 @@ const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     LOG_LEVEL: z.string().default('info'),
-    APP_URL: z.url(),
+    APP_URL: z.url().transform((value) => value.replace(/\/+$/, '')),
     DATABASE_URL: z.string().min(1),
     SMTP_HOST: z.string().optional(),
     SMTP_PORT: z.coerce.number().int().default(587),

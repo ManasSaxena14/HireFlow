@@ -3,6 +3,7 @@ import { MAIL_QUEUE, type MailMessage } from '@hireflow/shared';
 import pg from 'pg';
 import { PgBoss } from 'pg-boss';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanUp } from '../src/cleanup.js';
 import { deliverMail } from '../src/mail/deliver.js';
 import type { MailSender } from '../src/mail/sender.js';
 import { type EnqueueMail, scanReminders } from '../src/reminders/scan.js';
@@ -241,6 +242,19 @@ describe('reminders scan', () => {
       expect(await sentAt(seeded.reminderId)).not.toBeNull();
     });
 
+    it('does not remind anyone about an interview that has gone by', async () => {
+      const seeded = await seedInterview(null, null);
+      await pool.query(
+        `UPDATE interviews SET during = tstzrange(now() - interval '2 hours', now() - interval '1 hour', '[)')
+          WHERE application_id = $1`,
+        [seeded.applicationId],
+      );
+      await scanReminders(pool, collect, APP_URL);
+      expect(queued).toEqual([]);
+      expect(await sentAt(seeded.reminderId)).not.toBeNull();
+      expect(await notificationCount(seeded.interviewerId)).toBe(0);
+    });
+
     it('sends nothing twice, and links to the company if there is no meeting link', async () => {
       const seeded = await seedInterview(null, null);
       await scanReminders(pool, collect, APP_URL);
@@ -250,6 +264,30 @@ describe('reminders scan', () => {
 
       const forCandidate = queued.find((mail) => mail.dedupeKey.endsWith(':candidate'));
       expect(forCandidate?.link).toBe(`${APP_URL}/c/tessera-${seeded.suffix}`);
+    });
+  });
+
+  describe('clean up', () => {
+    it('removes only the rows nobody can use any more', async () => {
+      const userId = await seedUser();
+      const token = (hash: string, expires: string) =>
+        pool.query(
+          `INSERT INTO refresh_tokens (user_id, family_id, token_hash, expires_at)
+           VALUES ($1, gen_random_uuid(), $2, ${expires})`,
+          [userId, hash],
+        );
+      const oldHash = randomUUID();
+      const liveHash = randomUUID();
+      await token(oldHash, "now() - interval '2 days'");
+      await token(liveHash, "now() + interval '2 days'");
+
+      await cleanUp(pool);
+
+      const { rows } = await pool.query<{ token_hash: string }>(
+        'SELECT token_hash FROM refresh_tokens WHERE user_id = $1',
+        [userId],
+      );
+      expect(rows.map((row) => row.token_hash)).toEqual([liveHash]);
     });
   });
 });

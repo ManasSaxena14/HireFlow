@@ -33,6 +33,9 @@ export class SmtpSender implements MailSender {
     this.transport = nodemailer.createTransport({
       host: env.SMTP_HOST,
       port: env.SMTP_PORT,
+      // Port 465 starts encrypted. Others must upgrade, so a password is never sent in the open.
+      secure: env.SMTP_PORT === 465,
+      requireTLS: env.NODE_ENV === 'production' && env.SMTP_PORT !== 465,
       auth: env.SMTP_USER ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined,
     });
   }

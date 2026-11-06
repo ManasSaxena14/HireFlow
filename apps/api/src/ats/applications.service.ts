@@ -23,6 +23,7 @@ import { Database, type Executor, isUniqueViolation } from '../database/database
 import { FileLinks } from '../files/file-links.js';
 import { FileStorage } from '../files/file-storage.js';
 import { MailQueue } from '../queue/mail-queue.js';
+import { InterviewsService } from '../scheduler/interviews.service.js';
 
 const SCORECARD_CONSTRAINT = 'scorecards_application_id_interviewer_id_key';
 
@@ -46,6 +47,7 @@ export class ApplicationsService {
     private readonly links: FileLinks,
     private readonly storage: FileStorage,
     private readonly logger: PinoLogger,
+    private readonly interviews: InterviewsService,
   ) {}
 
   /** An interviewer gets a 404 for other candidates, so they cannot tell who has applied. */
@@ -332,6 +334,7 @@ export class ApplicationsService {
         },
         tx,
       );
+      if (decided) await this.interviews.closeForDecision(tx, viewer, id, ip);
       if (target.emailSubject && target.emailBody) {
         await this.queueStageEmail(tx, viewer.companyId, application, target, event.id);
       }
@@ -466,6 +469,22 @@ export class ApplicationsService {
   async unassign(viewer: Viewer, id: string, userId: string, ip: string | null) {
     await this.db.transaction().execute(async (tx) => {
       await this.findVisible(tx, viewer, id);
+      const upcoming = await tx
+        .selectFrom('interviews')
+        .select('id')
+        .where('companyId', '=', viewer.companyId)
+        .where('applicationId', '=', id)
+        .where('interviewerId', '=', userId)
+        .where('status', '=', 'scheduled')
+        .where(sql<boolean>`upper(during) > now()`)
+        .limit(1)
+        .executeTakeFirst();
+      if (upcoming) {
+        throw new DomainError(
+          'CONFLICT',
+          'This team member has an interview with this person. Please cancel it first.',
+        );
+      }
       await tx
         .deleteFrom('applicationAssignments')
         .where('companyId', '=', viewer.companyId)
@@ -519,7 +538,7 @@ export class ApplicationsService {
 
       const applications = await tx
         .selectFrom('applications')
-        .select('resumeFileId')
+        .select(['id', 'resumeFileId'])
         .where('companyId', '=', viewer.companyId)
         .where('candidateId', '=', candidateId)
         .execute();
@@ -527,12 +546,12 @@ export class ApplicationsService {
         (fileId): fileId is string => fileId !== null,
       );
 
-      // Their reminders go with the interviews.
-      await tx
-        .deleteFrom('interviews')
-        .where('companyId', '=', viewer.companyId)
-        .where('candidateId', '=', candidateId)
-        .execute();
+      await this.interviews.removeForDeletedCandidate(
+        tx,
+        viewer.companyId,
+        candidateId,
+        applications.map((application) => application.id),
+      );
       await tx
         .deleteFrom('candidates')
         .where('companyId', '=', viewer.companyId)

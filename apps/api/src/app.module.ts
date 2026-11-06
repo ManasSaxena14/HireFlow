@@ -70,7 +70,8 @@ const ONE_MINUTE_MS = 60_000;
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.env.JWT_ACCESS_SECRET,
-        signOptions: { expiresIn: ACCESS_TOKEN_TTL_SECONDS },
+        signOptions: { expiresIn: ACCESS_TOKEN_TTL_SECONDS, algorithm: 'HS256' },
+        verifyOptions: { algorithms: ['HS256'] },
       }),
     }),
     ThrottlerModule.forRootAsync({

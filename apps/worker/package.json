@@ -14,7 +14,7 @@
     "@hireflow/shared": "workspace:*",
     "nodemailer": "^10.3.1",
     "pg": "^8.23.1",
-    "pg-boss": "^12.38.0",
+    "pg-boss": "^12.38.1",
     "pino": "^10.4.0",
     "zod": "^4.6.7"
   },

@@ -430,7 +430,7 @@ const QUESTIONS = [
   },
   {
     q: 'Can companies use it today?',
-    a: 'Yes. Companies can post jobs, share a careers page, follow every candidate and work as a team. Interview booking is coming soon.',
+    a: 'Yes. Companies can post jobs, share a careers page, follow every candidate, book interviews and work as a team.',
   },
 ];
 
@@ -566,7 +566,7 @@ function FooterLink({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-const SOON = ['Interview booking', 'Job alerts', 'Resume match'];
+const SOON = ['Job alerts', 'Resume match', 'Interview practice'];
 
 function Footer() {
   const word = 'HireFlow'.split('');

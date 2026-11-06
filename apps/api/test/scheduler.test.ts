@@ -1253,6 +1253,129 @@ describe('scheduler', () => {
   });
 
   describe('when things around an interview change', () => {
+    const moveTo = async (id: string, kind: string, reason?: string) => {
+      const stages = await ctx.db
+        .selectFrom('pipelineStages')
+        .select(['id', 'kind'])
+        .where('jobId', '=', job.id)
+        .execute();
+      const target = stages.find((stage) => stage.kind === kind) as { id: string };
+      await ctx
+        .http()
+        .post(`${api()}/applications/${id}/move`)
+        .set(recruiter.auth)
+        .send({ toStageId: target.id, reason })
+        .expect(200);
+    };
+
+    it('cancels interviews and booking links when someone is rejected', async () => {
+      const { id, email } = await apply();
+      const start = freshDay();
+      const { body: interview } = await book(id, start).expect(201);
+      const { token } = await offer(id, [plus(start, DAY)]);
+
+      await moveTo(id, 'rejected', 'Not the right fit');
+
+      const { status } = await ctx.db
+        .selectFrom('interviews')
+        .select('status')
+        .where('id', '=', interview.id)
+        .executeTakeFirstOrThrow();
+      expect(status).toBe('cancelled');
+      expect(await remindersOf(interview.id)).toEqual([]);
+      expect(lastInterviewMail(email)?.kind).toBe('cancelled');
+      expect(lastInterviewMail(interviewer.email)?.kind).toBe('cancelled');
+      const page = await ctx.http().get(`/api/v1/interview-offers/${token}`).expect(200);
+      expect(page.body.status).toBe('withdrawn');
+
+      // The time is free again for someone else.
+      await book((await apply()).id, start).expect(201);
+    });
+
+    it('cancels interviews when someone is hired, and leaves other moves alone', async () => {
+      const { id } = await apply();
+      const { body: interview } = await book(id, freshDay()).expect(201);
+      await moveTo(id, 'interview');
+      const statusOf = async () =>
+        (
+          await ctx.db
+            .selectFrom('interviews')
+            .select('status')
+            .where('id', '=', interview.id)
+            .executeTakeFirstOrThrow()
+        ).status;
+      expect(await statusOf()).toBe('scheduled');
+      await moveTo(id, 'hired');
+      expect(await statusOf()).toBe('cancelled');
+    });
+
+    it('will not take a candidate away from someone who is interviewing them', async () => {
+      const { id } = await apply();
+      const { body: interview } = await book(id, freshDay()).expect(201);
+      const url = `${api()}/applications/${id}/assignees/${interviewer.id}`;
+      const { body } = await ctx.http().delete(url).set(recruiter.auth).expect(409);
+      expect(body.error.message).toContain('interview');
+      await ctx.http().get(`${api()}/applications/${id}`).set(interviewer.auth).expect(200);
+
+      await ctx
+        .http()
+        .post(`${api()}/interviews/${interview.id}/cancel`)
+        .set(recruiter.auth)
+        .expect(200);
+      await ctx.http().delete(url).set(recruiter.auth).expect(200);
+    });
+
+    it('stops the booking links of a team member who is removed', async () => {
+      const person = await join('interviewer');
+      const { id } = await apply();
+      const start = freshDay();
+      const { token } = await offer(id, [start], {}, person);
+      await ctx.http().delete(`${api()}/members/${person.id}`).set(admin.auth).expect(204);
+      const page = await ctx.http().get(`/api/v1/interview-offers/${token}`).expect(200);
+      expect(page.body.status).toBe('withdrawn');
+      await ctx
+        .http()
+        .post(`/api/v1/interview-offers/${token}/book`)
+        .send({ start: start.toISOString() })
+        .expect(409);
+    });
+
+    it('will not move or cancel an interview that has already happened', async () => {
+      const { id } = await apply();
+      const { body: interview } = await book(id, freshDay()).expect(201);
+      await ctx.db
+        .updateTable('interviews')
+        .set({
+          during: sql<string>`tstzrange(now() - interval '2 hours', now() - interval '1 hour', '[)')`,
+        })
+        .where('id', '=', interview.id)
+        .execute();
+      const url = `${api()}/interviews/${interview.id}`;
+      await ctx.http().post(`${url}/cancel`).set(recruiter.auth).expect(409);
+      await ctx
+        .http()
+        .post(`${url}/reschedule`)
+        .set(recruiter.auth)
+        .send({ start: freshDay().toISOString() })
+        .expect(409);
+    });
+
+    it('tells the interviewer without naming a deleted candidate, and removes old messages', async () => {
+      const person = await join('interviewer');
+      const { id, candidateId } = await apply('Secret Person');
+      await book(id, freshDay(), recruiter, person).expect(201);
+      const before = await ctx.http().get('/api/v1/notifications').set(person.auth).expect(200);
+      expect(JSON.stringify(before.body.items)).toContain('Secret Person');
+
+      await ctx.http().delete(`${api()}/candidates/${candidateId}`).set(admin.auth).expect(204);
+
+      const after = await ctx.http().get('/api/v1/notifications').set(person.auth).expect(200);
+      expect(JSON.stringify(after.body.items)).not.toContain('Secret Person');
+      expect(after.body.items[0].payload.message).toContain('Interview cancelled');
+      const mail = lastInterviewMail(person.email);
+      expect(mail).toMatchObject({ kind: 'cancelled', withName: 'the candidate' });
+    });
+
     it('will not remove a team member with interviews coming up', async () => {
       const person = await join('interviewer');
       const { id } = await apply();

@@ -39,7 +39,7 @@ export function RejectDialog({
       <form onSubmit={submit} noValidate className="space-y-4 p-6">
         <TextAreaField
           label="Why not?"
-          hint="Only your team sees this."
+          hint="Only your team sees this. Any interviews coming up will be cancelled."
           autoFocus
           rows={3}
           value={reason}

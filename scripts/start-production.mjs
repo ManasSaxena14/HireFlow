@@ -8,7 +8,8 @@ const children = ['apps/worker/dist/main.js', 'apps/api/dist/main.js'].map((entr
 
 const stopAll = (code) => {
   for (const child of children) child.kill('SIGTERM');
-  process.exitCode = code ?? 1;
+  // The first reason is the real one. The other process only stopped because we asked it to.
+  process.exitCode ??= code ?? 1;
 };
 
 for (const child of children) child.on('exit', stopAll);

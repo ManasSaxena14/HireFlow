@@ -1,9 +1,13 @@
+import { randomUUID } from 'node:crypto';
 import { METHOD_METADATA } from '@nestjs/common/constants.js';
 import { ModulesContainer } from '@nestjs/core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { CareersController } from '../src/ats/careers.controller.js';
 import { ACCESS_KEY } from '../src/common/access.js';
+import { AUTH_LIMIT_KEY } from '../src/common/rate-limit.js';
 import { parseEnv } from '../src/config/config.service.js';
-import { createTestApp, type TestContext } from './helpers/app.js';
+import { PublicOffersController } from '../src/scheduler/scheduler.controller.js';
+import { createTestApp, signUp, type TestContext, type TestUser } from './helpers/app.js';
 
 describe('platform', () => {
   let ctx: TestContext;
@@ -111,6 +115,115 @@ describe('platform', () => {
       const blocked = await attempt().expect(429);
       expect(blocked.body.error.code).toBe('RATE_LIMITED');
       await limited.app.close();
+    });
+  });
+});
+
+describe('settings and odd requests', () => {
+  const good = {
+    APP_URL: 'https://example.com/',
+    CORS_ORIGINS: 'https://example.com',
+    DATABASE_URL: 'postgresql://x',
+    JWT_ACCESS_SECRET: 'a'.repeat(40),
+    JWT_REFRESH_SECRET: 'b'.repeat(40),
+  };
+  const production = { ...good, NODE_ENV: 'production', COOKIE_SECURE: 'true' };
+
+  it('accepts good production settings and removes the slash at the end of the address', () => {
+    expect(parseEnv(production).APP_URL).toBe('https://example.com');
+  });
+
+  it('refuses unsafe production settings', () => {
+    expect(() => parseEnv({ ...production, COOKIE_SECURE: 'false' })).toThrow(/COOKIE_SECURE/);
+    expect(() =>
+      parseEnv({ ...production, JWT_ACCESS_SECRET: `replace-with-${'x'.repeat(40)}` }),
+    ).toThrow(/JWT_ACCESS_SECRET/);
+    expect(() => parseEnv({ ...good, JWT_REFRESH_SECRET: good.JWT_ACCESS_SECRET })).toThrow(
+      /JWT_REFRESH_SECRET/,
+    );
+  });
+
+  it('rate limits the public routes that accept forms', () => {
+    const limited = (handler: object) => Reflect.getMetadata(AUTH_LIMIT_KEY, handler);
+    expect(limited(CareersController.prototype.apply)).toBe(true);
+    expect(limited(PublicOffersController.prototype.book)).toBe(true);
+  });
+
+  describe('with a running app', () => {
+    let ctx: TestContext;
+    let user: TestUser;
+
+    beforeAll(async () => {
+      ctx = await createTestApp();
+      user = await signUp(ctx);
+    });
+    afterAll(async () => {
+      await ctx.app.close();
+    });
+
+    it('gives a 400 for a changed page link, not a server error', async () => {
+      const cursors = [
+        { at: 'x', id: 'y' },
+        { at: '2026-01-01 10:00:00.123456+00', id: 'y' },
+        { at: 'x', id: randomUUID() },
+      ];
+      for (const cursor of cursors) {
+        const raw = Buffer.from(JSON.stringify(cursor)).toString('base64url');
+        await ctx.http().get(`/api/v1/notifications?cursor=${raw}`).set(user.auth).expect(400);
+      }
+      const real = Buffer.from(
+        JSON.stringify({ at: '2026-01-01 10:00:00.123456+00', id: randomUUID() }),
+      ).toString('base64url');
+      await ctx.http().get(`/api/v1/notifications?cursor=${real}`).set(user.auth).expect(200);
+    });
+
+    it('gives a 400 for text the database cannot store', async () => {
+      const { body } = await ctx
+        .http()
+        .patch('/api/v1/me')
+        .set(user.auth)
+        .send({ fullName: 'a\u0000b' })
+        .expect(400);
+      expect(body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('uses plain words for broken requests', async () => {
+      const big = await ctx
+        .http()
+        .patch('/api/v1/me')
+        .set(user.auth)
+        .send({ fullName: 'x'.repeat(200_000) })
+        .expect(413);
+      expect(big.body.error.message).toContain('too long');
+      const broken = await ctx
+        .http()
+        .patch('/api/v1/me')
+        .set(user.auth)
+        .set('content-type', 'application/json')
+        .send('{oops')
+        .expect(400);
+      expect(broken.body.error.message).toBe('We could not read this request.');
+      const missing = await ctx.http().get('/api/v1/nope').set(user.auth).expect(404);
+      expect(missing.body.error.message).toBe('This page is not available.');
+    });
+
+    it('does not count a job that was never applied for in the reply rate', async () => {
+      const add = async (title: string, status: string) =>
+        ctx
+          .http()
+          .post('/api/v1/tracker/applications')
+          .set(user.auth)
+          .send({ title, companyName: 'Acme', status })
+          .expect(201);
+      const saved = await add('Only saved', 'saved');
+      await ctx
+        .http()
+        .post(`/api/v1/tracker/applications/${saved.body.id}/move`)
+        .set(user.auth)
+        .send({ toStatus: 'rejected' });
+      await add('Applied one', 'applied');
+      const { body } = await ctx.http().get('/api/v1/tracker/stats').set(user.auth).expect(200);
+      expect(body.responseRate).toBe(0);
     });
   });
 });

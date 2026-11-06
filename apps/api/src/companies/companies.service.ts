@@ -167,6 +167,15 @@ export class CompaniesService {
       }
       const result = await this.memberships.remove(companyId, userId, tx);
       if (result.numDeletedRows === 0n) throw notFound('Member');
+      // Their open booking links stop working too, or someone could still book with them.
+      await tx
+        .updateTable('interviewOffers')
+        .set({ withdrawnAt: new Date() })
+        .where('companyId', '=', companyId)
+        .where('interviewerId', '=', userId)
+        .where('interviewId', 'is', null)
+        .where('withdrawnAt', 'is', null)
+        .execute();
       await tx
         .deleteFrom('availabilityRules')
         .where('companyId', '=', companyId)

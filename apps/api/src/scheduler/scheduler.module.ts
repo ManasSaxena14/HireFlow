@@ -22,5 +22,6 @@ import { SchedulerLinks } from './scheduler-links.js';
     PublicOffersController,
   ],
   providers: [AvailabilityService, InterviewsService, OffersService, SchedulerLinks],
+  exports: [InterviewsService],
 })
 export class SchedulerModule {}

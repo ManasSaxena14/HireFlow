@@ -72,7 +72,11 @@ export const useApplicationInterviews = (cid: string, applicationId: string) =>
   });
 
 export const useMyInterviews = () =>
-  useQuery({ queryKey: ['my-interviews'], queryFn: () => api<MyInterview[]>('/me/interviews') });
+  useQuery({
+    queryKey: ['my-interviews'],
+    queryFn: () => api<MyInterview[]>('/me/interviews'),
+    staleTime: 0,
+  });
 
 export const useBookInterview = (cid: string) =>
   useCompanyMutation(cid, (body: CreateInterviewInput) =>

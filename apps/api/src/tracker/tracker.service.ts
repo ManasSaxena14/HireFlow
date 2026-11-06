@@ -328,8 +328,14 @@ export class TrackerService {
         if (rank >= index) funnel[stage] += 1;
       });
     }
+    // A job that was only saved and then rejected was never applied for, so it does not count.
+    const repliedAfterApplying = [...responded].filter(
+      (id) => (furthest.get(id) ?? -1) >= 0,
+    ).length;
     const responseRate =
-      funnel.applied === 0 ? null : Math.round((responded.size / funnel.applied) * 1000) / 1000;
+      funnel.applied === 0
+        ? null
+        : Math.round((repliedAfterApplying / funnel.applied) * 1000) / 1000;
     return { funnel, responseRate };
   }
 

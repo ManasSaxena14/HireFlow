@@ -128,7 +128,7 @@ export type AssignInterviewer = z.infer<typeof assignInterviewerSchema>;
 /** The text fields of the apply form. The resume file is checked apart from these. */
 export const applyToJobSchema = z.object({
   fullName: z.string().trim().min(2, 'Enter your full name').max(120),
-  email: z.string().trim().toLowerCase().pipe(z.email('Enter a valid email')),
+  email: z.string().trim().toLowerCase().pipe(z.email('Enter a valid email').max(254)),
   phone: optionalText(40),
   source: optionalText(100),
 });

@@ -1,5 +1,6 @@
 export const MAIL_QUEUE = 'mail';
 export const REMINDERS_SCAN_QUEUE = 'reminders-scan';
+export const CLEANUP_QUEUE = 'cleanup';
 
 export type MailMessage =
   | { template: 'verify-email'; to: string; dedupeKey: string; name: string; link: string }
