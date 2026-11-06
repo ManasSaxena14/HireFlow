@@ -13,3 +13,6 @@ The plan left a few things open. These are the choices we made.
 - **Calendar links in emails do not run out.** Candidates may add the interview at any time, and the file only holds the time, the job and the meeting link. Team notes never go in a calendar file.
 - **One interviewer per interview.** Free times can be checked for up to five people, as the plan says. Panel interviews are left for later, also as the plan says.
 - **Members with interviews coming up cannot be removed.** Otherwise a candidate could be waiting for someone who has left. Please cancel or change those interviews first.
+- **Rejecting or hiring closes interviews.** Interviews coming up are cancelled and open booking links stop, so nobody gets a reminder for an interview that no longer makes sense. Everyone is told by email.
+- **Deleting a candidate removes their name from notifications.** The interviewer is still told their time is free, but the message does not name the person.
+- **A person being interviewed stays with their interviewer.** They cannot be taken away until the interview is cancelled, or the interviewer's links would stop working.

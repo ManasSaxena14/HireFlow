@@ -27,6 +27,14 @@ To undo the last database change:
 pnpm db:rollback
 ```
 
+## Settings the app refuses in production
+
+The API will not start in production if `COOKIE_SECURE` is not `true`, or if a secret still has the example value. The two secrets must always be different.
+
+## Old rows
+
+Each night at 03:00 the worker removes login tokens and email links that ran out over a day ago, and email delivery rows older than 30 days. The log line is `old rows removed`.
+
 ## Checking the app
 
 - `GET /api/v1/health` answers if the app is running.
@@ -36,7 +44,7 @@ pnpm db:rollback
 
 **Emails are not arriving.** Look for `mail job done` in the worker log. A failed email is tried five more times, with longer waits. To see stuck emails, look in `pgboss.job` where `name = 'mail'`.
 
-**Reminders are late.** The worker checks for reminders once a minute. If the worker was down, reminders go out when it comes back, once each.
+**Reminders are late.** The worker checks for reminders once a minute. If the worker was down, reminders go out when it comes back, once each. Reminders for an interview that has already started are skipped.
 
 **Someone keeps getting signed out.** Look for `auth.refresh_reuse_detected` in `audit_logs`. It means an old login token was used, which can mean a stolen cookie.
 

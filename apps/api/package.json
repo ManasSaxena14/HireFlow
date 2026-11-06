@@ -9,7 +9,7 @@
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "migrate": "node --env-file-if-exists=../../.env node_modules/node-pg-migrate/bin/node-pg-migrate.js --migrations-dir migrations"
+    "migrate": "node --env-file-if-exists=../../.env node_modules/node-pg-migrate/bin/node-pg-migrate.js --migrations-dir migrations --ignore-pattern \"(\\\\..*)|(.* [0-9]+\\\\..*)\""
   },
   "dependencies": {
     "@hireflow/shared": "workspace:*",
@@ -25,7 +25,7 @@
     "luxon": "^3.7.2",
     "nestjs-pino": "^5.3.1",
     "pg": "^8.23.1",
-    "pg-boss": "^12.38.0",
+    "pg-boss": "^12.38.1",
     "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",

@@ -20,11 +20,15 @@ export async function resetTestDb(connectionString) {
   await admin.query(`CREATE DATABASE "${name}"`);
   await admin.end();
 
-  execFileSync('node_modules/.bin/node-pg-migrate', ['up', '--migrations-dir', 'migrations'], {
-    cwd: apiRoot,
-    env: { ...process.env, DATABASE_URL: url.toString() },
-    stdio: 'pipe',
-  });
+  execFileSync(
+    'node_modules/.bin/node-pg-migrate',
+    ['up', '--migrations-dir', 'migrations', '--ignore-pattern', '(\\..*)|(.* [0-9]+\\..*)'],
+    {
+      cwd: apiRoot,
+      env: { ...process.env, DATABASE_URL: url.toString() },
+      stdio: 'pipe',
+    },
+  );
 }
 
 // Run this before the browser tests, because Playwright starts the servers first.

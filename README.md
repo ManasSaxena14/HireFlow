@@ -127,9 +127,9 @@ scripts/      Helpers for the local database and for starting the app
 
 ## Known limits
 
+- Keep this folder out of iCloud or other sync tools. They can make copies like `ats 2.ts` while you work.
 - Rate limits are kept in memory, so they work per API server. This is fine for one server. More servers would need a shared store.
 - If the worker crashes right after the mail server accepts an email, that one email could be sent twice. No mail client can fully stop this.
 - Weekly numbers use UTC weeks, not your own time zone.
 - Resumes are saved on the server's disk. A host with a disk that is wiped on restart needs a lasting folder for `UPLOAD_DIR`, or a new storage class.
 - An interview has one interviewer. Free times can be checked for up to five people, but panel interviews are not built yet.
-- If you reject someone who has an interview coming up, the interview stays booked until you cancel it.
