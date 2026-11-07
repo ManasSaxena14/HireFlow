@@ -147,6 +147,20 @@ To apply, send a multipart form with `fullName`, `email`, optional `phone` and `
 | PATCH  | `/alerts/:id`         | User | Change an alert, or pause it with `active: false`                                   |
 | DELETE | `/alerts/:id`         | User | Delete an alert                                                                     |
 
+## Resumes
+
+| Method | Path                   | Who  | What it does                                                                   |
+| ------ | ---------------------- | ---- | ------------------------------------------------------------------------------ |
+| GET    | `/resumes`             | User | Your resumes, without their text                                               |
+| POST   | `/resumes`             | User | Upload as a multipart form with a `resume` file and optional `label`           |
+| GET    | `/resumes/:id`         | User | One resume. `status` is `pending`, `ready` or `failed`                         |
+| DELETE | `/resumes/:id`         | User | Deletes the resume, its checks and the file                                    |
+| GET    | `/resumes/:id/file`    | User | A short-lived download link                                                    |
+| POST   | `/resumes/:id/match`   | User | Body has `jobDescription` (with optional `jobLabel`) or `trackedApplicationId` |
+| GET    | `/resumes/:id/matches` | User | The last 20 checks                                                             |
+
+A check gives `{ score, matched, missing, sectionsFound, suggestions, breakdown }`. While a resume is being read, or if it could not be read, a check gives a `CONFLICT`.
+
 ## Notifications
 
 | Method | Path                      | What it does                       |

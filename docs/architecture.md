@@ -12,12 +12,13 @@ flowchart TB
   end
   subgraph API[NestJS API]
     G[Checks: login, rate limit, company, role]
-    M[Modules: auth, users, companies, tracker, feed, notifications]
+    M[Modules: auth, users, companies, tracker, feed, resumes, notifications]
     G --> M
   end
   subgraph Worker
     S[reminders-scan, every minute]
     F[feed-fetch, alerts-match, alerts-digest]
+    P[resume-parse]
     E[mail]
   end
   DB[(PostgreSQL: data and job queue)]
@@ -28,6 +29,7 @@ flowchart TB
   M --> DB
   S --> DB
   F --> DB
+  P --> DB
   F -- reads --> JB[Public job boards]
   E --> DB
   E --> SMTP
@@ -94,3 +96,13 @@ Jobs are stored in PostgreSQL using pg-boss. The big benefit is that a job can b
 - **No duplicates.** A job is saved once for its `(source_id, external_id)`, and `job_hash` keeps one copy when two sources list the same job. The hash is title, company and place, the same one the tracker uses, so the feed can tell if a job is already on your board.
 - **`alerts-match` runs after each fetch.** It looks at jobs with no `matched_at`, adds a delivery row for each alert that fits, and sets `matched_at` in one transaction. The delivery row's primary key is what makes sure an alert has a job only once.
 - **Sending.** Instant alerts go right after matching. `alerts-digest` runs every 15 minutes, sends daily alerts in the hour after 8 am on each person's clock, and picks up any instant ones left waiting. For each person, the email job, the notification and the delivered marks are saved in one transaction, so a retry cannot send a job twice.
+
+## How resumes and the match score work
+
+- **Upload.** The API checks the bytes of the file, saves it under a random name, and adds a `resume-parse` job in the same transaction as the database rows.
+- **Reading.** The worker opens the file on a separate thread with a time and memory limit, then saves the text and skills. Resume text never goes in the logs, and it is not sent back by the API.
+- **The score** is in `packages/shared/src/matcher.ts`. It has no database code, clock or random value, so the same resume and job always get the same score: `round(100 * (0.65 * coverage + 0.25 * keywordSim + 0.10 * sections))`.
+- **Coverage** is the share of the job's skills found in the resume. Skills under headings like Requirements count double.
+- **keywordSim** compares the important words of the two texts, using TF-IDF and cosine similarity.
+- **Sections** is the share of the headings experience, education, skills and projects found in the resume.
+- **Honest advice.** A missing required skill gives one suggestion: add it only if you have real experience with it.
