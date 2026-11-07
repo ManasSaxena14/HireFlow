@@ -15,6 +15,7 @@ import { AppThrottlerGuard, isAuthLimited } from './common/rate-limit.js';
 import { CompaniesModule } from './companies/companies.module.js';
 import { ConfigService } from './config/config.service.js';
 import { Database } from './database/database.js';
+import { FeedModule } from './feed/feed.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MailQueue, PgBossMailQueue } from './queue/mail-queue.js';
 import { NotificationsController } from './notifications/notifications.controller.js';
@@ -97,6 +98,7 @@ const ONE_MINUTE_MS = 60_000;
     TrackerModule,
     AtsModule,
     SchedulerModule,
+    FeedModule,
   ],
   controllers: [UsersController, NotificationsController, HealthController],
   providers: [

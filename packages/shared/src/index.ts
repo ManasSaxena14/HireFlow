@@ -4,6 +4,7 @@ export * from './common.js';
 export * from './company.js';
 export * from './enums.js';
 export * from './errors.js';
+export * from './feed.js';
 export * from './mail.js';
 export * from './scheduler.js';
 export * from './tracker.js';

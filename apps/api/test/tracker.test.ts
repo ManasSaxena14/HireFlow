@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { jobHash } from '../src/tracker/job-hash.js';
+import { jobHash } from '@hireflow/shared/node';
 import { createTestApp, signUp, type TestContext, type TestUser } from './helpers/app.js';
 
 const BASE = '/api/v1/tracker/applications';

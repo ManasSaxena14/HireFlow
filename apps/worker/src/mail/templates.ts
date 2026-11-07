@@ -13,7 +13,12 @@ const escapeHtml = (value: string) =>
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
 
-function layout(heading: string, lines: string[], action: { label: string; href: string }): string {
+function layout(
+  heading: string,
+  lines: string[],
+  action: { label: string; href: string },
+  extraHtml = '',
+): string {
   const paragraphs = lines
     .map(
       (line) =>
@@ -28,6 +33,7 @@ function layout(heading: string, lines: string[], action: { label: string; href:
       <tr><td style="padding:32px">
         <h1 style="margin:0 0 16px;font-size:20px;color:#17191c">${escapeHtml(heading)}</h1>
         ${paragraphs}
+        ${extraHtml}
         <a href="${escapeHtml(action.href)}" style="display:inline-block;margin-top:8px;padding:11px 20px;background:#ff4b32;border-radius:10px;font-size:14px;font-weight:600;color:#17191c;text-decoration:none">${escapeHtml(action.label)}</a>
       </td></tr>
     </table>
@@ -86,8 +92,56 @@ function renderInterview(message: Extract<MailMessage, { template: 'interview' }
   }
 }
 
+function renderJobAlert(message: Extract<MailMessage, { template: 'job-alert' }>): RenderedMail {
+  const shown = message.groups.reduce((total, group) => total + group.jobs.length, 0);
+  const total = shown + message.moreCount;
+  const jobWord = total === 1 ? '1 new job' : `${total} new jobs`;
+  const about = (job: { companyName: string; location: string | null }) =>
+    job.location ? `${job.companyName}, ${job.location}` : job.companyName;
+
+  const subject =
+    message.kind === 'daily' ? `Your daily jobs: ${jobWord}` : `${jobWord} for your alerts`;
+  const lines = [
+    `Hi ${message.name},`,
+    `We found ${jobWord} that ${total === 1 ? 'matches' : 'match'} your alerts.`,
+  ];
+  const more = message.moreCount > 0 ? [`And ${message.moreCount} more on HireFlow.`] : [];
+  const action = { label: 'See all jobs', href: message.link };
+
+  const groupsHtml = message.groups
+    .map((group) => {
+      const jobs = group.jobs
+        .map(
+          (job) =>
+            `<li style="margin:0 0 10px"><a href="${escapeHtml(job.url)}" style="font-size:15px;font-weight:600;color:#17191c">${escapeHtml(job.title)}</a><br><span style="font-size:13px;color:#5b636b">${escapeHtml(about(job))}</span></li>`,
+        )
+        .join('');
+      return `<h2 style="margin:20px 0 10px;font-size:14px;color:#17191c">${escapeHtml(group.alertName)}</h2><ul style="margin:0;padding:0 0 0 18px">${jobs}</ul>`;
+    })
+    .join('');
+  const moreHtml = more
+    .map(
+      (line) => `<p style="margin:0 0 16px;font-size:14px;color:#3a4047">${escapeHtml(line)}</p>`,
+    )
+    .join('');
+
+  const groupsText = message.groups.map((group) =>
+    [
+      group.alertName,
+      ...group.jobs.map((job) => `- ${job.title} (${about(job)}): ${job.url}`),
+    ].join('\n'),
+  );
+  return {
+    subject,
+    text: `${[...lines, ...groupsText, ...more].join('\n\n')}\n\n${action.label}: ${action.href}\n`,
+    html: layout(subject, lines, action, `${groupsHtml}${moreHtml}<div style="height:16px"></div>`),
+  };
+}
+
 export function renderMail(message: MailMessage): RenderedMail {
   switch (message.template) {
+    case 'job-alert':
+      return renderJobAlert(message);
     case 'verify-email':
       return compose(
         'Confirm your email for HireFlow',
