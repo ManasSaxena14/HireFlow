@@ -3,12 +3,14 @@
 import { clsx } from 'clsx';
 import {
   Bell,
+  BellPlus,
   CalendarDays,
   Building2,
   KanbanSquare,
   LogOut,
   type LucideIcon,
   Menu,
+  Search,
   Settings,
   X,
 } from 'lucide-react';
@@ -21,6 +23,8 @@ import { Logo } from './logo';
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/app/tracker', label: 'Job board', icon: KanbanSquare },
+  { href: '/app/feed', label: 'Find jobs', icon: Search },
+  { href: '/app/alerts', label: 'Job alerts', icon: BellPlus },
   { href: '/app/interviews', label: 'Interviews', icon: CalendarDays },
   { href: '/company', label: 'Hiring', icon: Building2 },
   { href: '/app/notifications', label: 'Notifications', icon: Bell },
