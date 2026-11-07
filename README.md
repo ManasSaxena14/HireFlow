@@ -2,7 +2,7 @@
 
 **Two-sided hiring platform.** Job seekers can keep track of every job they apply for. Companies can post jobs and hire the right people.
 
-Right now this project has the job seeker side, the main company side and interview booking. The other parts are still being built. See [What is coming next](#what-is-coming-next).
+Right now this project has the job seeker side, the main company side, interview booking, and a job feed with alerts. The other parts are still being built. See [What is coming next](#what-is-coming-next).
 
 ## What works today
 
@@ -69,6 +69,12 @@ pnpm db:seed
 
 It prints the demo accounts and their password, and it only runs in development.
 
+To fill the job feed, add the public job boards. The worker then reads them every 30 minutes:
+
+```bash
+pnpm feed:sources
+```
+
 - `pnpm db:start` runs a private database from the `.pgdata/` folder on port 5433. To use a different database, change `DATABASE_URL` and skip this step.
 - In `.env`, set both `JWT_` values to long random text. You can make it with `openssl rand -base64 48`.
 - If `SMTP_HOST` is empty, emails are not sent. They are saved as HTML files in `.mail-preview/`, and you can click the links from there.
@@ -119,7 +125,6 @@ scripts/      Helpers for the local database and for starting the app
 
 ## What is coming next
 
-- A job feed and job alerts from public job boards
 - Resume upload with a clear match score
 - A log for interview practice, with smart review dates
 - Hiring numbers for companies

@@ -135,6 +135,18 @@ Interviewers only see the applications given to them, and the jobs those belong 
 
 To apply, send a multipart form with `fullName`, `email`, optional `phone` and `source`, and a `resume` file. The file must be a PDF or DOCX of 5 MB or less. We check the bytes of the file, so a renamed `.exe` is refused. Applying to the same job twice gives a `CONFLICT`.
 
+## Job feed and alerts
+
+| Method | Path                  | Who  | What it does                                                                        |
+| ------ | --------------------- | ---- | ----------------------------------------------------------------------------------- |
+| GET    | `/feed/jobs`          | User | Search jobs. Filters: `q`, `location`, `remote=true`. Newest first                  |
+| GET    | `/feed/jobs/:id`      | User | One job with its full description                                                   |
+| POST   | `/feed/jobs/:id/save` | User | Copies the job to your board as saved. Gives `DUPLICATE_JOB` if it is there already |
+| GET    | `/alerts`             | User | Your alerts                                                                         |
+| POST   | `/alerts`             | User | Add an alert. You can keep up to 20                                                 |
+| PATCH  | `/alerts/:id`         | User | Change an alert, or pause it with `active: false`                                   |
+| DELETE | `/alerts/:id`         | User | Delete an alert                                                                     |
+
 ## Notifications
 
 | Method | Path                      | What it does                       |
