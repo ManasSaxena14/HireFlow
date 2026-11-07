@@ -1,6 +1,14 @@
 export const MAIL_QUEUE = 'mail';
 export const REMINDERS_SCAN_QUEUE = 'reminders-scan';
 export const CLEANUP_QUEUE = 'cleanup';
+export const FEED_FETCH_QUEUE = 'feed-fetch';
+export const ALERTS_MATCH_QUEUE = 'alerts-match';
+export const ALERTS_DIGEST_QUEUE = 'alerts-digest';
+
+export interface JobAlertGroup {
+  alertName: string;
+  jobs: { title: string; companyName: string; location: string | null; url: string }[];
+}
 
 export type MailMessage =
   | { template: 'verify-email'; to: string; dedupeKey: string; name: string; link: string }
@@ -55,5 +63,16 @@ export type MailMessage =
       companyName: string;
       durationMin: number;
       expires: string;
+      link: string;
+    }
+  | {
+      template: 'job-alert';
+      kind: 'instant' | 'daily';
+      to: string;
+      dedupeKey: string;
+      name: string;
+      groups: JobAlertGroup[];
+      /** Jobs left out to keep the email short. They can all be seen on the site. */
+      moreCount: number;
       link: string;
     };

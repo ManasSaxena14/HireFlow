@@ -16,5 +16,7 @@ export async function cleanUp(pool: pg.Pool) {
     emailDeliveries: await remove(
       `DELETE FROM email_deliveries WHERE sent_at < now() - interval '30 days'`,
     ),
+    // A job gone from its source for this long is closed. Its alert rows go with it.
+    feedJobs: await remove(`DELETE FROM feed_jobs WHERE last_seen_at < now() - interval '30 days'`),
   };
 }

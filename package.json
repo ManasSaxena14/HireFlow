@@ -1,6 +1,6 @@
 {
   "name": "hireflow",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Two-sided hiring platform",
   "packageManager": "pnpm@10.34.9",
@@ -23,6 +23,7 @@
     "db:migrate": "pnpm --filter @hireflow/api migrate up",
     "db:rollback": "pnpm --filter @hireflow/api migrate down",
     "db:seed": "node --env-file-if-exists=.env scripts/seed-demo.mjs",
+    "feed:sources": "node --env-file-if-exists=.env scripts/add-feed-sources.mjs",
     "prepare": "husky"
   },
   "lint-staged": {

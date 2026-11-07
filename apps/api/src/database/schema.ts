@@ -1,5 +1,6 @@
 import type { ColumnType, Generated, Insertable } from 'kysely';
 import type {
+  AlertFrequency,
   InterviewStatus,
   JobStatus,
   MembershipRole,
@@ -283,6 +284,55 @@ export interface InterviewOffersTable {
   createdAt: Generated<Date>;
 }
 
+export interface FeedSourcesTable {
+  id: Generated<string>;
+  name: string;
+  kind: string;
+  config: ColumnType<unknown, string | undefined, string>;
+  enabled: Generated<boolean>;
+  lastRunAt: Date | null;
+  lastStatus: string | null;
+  lastError: string | null;
+}
+
+export interface FeedJobsTable {
+  id: Generated<string>;
+  sourceId: string;
+  externalId: string;
+  title: string;
+  companyName: string;
+  location: string | null;
+  remote: Generated<boolean>;
+  url: string;
+  description: string | null;
+  skills: Generated<string[]>;
+  postedAt: Date | null;
+  jobHash: string;
+  lastSeenAt: Generated<Date>;
+  matchedAt: Date | null;
+  createdAt: Generated<Date>;
+}
+
+export interface JobAlertsTable {
+  id: Generated<string>;
+  userId: string;
+  name: string;
+  keywords: string[];
+  locations: Generated<string[]>;
+  remoteOnly: Generated<boolean>;
+  channel: Generated<string>;
+  frequency: Generated<AlertFrequency>;
+  active: Generated<boolean>;
+  lastSentAt: Date | null;
+  createdAt: Generated<Date>;
+}
+
+export interface AlertDeliveriesTable {
+  alertId: string;
+  feedJobId: string;
+  deliveredAt: Date | null;
+}
+
 export interface DB {
   users: UsersTable;
   companies: CompaniesTable;
@@ -308,6 +358,10 @@ export interface DB {
   availabilityBlocks: AvailabilityBlocksTable;
   interviews: InterviewsTable;
   interviewOffers: InterviewOffersTable;
+  feedSources: FeedSourcesTable;
+  feedJobs: FeedJobsTable;
+  jobAlerts: JobAlertsTable;
+  alertDeliveries: AlertDeliveriesTable;
 }
 
 export type NewAuditLog = Insertable<AuditLogsTable>;

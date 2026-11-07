@@ -1,0 +1,25 @@
+[
+  {
+    "id": "6f1c2c1e-0000-4000-8000-000000000001",
+    "text": "Data Analyst",
+    "hostedUrl": "https://jobs.lever.co/larkspur/6f1c2c1e-0000-4000-8000-000000000001",
+    "applyUrl": "https://jobs.lever.co/larkspur/6f1c2c1e-0000-4000-8000-000000000001/apply",
+    "categories": { "commitment": "Full-time", "location": "Berlin, Germany", "team": "Data" },
+    "workplaceType": "remote",
+    "createdAt": 1793000000000,
+    "description": "<div>Work with data.</div>",
+    "lists": [
+      { "text": "What you will do", "content": "<li>Write SQL</li><li>Share findings</li>" }
+    ],
+    "additional": "<div>We welcome everyone.</div>"
+  },
+  {
+    "id": "6f1c2c1e-0000-4000-8000-000000000002",
+    "text": "Senior Backend Engineer",
+    "hostedUrl": "https://jobs.lever.co/larkspur/6f1c2c1e-0000-4000-8000-000000000002",
+    "categories": { "location": "Remote, India" },
+    "workplaceType": "unspecified",
+    "createdAt": 1793000000000,
+    "description": "<div>The same job as on the other board.</div>"
+  }
+]

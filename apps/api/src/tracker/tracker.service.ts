@@ -17,7 +17,7 @@ import { DomainError, notFound } from '../common/domain-error.js';
 import { ConfigService } from '../config/config.service.js';
 import { Database, type Executor, isUniqueViolation, type Tx } from '../database/database.js';
 import type { TrackedApplicationsTable } from '../database/schema.js';
-import { jobHash } from './job-hash.js';
+import { jobHash } from '@hireflow/shared/node';
 
 type Row = Selectable<TrackedApplicationsTable>;
 

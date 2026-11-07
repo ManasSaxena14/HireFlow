@@ -15,3 +15,5 @@ export function loadEnvFile(start = process.cwd()): void {
     dir = parent;
   }
 }
+
+export * from './job-hash.js';
