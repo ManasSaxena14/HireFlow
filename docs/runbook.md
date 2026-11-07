@@ -27,6 +27,10 @@ To undo the last database change:
 pnpm db:rollback
 ```
 
+## Resume reading
+
+The worker reads the files the API saves, so both need the same `UPLOAD_DIR`. `pnpm start` handles this. A resume stuck on "We are reading your resume" usually means the worker is not running. Log lines are `resume read` and `could not read a resume`, and they never hold resume text.
+
 ## Job sources
 
 Add the starting list once, after the first release. It is safe to run again:
