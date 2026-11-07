@@ -566,7 +566,7 @@ function FooterLink({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-const SOON = ['Job alerts', 'Resume match', 'Interview practice'];
+const SOON = ['Resume match', 'Interview practice'];
 
 function Footer() {
   const word = 'HireFlow'.split('');
