@@ -27,13 +27,30 @@ To undo the last database change:
 pnpm db:rollback
 ```
 
+## Job sources
+
+Add the starting list once, after the first release. It is safe to run again:
+
+```bash
+pnpm feed:sources
+```
+
+To see how each source is doing, or turn one off:
+
+```sql
+SELECT name, enabled, last_run_at, last_status, last_error FROM feed_sources ORDER BY name;
+UPDATE feed_sources SET enabled = false WHERE name = 'Stripe';
+```
+
+A source marked `failed` does not stop the others, and it is tried again 30 minutes later. Turning a source off hides its jobs. Before adding a source, check that its terms allow this use.
+
 ## Settings the app refuses in production
 
 The API will not start in production if `COOKIE_SECURE` is not `true`, or if a secret still has the example value. The two secrets must always be different.
 
 ## Old rows
 
-Each night at 03:00 the worker removes login tokens and email links that ran out over a day ago, and email delivery rows older than 30 days. The log line is `old rows removed`.
+Each night at 03:00 the worker removes login tokens and email links that ran out over a day ago, email delivery rows older than 30 days, and jobs not seen at their source for 30 days. The log line is `old rows removed`.
 
 ## Checking the app
 

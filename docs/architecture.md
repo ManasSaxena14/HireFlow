@@ -12,11 +12,12 @@ flowchart TB
   end
   subgraph API[NestJS API]
     G[Checks: login, rate limit, company, role]
-    M[Modules: auth, users, companies, tracker, notifications]
+    M[Modules: auth, users, companies, tracker, feed, notifications]
     G --> M
   end
   subgraph Worker
     S[reminders-scan, every minute]
+    F[feed-fetch, alerts-match, alerts-digest]
     E[mail]
   end
   DB[(PostgreSQL: data and job queue)]
@@ -26,6 +27,8 @@ flowchart TB
   N -- /api/v1 --> API
   M --> DB
   S --> DB
+  F --> DB
+  F -- reads --> JB[Public job boards]
   E --> DB
   E --> SMTP
 ```
@@ -83,3 +86,11 @@ Jobs are stored in PostgreSQL using pg-boss. The big benefit is that a job can b
 - **Booking in one transaction:** the interview, the interviewer's access to the candidate, the reminders, the emails and the audit entry are saved together.
 - **Reminders:** each interview gets one row a day before and one an hour before. The worker turns a row into a notification and an email for the interviewer, and an email for the candidate. Moving or cancelling removes the rows that were not sent.
 - **Candidates have no account**, so a signed link lets them book. The offer row holds the times. It can be booked only once, because the save only works while the offer has no interview on it. The link is hidden from the logs and the page tells search engines to stay away.
+
+## How the job feed and alerts work
+
+- **One shape for every source.** Each source has an adapter in `apps/worker/src/feed/`, which turns its answer into a `NormalJob`. To add a source, write an adapter and list it in `adapters.ts`.
+- **`feed-fetch` runs every 30 minutes.** It reads enabled sources one by one, and each gets up to three tries. A source that fails is marked `failed` and the others carry on. A worker restart does not call a source fetched in the last 25 minutes.
+- **No duplicates.** A job is saved once for its `(source_id, external_id)`, and `job_hash` keeps one copy when two sources list the same job. The hash is title, company and place, the same one the tracker uses, so the feed can tell if a job is already on your board.
+- **`alerts-match` runs after each fetch.** It looks at jobs with no `matched_at`, adds a delivery row for each alert that fits, and sets `matched_at` in one transaction. The delivery row's primary key is what makes sure an alert has a job only once.
+- **Sending.** Instant alerts go right after matching. `alerts-digest` runs every 15 minutes, sends daily alerts in the hour after 8 am on each person's clock, and picks up any instant ones left waiting. For each person, the email job, the notification and the delivered marks are saved in one transaction, so a retry cannot send a job twice.
