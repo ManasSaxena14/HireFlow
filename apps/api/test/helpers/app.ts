@@ -10,6 +10,11 @@ import { MailQueue } from '../../src/queue/mail-queue.js';
 
 export class FakeMailQueue extends MailQueue {
   readonly sent: MailMessage[] = [];
+  readonly jobs: { queue: string; data: object }[] = [];
+
+  async enqueueJob(queue: string, data: object): Promise<void> {
+    this.jobs.push({ queue, data });
+  }
 
   async enqueue(message: MailMessage): Promise<void> {
     this.sent.push(message);

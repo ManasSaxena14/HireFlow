@@ -19,6 +19,7 @@ import { FeedModule } from './feed/feed.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MailQueue, PgBossMailQueue } from './queue/mail-queue.js';
 import { NotificationsController } from './notifications/notifications.controller.js';
+import { ResumesModule } from './resumes/resumes.module.js';
 import { SchedulerModule } from './scheduler/scheduler.module.js';
 import { TrackerModule } from './tracker/tracker.module.js';
 import { UsersController } from './users/users.controller.js';
@@ -99,6 +100,7 @@ const ONE_MINUTE_MS = 60_000;
     AtsModule,
     SchedulerModule,
     FeedModule,
+    ResumesModule,
   ],
   controllers: [UsersController, NotificationsController, HealthController],
   providers: [

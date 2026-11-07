@@ -4,6 +4,7 @@ export const CLEANUP_QUEUE = 'cleanup';
 export const FEED_FETCH_QUEUE = 'feed-fetch';
 export const ALERTS_MATCH_QUEUE = 'alerts-match';
 export const ALERTS_DIGEST_QUEUE = 'alerts-digest';
+export const RESUME_PARSE_QUEUE = 'resume-parse';
 
 export interface JobAlertGroup {
   alertName: string;

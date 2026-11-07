@@ -6,5 +6,6 @@ export * from './enums.js';
 export * from './errors.js';
 export * from './feed.js';
 export * from './mail.js';
+export * from './resume.js';
 export * from './scheduler.js';
 export * from './tracker.js';

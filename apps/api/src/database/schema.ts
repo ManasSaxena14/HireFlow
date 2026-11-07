@@ -5,9 +5,11 @@ import type {
   JobStatus,
   MembershipRole,
   Recommendation,
+  ResumeStatus,
   StageKind,
   TrackerStatus,
 } from '@hireflow/shared';
+import type { MatchBreakdown } from '@hireflow/shared/matcher';
 
 export interface UsersTable {
   id: Generated<string>;
@@ -333,6 +335,32 @@ export interface AlertDeliveriesTable {
   deliveredAt: Date | null;
 }
 
+export interface ResumesTable {
+  id: Generated<string>;
+  userId: string;
+  fileId: string;
+  label: string;
+  status: Generated<ResumeStatus>;
+  parseError: string | null;
+  parsedText: string | null;
+  parsedSkills: Generated<string[]>;
+  createdAt: Generated<Date>;
+}
+
+export interface ResumeMatchesTable {
+  id: Generated<string>;
+  resumeId: string;
+  trackedApplicationId: string | null;
+  jobRef: string | null;
+  score: ColumnType<string, number, number>;
+  matched: string[];
+  missing: string[];
+  sectionsFound: Generated<string[]>;
+  suggestions: Generated<string[]>;
+  breakdown: ColumnType<MatchBreakdown, string, string>;
+  createdAt: Generated<Date>;
+}
+
 export interface DB {
   users: UsersTable;
   companies: CompaniesTable;
@@ -362,6 +390,8 @@ export interface DB {
   feedJobs: FeedJobsTable;
   jobAlerts: JobAlertsTable;
   alertDeliveries: AlertDeliveriesTable;
+  resumes: ResumesTable;
+  resumeMatches: ResumeMatchesTable;
 }
 
 export type NewAuditLog = Insertable<AuditLogsTable>;

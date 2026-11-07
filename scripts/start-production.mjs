@@ -1,9 +1,13 @@
 // Runs the API and the worker together, for free hosting that allows one process.
 // If one stops, this stops the other too, so the host restarts both.
 import { spawn } from 'node:child_process';
+import { resolve } from 'node:path';
+
+// Both need the same folder, because the API saves resumes and the worker reads them.
+const env = { ...process.env, UPLOAD_DIR: resolve(process.env.UPLOAD_DIR ?? 'uploads') };
 
 const children = ['apps/worker/dist/main.js', 'apps/api/dist/main.js'].map((entry) =>
-  spawn(process.execPath, [entry], { stdio: 'inherit' }),
+  spawn(process.execPath, [entry], { stdio: 'inherit', env }),
 );
 
 const stopAll = (code) => {
