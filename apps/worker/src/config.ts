@@ -11,6 +11,7 @@ const envSchema = z
     SMTP_USER: z.string().optional(),
     SMTP_PASS: z.string().optional(),
     MAIL_FROM: z.string().min(1),
+    UPLOAD_DIR: z.string().min(1).default('uploads'),
   })
   .refine((env) => env.NODE_ENV !== 'production' || Boolean(env.SMTP_HOST), {
     path: ['SMTP_HOST'],

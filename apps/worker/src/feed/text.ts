@@ -15,7 +15,7 @@ const NAMED: Record<string, string> = {
   bull: '•',
 };
 
-const decodeEntities = (value: string) =>
+export const decodeEntities = (value: string) =>
   value.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, code: string) => {
     if (code.startsWith('#')) {
       const hex = code[1]?.toLowerCase() === 'x';

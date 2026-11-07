@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   ALERTS_DIGEST_QUEUE,
@@ -7,6 +9,7 @@ import {
   MAIL_QUEUE,
   type MailMessage,
   REMINDERS_SCAN_QUEUE,
+  RESUME_PARSE_QUEUE,
 } from '@hireflow/shared';
 import { loadEnvFile } from '@hireflow/shared/node';
 import pg from 'pg';
@@ -22,6 +25,8 @@ import { createFeedHttp } from './feed/http.js';
 import { deliverMail } from './mail/deliver.js';
 import { type MailSender, PreviewSender, SmtpSender } from './mail/sender.js';
 import { type EnqueueMail, scanReminders } from './reminders/scan.js';
+import { extractInThread } from './resumes/extract-in-thread.js';
+import { markResumeFailed, parseResume, READ_FAILED } from './resumes/parse.js';
 
 loadEnvFile();
 const env = loadConfig();
@@ -69,6 +74,35 @@ await boss.schedule(CLEANUP_QUEUE, '0 3 * * *');
 await boss.work(CLEANUP_QUEUE, async () => {
   log.info(await cleanUp(pool), 'old rows removed');
 });
+
+// A relative folder means the one inside apps/api, where the API saves files in development.
+const uploadRoot = resolve(fileURLToPath(new URL('../../api/', import.meta.url)), env.UPLOAD_DIR);
+
+const RESUME_RETRIES = 2;
+await boss.createQueue(RESUME_PARSE_QUEUE, { retryLimit: RESUME_RETRIES, retryDelay: 15 });
+await boss.work<{ resumeId: string }>(
+  RESUME_PARSE_QUEUE,
+  { includeMetadata: true },
+  async ([job]) => {
+    if (!job) return;
+    try {
+      const outcome = await parseResume(
+        pool,
+        (key) => readFile(join(uploadRoot, key)),
+        extractInThread,
+        job.data.resumeId,
+      );
+      // Resume text must never reach the logs, so only the id and result are written.
+      log.info({ jobId: job.id, outcome }, 'resume read');
+    } catch (error) {
+      if (job.retryCount >= RESUME_RETRIES) {
+        await markResumeFailed(pool, job.data.resumeId, READ_FAILED);
+      }
+      log.warn({ jobId: job.id, try: job.retryCount + 1 }, 'could not read a resume');
+      throw error;
+    }
+  },
+);
 
 const feedHttp = createFeedHttp();
 
