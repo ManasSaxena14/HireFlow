@@ -133,7 +133,7 @@ Interviewers only see the applications given to them, and the jobs those belong 
 | POST   | `/public/companies/:slug/jobs/:jobSlug/apply` | Public | Form upload. See below. Limited to 10 a minute     |
 | GET    | `/files/:id?expires=&signature=`              | Public | Downloads a file using a link from the route above |
 
-To apply, send a multipart form with `fullName`, `email`, optional `phone` and `source`, and a `resume` file. The file must be a PDF or DOCX of 5 MB or less. We check the bytes of the file, so a renamed `.exe` is refused. Applying to the same job twice gives a `CONFLICT`.
+To apply, send a multipart form with `fullName`, `email`, optional `phone` and `source`, and a `resume` file. If the request is signed in as a confirmed account with the same email, the application also appears on that person's job board, and the answer has `onYourBoard: true`. From then on, every move the company makes changes that card too. The file must be a PDF or DOCX of 5 MB or less. We check the bytes of the file, so a renamed `.exe` is refused. Applying to the same job twice gives a `CONFLICT`.
 
 ## Job feed and alerts
 
