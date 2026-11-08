@@ -1,5 +1,6 @@
 import {
   Body,
+  Header,
   Controller,
   Get,
   Param,
@@ -22,12 +23,16 @@ import { ZodPipe } from '../common/zod.pipe.js';
 import type { UploadedFile as UploadedResume } from '../files/resume-check.js';
 import { CareersService } from './careers.service.js';
 
+/** Public pages are the same for everyone, so browsers and proxies may keep them for a minute. */
+const PUBLIC_CACHE = 'public, max-age=60';
+
 @Controller('public/companies/:slug/jobs')
 @Public()
 export class CareersController {
   constructor(private readonly careers: CareersService) {}
 
   @Get()
+  @Header('Cache-Control', PUBLIC_CACHE)
   list(
     @Param('slug') slug: string,
     @Query(new ZodPipe(paginationSchema)) query: z.infer<typeof paginationSchema>,
@@ -36,6 +41,7 @@ export class CareersController {
   }
 
   @Get(':jobSlug')
+  @Header('Cache-Control', PUBLIC_CACHE)
   get(@Param('slug') slug: string, @Param('jobSlug') jobSlug: string) {
     return this.careers.getJob(slug, jobSlug);
   }

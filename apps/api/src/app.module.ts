@@ -7,6 +7,7 @@ import { LoggerModule } from 'nestjs-pino';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { ACCESS_TOKEN_TTL_SECONDS } from './auth/tokens.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
+import { AuditLogsModule } from './audit/audit-logs.module.js';
 import { AtsModule } from './ats/ats.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
@@ -105,6 +106,7 @@ const ONE_MINUTE_MS = 60_000;
     ResumesModule,
     PrepModule,
     AnalyticsModule,
+    AuditLogsModule,
   ],
   controllers: [UsersController, NotificationsController, HealthController],
   providers: [
