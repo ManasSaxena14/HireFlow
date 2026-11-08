@@ -2,6 +2,7 @@
 
 import type { FunnelReport, SourcesReport, TimeToHireReport } from '@hireflow/shared';
 import { useQuery } from '@tanstack/react-query';
+import { livePoll, POLL } from './live';
 import { api } from './api';
 
 export interface AnalyticsFilters {
@@ -21,6 +22,7 @@ const useReport = <T>(cid: string, name: string, filters: AnalyticsFilters) =>
     queryKey: ['ats', cid, 'analytics', name, filters],
     queryFn: () => api<T>(`/companies/${cid}/analytics/${name}?${query(filters)}`),
     placeholderData: (previous) => previous,
+    refetchInterval: livePoll(POLL.numbers),
   });
 
 export const useFunnel = (cid: string, filters: AnalyticsFilters) =>

@@ -242,6 +242,12 @@ export function ApplicationDetails({
         {data.title}
       </h1>
       <p className="mt-1.5 text-lg text-muted">{data.companyName}</p>
+      {data.linked && (
+        <p className="mt-3 flex items-center gap-2 text-sm text-muted">
+          <span aria-hidden className="size-2 shrink-0 rounded-full bg-accent" />
+          This card follows {data.companyName}&apos;s hiring on HireFlow, so it moves by itself.
+        </p>
+      )}
 
       <div role="group" aria-label="Status" className="mt-5 flex flex-wrap gap-1.5">
         {TRACKER_STATUSES.map((status) => {

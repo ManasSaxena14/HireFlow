@@ -17,11 +17,12 @@ import type { AtsApplication, PipelineStage } from '@hireflow/shared';
 import { clsx } from 'clsx';
 import { GripVertical, Star } from 'lucide-react';
 import Link from 'next/link';
-import { type CSSProperties, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { useCardFlights } from '@/components/tracker/use-card-flights';
 import { useToast } from '@/components/ui/toast';
 import { KIND_COLORS } from '@/lib/ats';
 import { avatarColor, timeAgo } from '@/lib/format';
+import { setBoardBusy } from '@/lib/live';
 
 function Avatar({ name }: { name: string }) {
   return (
@@ -246,6 +247,12 @@ export function PipelineBoard({
   }, [stages, applications]);
 
   const active = applications.find((application) => application.id === activeId);
+
+  // Pause the live refresh while a card is held, so nothing jumps in the person's hand.
+  useEffect(() => {
+    setBoardBusy(activeId !== null);
+    return () => setBoardBusy(false);
+  }, [activeId]);
 
   const handleDragEnd = ({ active: dragged, over }: DragEndEvent) => {
     setActiveId(null);

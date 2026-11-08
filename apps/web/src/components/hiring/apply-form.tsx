@@ -4,11 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type ApplyToJobInput, applyToJobSchema, MAX_RESUME_BYTES } from '@hireflow/shared';
 import { clsx } from 'clsx';
 import { CircleCheck, FileUp, X } from 'lucide-react';
+import Link from 'next/link';
 import { type ChangeEvent, type DragEvent, useId, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { FormError, TextField } from '@/components/ui/field';
 import { api, ApiError } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { applyServerErrors } from '@/lib/forms';
 
 function resumeProblem(file: File): string | null {
@@ -33,6 +35,8 @@ export function ApplyForm({
   const [dragging, setDragging] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [onYourBoard, setOnYourBoard] = useState(false);
+  const { status, restore } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
   const {
@@ -71,11 +75,14 @@ export function ApplyForm({
     if (values.phone) body.set('phone', values.phone);
     body.set('resume', file);
     try {
-      await api(`/public/companies/${companySlug}/jobs/${jobSlug}/apply`, {
-        method: 'POST',
-        body,
-        auth: false,
-      });
+      // Someone who is signed in gets this application on their own job board too. The login
+      // is only in memory, so on this public page it is looked up now, once, when they apply.
+      if (status !== 'authenticated') await restore();
+      const result = await api<{ onYourBoard?: boolean }>(
+        `/public/companies/${companySlug}/jobs/${jobSlug}/apply`,
+        { method: 'POST', body, auth: false },
+      );
+      setOnYourBoard(Boolean(result.onYourBoard));
       setDone(true);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -99,6 +106,18 @@ export function ApplyForm({
         <p className="mx-auto mt-3 max-w-sm text-[15px] leading-relaxed text-muted">
           {companyName} got your application for {jobTitle}. We also sent you an email.
         </p>
+        {onYourBoard && (
+          <p className="mx-auto mt-3 max-w-sm text-[15px] leading-relaxed text-muted">
+            It is on your job board too, and it will move there by itself as {companyName} goes
+            through their hiring.{' '}
+            <Link
+              href="/app/tracker"
+              className="font-semibold text-fg underline underline-offset-4"
+            >
+              Open my job board
+            </Link>
+          </p>
+        )}
       </div>
     );
   }
@@ -184,6 +203,10 @@ export function ApplyForm({
       <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>
         Send my application
       </Button>
+      <p className="text-center text-[13px] text-muted">
+        Have a HireFlow account? Use its email, and this application also appears on your job board
+        and moves there by itself.
+      </p>
     </form>
   );
 }

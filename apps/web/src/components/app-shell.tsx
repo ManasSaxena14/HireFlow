@@ -21,6 +21,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useNotifications } from '@/lib/tracker';
+import { LiveUpdates } from './live-updates';
 import { Logo } from './logo';
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
@@ -132,6 +133,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-dvh lg:grid lg:h-dvh lg:grid-cols-[272px_minmax(0,1fr)]">
+      <LiveUpdates />
       <aside className="hidden h-dvh flex-col border-r border-line bg-sunken p-4 lg:flex">
         <Link href="/app" className="mb-8 px-2 pt-2 text-2xl">
           <Logo />

@@ -17,9 +17,10 @@ import {
 import { TRACKER_STATUSES, type TrackedApplication, type TrackerStatus } from '@hireflow/shared';
 import { clsx } from 'clsx';
 import { GripVertical, MapPin } from 'lucide-react';
-import { type CSSProperties, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '@/components/ui/toast';
 import { avatarColor, timeAgo } from '@/lib/format';
+import { setBoardBusy } from '@/lib/live';
 import { STATUS_COLORS, STATUS_LABELS } from '@/lib/tracker';
 import { useCardFlights } from './use-card-flights';
 
@@ -113,8 +114,17 @@ function Card({
       </div>
       <CardExtras application={application} />
       <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-2.5">
-        <span className="text-xs whitespace-nowrap text-subtle">
+        <span className="flex min-w-0 items-center gap-2 text-xs whitespace-nowrap text-subtle">
           {timeAgo(application.updatedAt)}
+          {application.linked && (
+            <span
+              title="This card moves by itself as the company's hiring goes on"
+              className="inline-flex items-center gap-1 rounded-full bg-overlay px-2 py-0.5 font-semibold text-fg"
+            >
+              <span aria-hidden className="size-1.5 rounded-full bg-accent" />
+              Live
+            </span>
+          )}
         </span>
         <label className="min-w-0">
           <span className="sr-only">Move {application.title} to</span>
@@ -240,6 +250,12 @@ export function KanbanBoard({
   }, [applications]);
 
   const active = applications.find((application) => application.id === activeId);
+
+  // Pause the live refresh while a card is held, so nothing jumps in the person's hand.
+  useEffect(() => {
+    setBoardBusy(activeId !== null);
+    return () => setBoardBusy(false);
+  }, [activeId]);
 
   const handleDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id));
   const handleDragEnd = ({ active: dragged, over }: DragEndEvent) => {
