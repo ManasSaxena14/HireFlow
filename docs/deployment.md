@@ -24,6 +24,8 @@ Free web services sleep after about 15 minutes with no visits, and the first vis
 - **Safe with a sleeping database.** Free databases close idle links and sleep too. A closed link no longer stops the app, and a sleeping database gets 15 seconds to wake.
 - **Few database links.** The API and worker use at most 21 links together.
 
+**Open tabs keep it awake.** Screens ask the server again every 15 to 60 seconds while a tab is open and in view, so job boards stay current. A tab in the background does not ask. While someone has HireFlow open, the server does not sleep, and when everyone has left, it can.
+
 **To stop it sleeping at all,** add a free uptime check that calls `https://<your-api>/api/v1/health` every 10 minutes, such as cron-job.org or UptimeRobot. One always-on service uses about 744 of the 750 free hours a month on Render. The health route does not touch the database, so it does not keep the database awake as well.
 
 **While the backend sleeps, background jobs wait too.** Reminder emails, job alerts and the job feed run again when it wakes, and nothing is lost, but they can be late. The uptime check above avoids this.

@@ -112,3 +112,10 @@ Jobs are stored in PostgreSQL using pg-boss. The big benefit is that a job can b
 - **Reviews use SM-2.** The formula is in `packages/shared/src/prep.ts`, with no database code, and the tests check it against the plan's formula for every grade. A grade is saved inside a transaction that locks the row, so two grades at once are applied one after the other.
 - **Dates are the person's own.** "Today" for reviews and streaks is worked out in their time zone with Luxon. Dates are read from PostgreSQL as text, because the `pg` driver would turn a date into a JS time at local midnight.
 - **Hiring numbers are worked out by PostgreSQL** from the applications and their stage history, filtered by the company id that the tenant guard checked.
+
+## How the boards follow the hiring process
+
+- **One link.** A card on a person's job board can point at their application to a company (`company_application_id`). The code is `CompanyLinks` in `apps/api/src/tracker/company-links.service.ts`.
+- **Same transaction.** When someone applies, or a company moves a candidate, the card is made or changed inside that transaction. It writes the history line, cancels or sets reminders, and adds a notification.
+- **Proof first.** A card is only made when the applicant is signed in with a confirmed email that matches the form. Moves never make cards.
+- **The web side asks again.** `apps/web/src/lib/live.ts` gives every live screen a poll time. A new notification refreshes the job board, interviews and company screens at once (`LiveUpdates`).

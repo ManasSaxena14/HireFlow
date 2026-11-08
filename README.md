@@ -2,7 +2,7 @@
 
 **Two-sided hiring platform.** Job seekers can keep track of every job they apply for. Companies can post jobs and hire the right people.
 
-Right now this project has the job seeker side, the main company side, interview booking, a job feed with alerts, a resume match score, interview practice and hiring numbers. It has not been deployed yet. See [Deploying HireFlow](docs/deployment.md).
+Right now this project has the job seeker side, the main company side, interview booking, a job feed with alerts, a resume match score, interview practice and hiring numbers. A person's job board follows their applications on HireFlow by itself. It has not been deployed yet. See [Deploying HireFlow](docs/deployment.md).
 
 ## What works today
 
