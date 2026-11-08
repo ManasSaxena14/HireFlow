@@ -15,6 +15,17 @@ One laptop ran everything at once: the API, PostgreSQL and the load test tool.
 
 The API ran from its production build (`NODE_ENV=production`) on its own database. Rate limits were raised for the test, because k6 sends everything from one address and a few accounts.
 
+## Start-up
+
+Measured with `pnpm start`, which runs the API and the worker together, three times in a row.
+
+| What                             | Result                                                    |
+| -------------------------------- | --------------------------------------------------------- |
+| From start to `/ready` answering | 1.9 s, 1.1 s, 1.0 s                                       |
+| API memory once started          | 232 MB                                                    |
+| Worker memory once started       | 100 MB                                                    |
+| Checking one password            | 27 ms with the OWASP settings, 42 ms with the old default |
+
 ## Data in the database
 
 `scripts/load/seed-volume.sql` added 5,000 people, 200,000 jobs on their boards, 200,000 notifications, 50,000 job feed posts and 30,000 practice sessions, so that slow queries would show up.
