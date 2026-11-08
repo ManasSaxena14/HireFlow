@@ -140,3 +140,7 @@ To measure it yourself, install [k6](https://k6.io), start the API on a database
 - Weekly numbers use UTC weeks, not your own time zone.
 - Resumes are saved on the server's disk. A host with a disk that is wiped on restart needs a lasting folder for `UPLOAD_DIR`, or a new storage class.
 - An interview has one interviewer. Free times can be checked for up to five people, but panel interviews are not built yet.
+
+## Licence
+
+MIT. You may use, change and share this code, also in paid work, as long as you keep the copyright and licence notice. See [LICENSE](LICENSE).

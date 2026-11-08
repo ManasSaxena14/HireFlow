@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "private": true,
   "description": "Two-sided hiring platform",
+  "license": "MIT",
   "packageManager": "pnpm@10.34.9",
   "engines": {
     "node": ">=22"
