@@ -17,7 +17,7 @@ export function CompanyNav({ membership, many }: { membership: Membership; many:
     {
       href: `${base}/jobs`,
       label: 'Jobs',
-      active: !['team', 'interviews', 'availability', 'numbers'].some(inSection),
+      active: !['team', 'interviews', 'availability', 'numbers', 'activity'].some(inSection),
     },
     { href: `${base}/interviews`, label: 'Interviews', active: inSection('interviews') },
     { href: `${base}/availability`, label: 'My hours', active: inSection('availability') },
@@ -25,7 +25,10 @@ export function CompanyNav({ membership, many }: { membership: Membership; many:
       ? [{ href: `${base}/numbers`, label: 'Numbers', active: inSection('numbers') }]
       : []),
     ...(membership.role === 'admin'
-      ? [{ href: `${base}/team`, label: 'Team', active: inSection('team') }]
+      ? [
+          { href: `${base}/team`, label: 'Team', active: inSection('team') },
+          { href: `${base}/activity`, label: 'Activity', active: inSection('activity') },
+        ]
       : []),
   ];
 
