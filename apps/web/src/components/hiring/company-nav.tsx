@@ -5,7 +5,7 @@ import { ArrowUpRight, ArrowLeftRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { Profile } from '@/lib/auth';
-import { ROLE_LABELS } from '@/lib/ats';
+import { canRunHiring, ROLE_LABELS } from '@/lib/ats';
 
 type Membership = Profile['memberships'][number];
 
@@ -17,10 +17,13 @@ export function CompanyNav({ membership, many }: { membership: Membership; many:
     {
       href: `${base}/jobs`,
       label: 'Jobs',
-      active: !inSection('team') && !inSection('interviews') && !inSection('availability'),
+      active: !['team', 'interviews', 'availability', 'numbers'].some(inSection),
     },
     { href: `${base}/interviews`, label: 'Interviews', active: inSection('interviews') },
     { href: `${base}/availability`, label: 'My hours', active: inSection('availability') },
+    ...(canRunHiring(membership.role)
+      ? [{ href: `${base}/numbers`, label: 'Numbers', active: inSection('numbers') }]
+      : []),
     ...(membership.role === 'admin'
       ? [{ href: `${base}/team`, label: 'Team', active: inSection('team') }]
       : []),

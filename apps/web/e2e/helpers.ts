@@ -6,6 +6,8 @@ export const PASSWORD = 'end-to-end-password';
 export async function registerNewUser(page: Page): Promise<string> {
   const email = `e2e-${randomUUID()}@example.com`;
   await page.goto('/register');
+  // A click before the page is ready does nothing, so wait for it to finish loading.
+  await page.waitForLoadState('networkidle');
   await page.getByLabel('Full name').fill('Riya Menon');
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(PASSWORD);

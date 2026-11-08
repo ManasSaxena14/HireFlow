@@ -566,7 +566,12 @@ function FooterLink({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-const SOON = ['Interview practice', 'Hiring numbers'];
+const ALSO_INSIDE = [
+  'Job feed and alerts',
+  'Resume match score',
+  'Interview practice',
+  'Hiring numbers',
+];
 
 function Footer() {
   const word = 'HireFlow'.split('');
@@ -611,12 +616,9 @@ function Footer() {
           </nav>
 
           <div className="reveal" style={stagger(3)}>
-            <h2 className="flex items-center gap-2 text-sm font-bold">
-              Coming soon
-              <span className="animate-soon size-2 rounded-full bg-accent" />
-            </h2>
+            <h2 className="flex items-center gap-2 text-sm font-bold">Also inside</h2>
             <ul className="mt-4 space-y-3 text-[15px] text-subtle">
-              {SOON.map((item) => (
+              {ALSO_INSIDE.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
