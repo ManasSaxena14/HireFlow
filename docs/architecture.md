@@ -12,7 +12,7 @@ flowchart TB
   end
   subgraph API[NestJS API]
     G[Checks: login, rate limit, company, role]
-    M[Modules: auth, users, companies, tracker, feed, resumes, notifications]
+    M[Modules: auth, users, companies, tracker, feed, resumes, prep, analytics, notifications]
     G --> M
   end
   subgraph Worker
@@ -106,3 +106,9 @@ Jobs are stored in PostgreSQL using pg-boss. The big benefit is that a job can b
 - **keywordSim** compares the important words of the two texts, using TF-IDF and cosine similarity.
 - **Sections** is the share of the headings experience, education, skills and projects found in the resume.
 - **Honest advice.** A missing required skill gives one suggestion: add it only if you have real experience with it.
+
+## How practice and hiring numbers work
+
+- **Reviews use SM-2.** The formula is in `packages/shared/src/prep.ts`, with no database code, and the tests check it against the plan's formula for every grade. A grade is saved inside a transaction that locks the row, so two grades at once are applied one after the other.
+- **Dates are the person's own.** "Today" for reviews and streaks is worked out in their time zone with Luxon. Dates are read from PostgreSQL as text, because the `pg` driver would turn a date into a JS time at local midnight.
+- **Hiring numbers are worked out by PostgreSQL** from the applications and their stage history, filtered by the company id that the tenant guard checked.

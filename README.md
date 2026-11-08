@@ -2,7 +2,7 @@
 
 **Two-sided hiring platform.** Job seekers can keep track of every job they apply for. Companies can post jobs and hire the right people.
 
-Right now this project has the job seeker side, the main company side, interview booking, a job feed with alerts, and a resume match score. The other parts are still being built. See [What is coming next](#what-is-coming-next).
+Right now this project has the job seeker side, the main company side, interview booking, a job feed with alerts, a resume match score, interview practice and hiring numbers. The other parts are still being built. See [What is coming next](#what-is-coming-next).
 
 ## What works today
 
@@ -125,8 +125,6 @@ scripts/      Helpers for the local database and for starting the app
 
 ## What is coming next
 
-- A log for interview practice, with smart review dates
-- Hiring numbers for companies
 - Speed and security checks, then a public launch
 
 ## Known limits
