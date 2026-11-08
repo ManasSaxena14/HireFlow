@@ -32,6 +32,18 @@ export interface Session {
   user: { id: string; email: string; fullName: string; timezone: string };
 }
 
+/**
+ * Argon2id with the OWASP settings: 19 MiB of memory, 2 passes, 1 lane. The library default
+ * uses 64 MiB and 4 lanes, which is slow and heavy on a small free server. Hashes made with
+ * other settings still check correctly, because each hash stores its own settings.
+ */
+const PASSWORD_HASH = {
+  type: argon2.argon2id,
+  memoryCost: 19_456,
+  timeCost: 2,
+  parallelism: 1,
+} as const;
+
 @Injectable()
 export class AuthService implements OnModuleInit {
   /** Checked when the email is unknown, so both cases take the same time. */
@@ -46,11 +58,11 @@ export class AuthService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    this.decoyHash = await argon2.hash(randomToken());
+    this.decoyHash = await argon2.hash(randomToken(), PASSWORD_HASH);
   }
 
   async register(input: RegisterInput) {
-    const passwordHash = await argon2.hash(input.password);
+    const passwordHash = await argon2.hash(input.password, PASSWORD_HASH);
     try {
       return await this.db.transaction().execute(async (tx) => {
         const user = await tx
@@ -296,7 +308,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async resetPassword(input: ResetPasswordInput): Promise<void> {
-    const passwordHash = await argon2.hash(input.password);
+    const passwordHash = await argon2.hash(input.password, PASSWORD_HASH);
     await this.db.transaction().execute(async (tx) => {
       const userId = await this.consumeEmailToken(tx, input.token, 'reset_password');
       await tx.updateTable('users').set({ passwordHash }).where('id', '=', userId).execute();

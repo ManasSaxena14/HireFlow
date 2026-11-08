@@ -6,8 +6,14 @@ import { resolve } from 'node:path';
 // Both need the same folder, because the API saves resumes and the worker reads them.
 const env = { ...process.env, UPLOAD_DIR: resolve(process.env.UPLOAD_DIR ?? 'uploads') };
 
-const children = ['apps/worker/dist/main.js', 'apps/api/dist/main.js'].map((entry) =>
-  spawn(process.execPath, [entry], { stdio: 'inherit', env }),
+// Memory caps in MB, so both fit on a 512 MB free server with room for reading a resume.
+const PARTS = [
+  ['apps/worker/dist/main.js', process.env.WORKER_MEMORY_MB ?? '160'],
+  ['apps/api/dist/main.js', process.env.API_MEMORY_MB ?? '256'],
+];
+
+const children = PARTS.map(([entry, memory]) =>
+  spawn(process.execPath, [`--max-old-space-size=${memory}`, entry], { stdio: 'inherit', env }),
 );
 
 const stopAll = (code) => {

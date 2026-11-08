@@ -24,6 +24,11 @@ const envSchema = z
     RATE_LIMIT_AUTH_PER_MIN: z.coerce.number().int().positive().default(10),
     FOLLOW_UP_DAYS: z.coerce.number().int().positive().default(7),
     UPLOAD_DIR: z.string().min(1).default('uploads'),
+    /**
+     * How many proxies sit in front of the API. Rate limits for sign-in count by address, so
+     * this must be right: too low and everyone shares the address of the last proxy.
+     */
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
   })
   .superRefine((env, ctx) => {
     if (env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET) {

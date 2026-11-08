@@ -10,7 +10,8 @@ export function extractInThread(content: Uint8Array, mimeType: string): Promise<
   return new Promise((resolve, reject) => {
     const thread = new Worker(new URL('./extract-thread.js', import.meta.url), {
       workerData: { content, mimeType },
-      resourceLimits: { maxOldGenerationSizeMb: 256 },
+      // Small enough to fit next to the API and worker on a 512 MB free server.
+      resourceLimits: { maxOldGenerationSizeMb: 128 },
       stdout: true,
       stderr: true,
     });
