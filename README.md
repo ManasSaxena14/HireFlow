@@ -2,7 +2,7 @@
 
 **Two-sided hiring platform.** Job seekers can keep track of every job they apply for. Companies can post jobs and hire the right people.
 
-Right now this project has the job seeker side, the main company side, interview booking, a job feed with alerts, a resume match score, interview practice and hiring numbers. The other parts are still being built. See [What is coming next](#what-is-coming-next).
+Right now this project has the job seeker side, the main company side, interview booking, a job feed with alerts, a resume match score, interview practice and hiring numbers. It has not been deployed yet. See [Deploying HireFlow](docs/deployment.md).
 
 ## What works today
 
@@ -123,9 +123,14 @@ docs/         How it works, API list, decisions and help for problems
 scripts/      Helpers for the local database and for starting the app
 ```
 
-## What is coming next
+## Speed, security and launch
 
-- Speed and security checks, then a public launch
+- [Speed and test results](docs/performance.md): load tests, query plans and test coverage, all measured
+- [Security checklist](docs/security.md): the plan's security rules, one by one
+- [Deploying HireFlow](docs/deployment.md): how to put it online for free
+- [API docs](docs/openapi.json): made from the code, so they always match it
+
+To measure it yourself, install [k6](https://k6.io), start the API on a database you can throw away, and run `k6 run scripts/load/mixed.js`. Run `pnpm coverage` for test coverage.
 
 ## Known limits
 

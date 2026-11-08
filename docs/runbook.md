@@ -56,6 +56,10 @@ The API will not start in production if `COOKIE_SECURE` is not `true`, or if a s
 
 Each night at 03:00 the worker removes login tokens and email links that ran out over a day ago, email delivery rows older than 30 days, and jobs not seen at their source for 30 days. The log line is `old rows removed`.
 
+## Finding an error
+
+Every error a person sees has a `requestId`. Search the API logs for it to find what went wrong. Set an uptime check on `/api/v1/health` so you hear when the app is down.
+
 ## Checking the app
 
 - `GET /api/v1/health` answers if the app is running.
