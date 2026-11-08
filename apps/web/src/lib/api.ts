@@ -33,6 +33,14 @@ interface RequestOptions {
 const WAKE_DELAYS_MS = [1000, 2000, 3000, 4000, 5000, 5000, 10_000, 10_000, 10_000, 10_000, 10_000];
 const STARTING_UP = new Set([502, 503, 504]);
 
+/**
+ * A 502, 503 or 504, or a 500 that did not come from our API. Our API always answers errors
+ * with JSON, so a plain 500 means the proxy in front of it could not reach it yet.
+ */
+const isStartingUp = (response: Response) =>
+  STARTING_UP.has(response.status) ||
+  (response.status === 500 && !response.headers.get('content-type')?.includes('application/json'));
+
 type WakeListener = (waking: boolean) => void;
 const wakeListeners = new Set<WakeListener>();
 let waitingRequests = 0;
@@ -55,14 +63,14 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 /** Runs the request again while the server is starting up. A clear answer ends it at once. */
 async function whileWaking(
   attempt: () => Promise<Response>,
-  tryAgain = (status: number) => STARTING_UP.has(status),
+  tryAgain: (response: Response) => boolean = isStartingUp,
 ): Promise<Response> {
   let waiting = false;
   try {
     for (let index = 0; ; index++) {
       try {
         const response = await attempt();
-        if (!tryAgain(response.status) || index === WAKE_DELAYS_MS.length) return response;
+        if (!tryAgain(response) || index === WAKE_DELAYS_MS.length) return response;
       } catch (error) {
         if (index === WAKE_DELAYS_MS.length) throw error;
       }
@@ -118,7 +126,7 @@ async function toError(response: Response): Promise<ApiError> {
     const { error } = (await response.json()) as ErrorBody;
     return new ApiError(response.status, error.code, error.message, error.details);
   } catch {
-    const message = STARTING_UP.has(response.status)
+    const message = isStartingUp(response)
       ? 'The server is starting up. Please try again in a moment.'
       : 'Something went wrong. Please try again.';
     return new ApiError(response.status, 'INTERNAL', message);
@@ -129,7 +137,7 @@ async function requestRefresh(): Promise<SessionPayload | null> {
   // Only a clear "no" from the server ends the session. A 5xx means it is starting up.
   const response = await whileWaking(
     () => fetch('/api/v1/auth/refresh', { method: 'POST', credentials: 'same-origin' }),
-    (status) => status >= 500,
+    (response) => response.status >= 500,
   );
   return response.ok ? ((await response.json()) as SessionPayload) : null;
 }
