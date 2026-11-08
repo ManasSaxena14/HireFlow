@@ -6,3 +6,6 @@ test-results
 pnpm-lock.yaml
 .pgdata
 *.sql
+
+# Made by a script
+docs/openapi.json

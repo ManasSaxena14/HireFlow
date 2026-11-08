@@ -4,7 +4,8 @@ import type { output, ZodType } from 'zod';
 import { DomainError } from './domain-error.js';
 
 export class ZodPipe<T extends ZodType> implements PipeTransform<unknown, output<T>> {
-  constructor(private readonly schema: T) {}
+  // Public, so the API docs script can read which schema each route uses.
+  constructor(readonly schema: T) {}
 
   transform(value: unknown): output<T> {
     const result = this.schema.safeParse(value);

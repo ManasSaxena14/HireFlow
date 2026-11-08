@@ -1,6 +1,6 @@
 {
   "name": "hireflow",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Two-sided hiring platform",
   "packageManager": "pnpm@10.34.9",
@@ -24,7 +24,8 @@
     "db:rollback": "pnpm --filter @hireflow/api migrate down",
     "db:seed": "node --env-file-if-exists=.env scripts/seed-demo.mjs",
     "feed:sources": "node --env-file-if-exists=.env scripts/add-feed-sources.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "coverage": "pnpm --filter @hireflow/shared build && pnpm --filter @hireflow/shared --filter @hireflow/api --filter @hireflow/worker --workspace-concurrency=1 exec vitest run --coverage --coverage.include='src/**' --coverage.exclude='src/**/*.test.ts' --coverage.reporter=text-summary"
   },
   "lint-staged": {
     "*.{ts,tsx,mjs}": [
@@ -49,6 +50,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^5.1.0",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",

@@ -47,3 +47,25 @@ export interface SourcesReport {
   range: AnalyticsRange;
   sources: { source: string; applications: number; hires: number }[];
 }
+
+export const auditLogQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().min(1).max(200).optional(),
+  actorId: uuidSchema.optional(),
+  entityType: z.string().trim().min(1).max(50).optional(),
+  entityId: uuidSchema.optional(),
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+});
+export type AuditLogQuery = z.output<typeof auditLogQuerySchema>;
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  actor: { id: string; fullName: string; email: string } | null;
+  diff: unknown;
+  ip: string | null;
+  createdAt: string;
+}
