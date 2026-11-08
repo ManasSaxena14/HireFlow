@@ -69,7 +69,9 @@ test('a sleeping server is waited for, with a note on screen', async ({ page }) 
   // The first two answers act like a free host that is still waking up.
   await page.route('**/api/v1/tracker/stats', async (route) => {
     calls += 1;
-    if (calls <= 2) await route.fulfill({ status: 503, body: 'starting' });
+    // A proxy says 503, or a plain 500 when it cannot reach the API at all.
+    if (calls === 1) await route.fulfill({ status: 503, body: 'starting' });
+    else if (calls === 2) await route.fulfill({ status: 500, body: 'Internal Server Error' });
     else await route.continue();
   });
   await page.reload();
