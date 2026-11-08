@@ -2,6 +2,8 @@ import type { ColumnType, Generated, Insertable } from 'kysely';
 import type {
   AlertFrequency,
   InterviewStatus,
+  PracticeKind,
+  PracticeOutcome,
   JobStatus,
   MembershipRole,
   Recommendation,
@@ -361,6 +363,30 @@ export interface ResumeMatchesTable {
   createdAt: Generated<Date>;
 }
 
+export interface PracticeSessionsTable {
+  id: Generated<string>;
+  userId: string;
+  topic: string;
+  kind: PracticeKind;
+  difficulty: number | null;
+  durationMin: number | null;
+  outcome: PracticeOutcome | null;
+  notes: string | null;
+  createdAt: Generated<Date>;
+}
+
+export interface ReviewItemsTable {
+  id: Generated<string>;
+  userId: string;
+  topic: string;
+  easeFactor: ColumnType<string, number | undefined, number>;
+  intervalDays: Generated<number>;
+  repetitions: Generated<number>;
+  /** Read it as text, because pg turns a date into a JS Date at local midnight. */
+  dueOn: ColumnType<Date, string | undefined, string>;
+  lastReviewedAt: Date | null;
+}
+
 export interface DB {
   users: UsersTable;
   companies: CompaniesTable;
@@ -392,6 +418,8 @@ export interface DB {
   alertDeliveries: AlertDeliveriesTable;
   resumes: ResumesTable;
   resumeMatches: ResumeMatchesTable;
+  practiceSessions: PracticeSessionsTable;
+  reviewItems: ReviewItemsTable;
 }
 
 export type NewAuditLog = Insertable<AuditLogsTable>;

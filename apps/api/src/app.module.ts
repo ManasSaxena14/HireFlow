@@ -6,6 +6,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { ACCESS_TOKEN_TTL_SECONDS } from './auth/tokens.js';
+import { AnalyticsModule } from './analytics/analytics.module.js';
 import { AtsModule } from './ats/ats.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
@@ -19,6 +20,7 @@ import { FeedModule } from './feed/feed.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MailQueue, PgBossMailQueue } from './queue/mail-queue.js';
 import { NotificationsController } from './notifications/notifications.controller.js';
+import { PrepModule } from './prep/prep.module.js';
 import { ResumesModule } from './resumes/resumes.module.js';
 import { SchedulerModule } from './scheduler/scheduler.module.js';
 import { TrackerModule } from './tracker/tracker.module.js';
@@ -101,6 +103,8 @@ const ONE_MINUTE_MS = 60_000;
     SchedulerModule,
     FeedModule,
     ResumesModule,
+    PrepModule,
+    AnalyticsModule,
   ],
   controllers: [UsersController, NotificationsController, HealthController],
   providers: [
