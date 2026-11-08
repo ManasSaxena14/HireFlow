@@ -674,9 +674,6 @@
   .journey-fill {
     animation: journey-fill 12s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   }
-  .animate-soon {
-    animation: soon-pulse 2s ease-in-out infinite;
-  }
 
   /* Footer word: the same word on top, lit only near the mouse. */
   .wordmark {
@@ -1106,18 +1103,6 @@
   100% {
     transform: scaleX(0);
     opacity: 0;
-  }
-}
-
-@keyframes soon-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.75);
   }
 }
 
