@@ -31,7 +31,13 @@ const CANCELS_FOLLOW_UP: readonly TrackerStatus[] = ['rejected', 'withdrawn', 'o
 const FUNNEL_STAGES = ['applied', 'screening', 'interview', 'offer'] as const;
 const RESPONSE_STATUSES: readonly TrackerStatus[] = ['screening', 'interview', 'offer', 'rejected'];
 
-const present = ({ jobHash: _hash, userId: _user, resumeId: _resume, ...row }: Row) => row;
+const present = ({
+  jobHash: _hash,
+  userId: _user,
+  resumeId: _resume,
+  companyApplicationId,
+  ...row
+}: Row) => ({ ...row, linked: companyApplicationId !== null });
 
 @Injectable()
 export class TrackerService {

@@ -21,6 +21,7 @@ import { DomainError, notFound } from '../common/domain-error.js';
 import { ConfigService } from '../config/config.service.js';
 import { Database, type Executor, isUniqueViolation } from '../database/database.js';
 import { FileLinks } from '../files/file-links.js';
+import { CompanyLinks } from '../tracker/company-links.service.js';
 import { FileStorage } from '../files/file-storage.js';
 import { MailQueue } from '../queue/mail-queue.js';
 import { InterviewsService } from '../scheduler/interviews.service.js';
@@ -48,6 +49,7 @@ export class ApplicationsService {
     private readonly storage: FileStorage,
     private readonly logger: PinoLogger,
     private readonly interviews: InterviewsService,
+    private readonly companyLinks: CompanyLinks,
   ) {}
 
   /** An interviewer gets a 404 for other candidates, so they cannot tell who has applied. */
@@ -335,6 +337,8 @@ export class ApplicationsService {
         tx,
       );
       if (decided) await this.interviews.closeForDecision(tx, viewer, id, ip);
+      // The candidate's own job board follows this move, in the same transaction.
+      await this.companyLinks.refresh(tx, id, 'moved');
       if (target.emailSubject && target.emailBody) {
         await this.queueStageEmail(tx, viewer.companyId, application, target, event.id);
       }

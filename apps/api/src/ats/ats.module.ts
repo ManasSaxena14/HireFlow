@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { FilesModule } from '../files/files.module.js';
+import { TrackerModule } from '../tracker/tracker.module.js';
 import { SchedulerModule } from '../scheduler/scheduler.module.js';
 import { ApplicationsService } from './applications.service.js';
 import { ApplicationsController, JobsController } from './ats.controller.js';
@@ -8,7 +9,7 @@ import { CareersService } from './careers.service.js';
 import { JobsService } from './jobs.service.js';
 
 @Module({
-  imports: [FilesModule, SchedulerModule],
+  imports: [FilesModule, SchedulerModule, TrackerModule],
   controllers: [JobsController, ApplicationsController, CareersController],
   providers: [JobsService, ApplicationsService, CareersService],
 })

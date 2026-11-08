@@ -115,6 +115,8 @@ export interface TrackedApplication {
   skills: string[];
   description: string | null;
   tags: string[];
+  /** True when the company moves this card itself, as its hiring goes on. */
+  linked: boolean;
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;

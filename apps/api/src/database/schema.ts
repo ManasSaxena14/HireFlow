@@ -91,6 +91,8 @@ export interface TrackedApplicationsTable {
   tags: string[];
   jobHash: string;
   resumeId: string | null;
+  /** Set when this card follows the person's application to a company on HireFlow. */
+  companyApplicationId: ColumnType<string | null, string | null | undefined, string | null>;
   archivedAt: Date | null;
   createdAt: Generated<Date>;
   updatedAt: Generated<Date>;
