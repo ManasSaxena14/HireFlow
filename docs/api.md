@@ -161,6 +161,29 @@ To apply, send a multipart form with `fullName`, `email`, optional `phone` and `
 
 A check gives `{ score, matched, missing, sectionsFound, suggestions, breakdown }`. While a resume is being read, or if it could not be read, a check gives a `CONFLICT`.
 
+## Practice
+
+| Method | Path                      | Who  | What it does                                                      |
+| ------ | ------------------------- | ---- | ----------------------------------------------------------------- |
+| POST   | `/prep/sessions`          | User | Log practice. A new topic is added to the reviews, due tomorrow   |
+| GET    | `/prep/sessions`          | User | Your practice, newest first, a page at a time                     |
+| DELETE | `/prep/sessions/:id`      | User | Delete one                                                        |
+| GET    | `/prep/stats`             | User | Days in a row, and the last 30 days by type, topic and result     |
+| GET    | `/prep/reviews`           | User | All review topics, the ones due first                             |
+| GET    | `/prep/reviews/due`       | User | Topics due today or earlier, in your time zone                    |
+| POST   | `/prep/reviews/:id/grade` | User | Body `{ quality }` from 0 to 5. Works out the next date with SM-2 |
+| DELETE | `/prep/reviews/:id`       | User | Stop reviewing a topic                                            |
+
+## Hiring numbers
+
+All three take optional `from` and `to` dates, like `2026-01-31`, and an optional `jobId`. The default is the last 90 days.
+
+| Method | Path                                     | Who                              | What it does                                     |
+| ------ | ---------------------------------------- | -------------------------------- | ------------------------------------------------ |
+| GET    | `/companies/:cid/analytics/funnel`       | Admin, recruiter, hiring manager | How many people reached each step                |
+| GET    | `/companies/:cid/analytics/time-to-hire` | Admin, recruiter, hiring manager | Days from applying to hired, overall and by job  |
+| GET    | `/companies/:cid/analytics/sources`      | Admin, recruiter, hiring manager | Applications and hires by where people came from |
+
 ## Notifications
 
 | Method | Path                      | What it does                       |
