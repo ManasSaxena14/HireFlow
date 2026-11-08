@@ -6,6 +6,7 @@ import { ApiError } from '@/lib/api';
 import { AuthProvider } from '@/lib/auth';
 import { PointerGlow } from './pointer-glow';
 import { ToastProvider } from './ui/toast';
+import { WakingNote } from './waking-note';
 
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(
@@ -27,6 +28,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <ToastProvider>
           <PointerGlow />
           {children}
+          <WakingNote />
         </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>

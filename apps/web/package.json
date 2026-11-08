@@ -15,7 +15,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hireflow/shared": "workspace:*",
     "@hookform/resolvers": "^7.0.3",
-    "@tanstack/react-query": "^5.106.1",
+    "@tanstack/react-query": "^5.107.1",
     "clsx": "^2.1.1",
     "lenis": "^1.3.27",
     "lucide-react": "^1.70.0",
@@ -29,7 +29,7 @@
   "devDependencies": {
     "@hireflow/config": "workspace:*",
     "@playwright/test": "^1.65.0",
-    "@tailwindcss/postcss": "^4.3.4",
+    "@tailwindcss/postcss": "^4.3.5",
     "@types/luxon": "^3.7.6",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
@@ -38,7 +38,7 @@
     "fflate": "^0.8.3",
     "pg": "^8.23.1",
     "postcss": "^8.5.32",
-    "tailwindcss": "^4.3.4",
+    "tailwindcss": "^4.3.5",
     "typescript": "~5.9.3"
   }
 }

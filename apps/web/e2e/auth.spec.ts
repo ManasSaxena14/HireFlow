@@ -62,3 +62,19 @@ test('two tabs refreshing together do not kill the session', async ({ page, cont
   await expect(page.getByRole('heading', { name: 'My job board' })).toBeVisible();
   await expect(second.getByRole('heading', { name: 'My job board' })).toBeVisible();
 });
+
+test('a sleeping server is waited for, with a note on screen', async ({ page }) => {
+  await registerNewUser(page);
+  let calls = 0;
+  // The first two answers act like a free host that is still waking up.
+  await page.route('**/api/v1/tracker/stats', async (route) => {
+    calls += 1;
+    if (calls <= 2) await route.fulfill({ status: 503, body: 'starting' });
+    else await route.continue();
+  });
+  await page.reload();
+  await expect(page.getByText('Starting the server.')).toBeVisible();
+  await expect(page.getByTestId('stats')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('Starting the server.')).toBeHidden();
+  expect(calls).toBeGreaterThanOrEqual(3);
+});

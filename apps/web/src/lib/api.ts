@@ -25,6 +25,63 @@ interface RequestOptions {
   auth?: boolean;
 }
 
+/**
+ * A free host puts the API to sleep when nobody uses it, and the first request wakes it.
+ * That can take up to a minute, so reads and session checks wait and try again, and the
+ * screen says what is happening. These are the waits between tries, about 70 seconds in all.
+ */
+const WAKE_DELAYS_MS = [1000, 2000, 3000, 4000, 5000, 5000, 10_000, 10_000, 10_000, 10_000, 10_000];
+const STARTING_UP = new Set([502, 503, 504]);
+
+type WakeListener = (waking: boolean) => void;
+const wakeListeners = new Set<WakeListener>();
+let waitingRequests = 0;
+
+/** Lets the screen show a note while the server is starting. Returns a function to stop. */
+export function onServerWaking(listener: WakeListener): () => void {
+  wakeListeners.add(listener);
+  return () => wakeListeners.delete(listener);
+}
+
+function setWaiting(change: 1 | -1) {
+  const before = waitingRequests > 0;
+  waitingRequests += change;
+  const after = waitingRequests > 0;
+  if (before !== after) for (const listener of wakeListeners) listener(after);
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Runs the request again while the server is starting up. A clear answer ends it at once. */
+async function whileWaking(
+  attempt: () => Promise<Response>,
+  tryAgain = (status: number) => STARTING_UP.has(status),
+): Promise<Response> {
+  let waiting = false;
+  try {
+    for (let index = 0; ; index++) {
+      try {
+        const response = await attempt();
+        if (!tryAgain(response.status) || index === WAKE_DELAYS_MS.length) return response;
+      } catch (error) {
+        if (index === WAKE_DELAYS_MS.length) throw error;
+      }
+      if (!waiting) {
+        waiting = true;
+        setWaiting(1);
+      }
+      await sleep(WAKE_DELAYS_MS[index] as number);
+    }
+  } finally {
+    if (waiting) setWaiting(-1);
+  }
+}
+
+/** Starts waking the server as soon as a page opens, while the person is still reading. */
+export function wakeServer(): void {
+  void fetch('/api/v1/health', { cache: 'no-store' }).catch(() => undefined);
+}
+
 // The access token is kept only in memory and is never saved to disk.
 let accessToken: string | null = null;
 let refreshInFlight: Promise<SessionPayload | null> | null = null;
@@ -61,28 +118,20 @@ async function toError(response: Response): Promise<ApiError> {
     const { error } = (await response.json()) as ErrorBody;
     return new ApiError(response.status, error.code, error.message, error.details);
   } catch {
-    return new ApiError(response.status, 'INTERNAL', 'Something went wrong. Please try again.');
+    const message = STARTING_UP.has(response.status)
+      ? 'The server is starting up. Please try again in a moment.'
+      : 'Something went wrong. Please try again.';
+    return new ApiError(response.status, 'INTERNAL', message);
   }
 }
 
-const REFRESH_ATTEMPTS = 5;
-const RETRY_DELAY_MS = 1500;
-
 async function requestRefresh(): Promise<SessionPayload | null> {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      const response = await fetch('/api/v1/auth/refresh', {
-        method: 'POST',
-        credentials: 'same-origin',
-      });
-      if (response.ok) return (await response.json()) as SessionPayload;
-      // Only a clear "no" from the server ends the session. A 5xx means it is starting up.
-      if (response.status < 500 || attempt === REFRESH_ATTEMPTS) return null;
-    } catch (error) {
-      if (attempt === REFRESH_ATTEMPTS) throw error;
-    }
-    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-  }
+  // Only a clear "no" from the server ends the session. A 5xx means it is starting up.
+  const response = await whileWaking(
+    () => fetch('/api/v1/auth/refresh', { method: 'POST', credentials: 'same-origin' }),
+    (status) => status >= 500,
+  );
+  return response.ok ? ((await response.json()) as SessionPayload) : null;
 }
 
 /**
@@ -106,7 +155,11 @@ export function refreshSession(): Promise<SessionPayload | null> {
 }
 
 async function request(path: string, options: RequestOptions): Promise<Response> {
-  let response = await send(path, options);
+  // Reads are safe to repeat. A change is sent once, so it can never be saved twice.
+  let response =
+    (options.method ?? 'GET') === 'GET'
+      ? await whileWaking(() => send(path, options))
+      : await send(path, options);
 
   if (response.status === 401 && options.auth !== false) {
     const session = await refreshSession();
