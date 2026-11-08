@@ -14,6 +14,7 @@ import type {
 } from '@hireflow/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/toast';
+import { livePoll, POLL } from './live';
 import { api, ApiError } from './api';
 
 export const STATUS_LABELS: Record<TrackerStatus, string> = {
@@ -76,21 +77,28 @@ export const useBoard = (filters: BoardFilters) =>
     queryKey: keys.board(filters),
     queryFn: () => fetchBoard(filters),
     placeholderData: (previous) => previous,
+    refetchInterval: livePoll(POLL.board),
   });
 
 export const useStats = () =>
-  useQuery({ queryKey: keys.stats, queryFn: () => api<TrackerStats>('/tracker/stats') });
+  useQuery({
+    queryKey: keys.stats,
+    queryFn: () => api<TrackerStats>('/tracker/stats'),
+    refetchInterval: livePoll(POLL.list),
+  });
 
 export const useApplication = (id: string) =>
   useQuery({
     queryKey: keys.detail(id),
     queryFn: () => api<ApplicationDetail>(`/tracker/applications/${id}`),
+    refetchInterval: livePoll(POLL.board),
   });
 
 export const useEvents = (id: string) =>
   useQuery({
     queryKey: keys.events(id),
     queryFn: () => api<ApplicationEvent[]>(`/tracker/applications/${id}/events`),
+    refetchInterval: livePoll(POLL.board),
   });
 
 export const useNotes = (id: string) =>
@@ -181,7 +189,7 @@ export const useNotifications = () =>
   useQuery({
     queryKey: ['notifications'],
     queryFn: () => api<NotificationPage>('/notifications?limit=50'),
-    refetchInterval: 60_000,
+    refetchInterval: livePoll(POLL.board),
   });
 
 export function useMarkNotificationRead() {

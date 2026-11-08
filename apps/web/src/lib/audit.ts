@@ -2,6 +2,7 @@
 
 import type { AuditLogEntry, Page } from '@hireflow/shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { livePoll, POLL } from './live';
 import { api } from './api';
 
 export const useAuditLog = (cid: string, entityType: string) =>
@@ -15,4 +16,5 @@ export const useAuditLog = (cid: string, entityType: string) =>
       return api<Page<AuditLogEntry>>(`/companies/${cid}/audit-logs?${params}`);
     },
     getNextPageParam: (last) => last.nextCursor,
+    refetchInterval: livePoll(POLL.list),
   });

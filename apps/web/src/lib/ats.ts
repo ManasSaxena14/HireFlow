@@ -16,6 +16,7 @@ import type {
 } from '@hireflow/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/toast';
+import { livePoll, POLL } from './live';
 import { api, ApiError } from './api';
 
 export const ROLE_LABELS: Record<MembershipRole, string> = {
@@ -68,12 +69,14 @@ export const useJobs = (cid: string) =>
   useQuery({
     queryKey: keys.jobs(cid),
     queryFn: () => api<Page<Job>>(`/companies/${cid}/jobs?limit=${PAGE_SIZE}`),
+    refetchInterval: livePoll(POLL.list),
   });
 
 export const useJob = (cid: string, id: string) =>
   useQuery({
     queryKey: keys.job(cid, id),
     queryFn: () => api<JobDetail>(`/companies/${cid}/jobs/${id}`),
+    refetchInterval: livePoll(POLL.list),
   });
 
 async function fetchBoard(cid: string, jobId: string, q: string): Promise<AtsApplication[]> {
@@ -96,12 +99,14 @@ export const usePipeline = (cid: string, jobId: string, q: string) =>
     queryKey: [...keys.board(cid, jobId), q],
     queryFn: () => fetchBoard(cid, jobId, q),
     placeholderData: (previous) => previous,
+    refetchInterval: livePoll(POLL.fast),
   });
 
 export const useCandidate = (cid: string, id: string) =>
   useQuery({
     queryKey: keys.candidate(cid, id),
     queryFn: () => api<AtsApplicationDetail>(`/companies/${cid}/applications/${id}`),
+    refetchInterval: livePoll(POLL.fast),
   });
 
 export const useMembers = (cid: string, enabled = true) =>

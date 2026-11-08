@@ -14,6 +14,7 @@ import type {
   Slot,
 } from '@hireflow/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { livePoll, POLL } from './live';
 import { api, apiText } from './api';
 import { useCompanyMutation } from './ats';
 
@@ -62,6 +63,7 @@ export const useCompanyInterviews = (cid: string, scope: 'upcoming' | 'past') =>
       return api<Page<Interview>>(`/companies/${cid}/interviews?${params}`);
     },
     getNextPageParam: (last) => last.nextCursor,
+    refetchInterval: livePoll(POLL.list),
   });
 
 export const useApplicationInterviews = (cid: string, applicationId: string) =>
@@ -69,6 +71,7 @@ export const useApplicationInterviews = (cid: string, applicationId: string) =>
     queryKey: ['ats', cid, 'candidate-interviews', applicationId],
     queryFn: () =>
       api<ApplicationInterviews>(`/companies/${cid}/applications/${applicationId}/interviews`),
+    refetchInterval: livePoll(POLL.board),
   });
 
 export const useMyInterviews = () =>
@@ -76,6 +79,7 @@ export const useMyInterviews = () =>
     queryKey: ['my-interviews'],
     queryFn: () => api<MyInterview[]>('/me/interviews'),
     staleTime: 0,
+    refetchInterval: livePoll(POLL.list),
   });
 
 export const useBookInterview = (cid: string) =>
