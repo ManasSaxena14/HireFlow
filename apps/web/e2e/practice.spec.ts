@@ -57,7 +57,7 @@ test('logs practice, keeps a streak and grades a review', async ({ page }) => {
   await expect(page.getByText('Nothing saved yet.')).toBeVisible();
 });
 
-test('shows a company its hiring numbers', async ({ page }) => {
+test('shows a company its hiring numbers and its activity', async ({ page }) => {
   await registerNewUser(page);
   await page.getByRole('link', { name: 'Hiring' }).first().click();
   await page.getByLabel('Company name').fill('Numbers Test Co');
@@ -70,4 +70,9 @@ test('shows a company its hiring numbers', async ({ page }) => {
   await expect(page.getByText('Nobody was hired in this time.')).toBeVisible();
   await page.getByLabel('Time').selectOption('365');
   await expect(page.getByText('Nobody applied in this time.').first()).toBeVisible();
+
+  // The admin can also see who changed what.
+  await page.getByRole('link', { name: 'Activity' }).click();
+  await expect(page.getByRole('heading', { name: 'Activity', level: 1 })).toBeVisible();
+  await expect(page.getByText('Created the company')).toBeVisible();
 });
