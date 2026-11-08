@@ -354,6 +354,20 @@ export class InterviewsService {
         }),
       })
       .execute();
+    // A candidate with an account sees it on their own screens too, without waiting for an email.
+    if (facts.candidateUserId) {
+      await tx
+        .insertInto('notifications')
+        .values({
+          userId: facts.candidateUserId,
+          type: 'interview',
+          payload: JSON.stringify({
+            message: `${words[kind]}: ${facts.jobTitle} at ${facts.companyName}, ${candidateWhen}.`,
+            link: '/app/interviews',
+          }),
+        })
+        .execute();
+    }
   }
 
   /** The one place that adds an interview. The database rules decide if the time is free. */

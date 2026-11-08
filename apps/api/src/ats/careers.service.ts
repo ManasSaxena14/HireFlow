@@ -9,6 +9,7 @@ import { Database, isUniqueViolation, type Tx } from '../database/database.js';
 import { FileStorage } from '../files/file-storage.js';
 import { checkResume, type CheckedResume, type UploadedFile } from '../files/resume-check.js';
 import { MailQueue } from '../queue/mail-queue.js';
+import { CompanyLinks } from '../tracker/company-links.service.js';
 
 const ONE_APPLICATION_CONSTRAINT = 'applications_job_id_candidate_id_key';
 const PUBLIC_COLUMNS = [
@@ -28,6 +29,7 @@ export class CareersService {
     private readonly storage: FileStorage,
     private readonly mail: MailQueue,
     private readonly config: ConfigService,
+    private readonly links: CompanyLinks,
   ) {}
 
   private async findCompany(slug: string) {
@@ -90,8 +92,15 @@ export class CareersService {
     };
   }
 
-  async apply(slug: string, jobSlug: string, input: ApplyToJob, file: UploadedFile | undefined) {
+  async apply(
+    slug: string,
+    jobSlug: string,
+    input: ApplyToJob,
+    file: UploadedFile | undefined,
+    signedInUserId: string | null = null,
+  ) {
     const resume = checkResume(file);
+    let onYourBoard = false;
     const company = await this.findCompany(slug);
     const job = await this.db
       .selectFrom('jobs')
@@ -118,6 +127,7 @@ export class CareersService {
       await this.db.transaction().execute(async (tx) => {
         const fileId = await this.insertFile(tx, company.id, storageKey, resume);
         const candidateId = await this.upsertCandidate(tx, company.id, input, fileId);
+        const proven = await this.attachAccount(tx, candidateId, input.email, signedInUserId);
         const application = await tx
           .insertInto('applications')
           .values({
@@ -142,6 +152,8 @@ export class CareersService {
             actorId: null,
           })
           .execute();
+        onYourBoard = proven;
+        if (proven) await this.links.refresh(tx, application.id, 'applied');
         await this.mail.enqueue(
           {
             template: 'application-received',
@@ -162,7 +174,42 @@ export class CareersService {
       }
       throw error;
     }
-    return { jobTitle: job.title, companyName: company.name };
+    return { jobTitle: job.title, companyName: company.name, onYourBoard };
+  }
+
+  /**
+   * Links the candidate to an account, but only when the person proves they own the email:
+   * they were signed in, the account's email is confirmed, and it is the one on the form.
+   * The form itself is open to anyone, so an email alone proves nothing.
+   */
+  private async attachAccount(
+    tx: Tx,
+    candidateId: string,
+    email: string,
+    userId: string | null,
+  ): Promise<boolean> {
+    if (!userId) return false;
+    const user = await tx
+      .selectFrom('users')
+      .select('id')
+      .where('id', '=', userId)
+      .where('isActive', '=', true)
+      .where('emailVerifiedAt', 'is not', null)
+      .where((eb) => eb(eb.fn('lower', ['email']), '=', email.toLowerCase()))
+      .executeTakeFirst();
+    if (!user) return false;
+    await tx
+      .updateTable('candidates')
+      .set({ userId: user.id })
+      .where('id', '=', candidateId)
+      .where('userId', 'is', null)
+      .execute();
+    const candidate = await tx
+      .selectFrom('candidates')
+      .select('userId')
+      .where('id', '=', candidateId)
+      .executeTakeFirstOrThrow();
+    return candidate.userId === user.id;
   }
 
   private async insertFile(
