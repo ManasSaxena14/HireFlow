@@ -184,6 +184,14 @@ All three take optional `from` and `to` dates, like `2026-01-31`, and an optiona
 | GET    | `/companies/:cid/analytics/time-to-hire` | Admin, recruiter, hiring manager | Days from applying to hired, overall and by job  |
 | GET    | `/companies/:cid/analytics/sources`      | Admin, recruiter, hiring manager | Applications and hires by where people came from |
 
+## Activity log
+
+| Method | Path                         | Who   | What it does                                                                                          |
+| ------ | ---------------------------- | ----- | ----------------------------------------------------------------------------------------------------- |
+| GET    | `/companies/:cid/audit-logs` | Admin | What changed and who did it, newest first. Filters: `actorId`, `entityType`, `entityId`, `from`, `to` |
+
+The full list of routes, with every field they accept, is in [openapi.json](openapi.json).
+
 ## Notifications
 
 | Method | Path                      | What it does                       |
