@@ -32,8 +32,17 @@ loadEnvFile();
 const env = loadConfig();
 const log = pino({ level: env.LOG_LEVEL, name: 'worker' });
 
-const pool = new pg.Pool({ connectionString: env.DATABASE_URL, max: 5 });
-const boss = new PgBoss(env.DATABASE_URL);
+// Free database hosts close idle links and sleep. Without this listener, a link closed while
+// idle would crash the worker. The pool opens a new one next time.
+const pool = new pg.Pool({
+  connectionString: env.DATABASE_URL,
+  max: 5,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 15_000,
+  keepAlive: true,
+});
+pool.on('error', (err) => log.warn({ err }, 'an idle database link closed'));
+const boss = new PgBoss({ connectionString: env.DATABASE_URL, max: 4 });
 boss.on('error', (err) => log.error({ err }, 'job queue error'));
 
 const previewDir = fileURLToPath(new URL('../../../.mail-preview', import.meta.url));

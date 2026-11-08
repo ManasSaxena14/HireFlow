@@ -27,6 +27,8 @@ export class PgBossMailQueue extends MailQueue implements OnModuleInit, OnModule
       connectionString: config.env.DATABASE_URL,
       schedule: false,
       supervise: false,
+      // The API only adds jobs, so two links are plenty. Free databases allow few links.
+      max: 2,
     });
     this.boss.on('error', (err) => this.logger.error({ err }, 'job queue error'));
   }

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "HireFlow API",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Made from the code by `pnpm --filter @hireflow/api openapi`. Errors always have the shape in `Error`."
   },
   "servers": [

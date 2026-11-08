@@ -1,6 +1,6 @@
 {
   "name": "hireflow",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Two-sided hiring platform",
   "packageManager": "pnpm@10.34.9",
@@ -10,6 +10,8 @@
   "scripts": {
     "dev": "pnpm --filter @hireflow/shared build && pnpm --parallel --filter \"./apps/*\" --filter @hireflow/shared dev",
     "build": "pnpm -r build",
+    "build:server": "pnpm --filter @hireflow/shared --filter @hireflow/api --filter @hireflow/worker build",
+    "build:web": "pnpm --filter @hireflow/shared build && pnpm --filter @hireflow/web build",
     "start": "node scripts/start-production.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",

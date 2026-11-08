@@ -6,6 +6,7 @@ import { CareersController } from '../src/ats/careers.controller.js';
 import { ACCESS_KEY } from '../src/common/access.js';
 import { AUTH_LIMIT_KEY } from '../src/common/rate-limit.js';
 import { parseEnv } from '../src/config/config.service.js';
+import { createPool } from '../src/database/database.js';
 import { PublicOffersController } from '../src/scheduler/scheduler.controller.js';
 import { createTestApp, signUp, type TestContext, type TestUser } from './helpers/app.js';
 
@@ -40,6 +41,27 @@ describe('platform', () => {
       }
     }
     expect(undeclared).toEqual([]);
+  });
+
+  it('a database link closed while idle does not stop the process', async () => {
+    const pool = createPool('postgresql://nobody@localhost:1/none', 1);
+    // With no listener, Node would throw this error and stop the whole app.
+    expect(() => pool.emit('error', new Error('terminating connection'))).not.toThrow();
+    await pool.end();
+  });
+
+  it('reads how many proxies to trust', () => {
+    const base = {
+      APP_URL: 'http://localhost:3000',
+      CORS_ORIGINS: 'http://localhost:3000',
+      DATABASE_URL: 'postgresql://x',
+      JWT_ACCESS_SECRET: 'a'.repeat(40),
+      JWT_REFRESH_SECRET: 'b'.repeat(40),
+      MAIL_FROM: 'x',
+    };
+    expect(parseEnv(base).TRUST_PROXY_HOPS).toBe(1);
+    expect(parseEnv({ ...base, TRUST_PROXY_HOPS: '2' }).TRUST_PROXY_HOPS).toBe(2);
+    expect(() => parseEnv({ ...base, TRUST_PROXY_HOPS: '-1' })).toThrow();
   });
 
   it('health and readiness are public', async () => {

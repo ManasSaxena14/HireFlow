@@ -1,4 +1,4 @@
-import { Injectable, type OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
 import { CamelCasePlugin, Kysely, PostgresDialect, type Transaction } from 'kysely';
 import pg from 'pg';
 import { ConfigService } from '../config/config.service.js';
@@ -28,13 +28,31 @@ export function bookingClash(error: unknown): 'interviewer' | 'candidate' | null
   return pgError.constraint === 'no_candidate_overlap' ? 'candidate' : 'interviewer';
 }
 
+const logger = new Logger('Database');
+
+/**
+ * Free database hosts close idle links and sleep when unused. Without an error listener, a
+ * link closed while idle would crash the whole process, so it is logged and the pool opens a
+ * new one next time. Idle links are closed after 30 seconds, and a sleeping database gets
+ * 15 seconds to wake.
+ */
+export function createPool(connectionString: string, max: number): pg.Pool {
+  const pool = new pg.Pool({
+    connectionString,
+    max,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 15_000,
+    keepAlive: true,
+  });
+  pool.on('error', (err) => logger.warn(`An idle database link closed: ${err.message}`));
+  return pool;
+}
+
 @Injectable()
 export class Database extends Kysely<DB> implements OnModuleDestroy {
   constructor(config: ConfigService) {
     super({
-      dialect: new PostgresDialect({
-        pool: new pg.Pool({ connectionString: config.env.DATABASE_URL, max: 10 }),
-      }),
+      dialect: new PostgresDialect({ pool: createPool(config.env.DATABASE_URL, 10) }),
       plugins: [new CamelCasePlugin()],
     });
   }
