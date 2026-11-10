@@ -38,7 +38,14 @@ export class FeedService {
         's.name as sourceName',
         't.id as savedApplicationId',
       ])
-      .select(sql<string | null>`left(j.description, ${SUMMARY_LENGTH})`.as('summary'))
+      .select(
+        // Cut at the last whole word, so a summary never ends in half a word.
+        sql<
+          string | null
+        >`CASE WHEN length(j.description) > ${SUMMARY_LENGTH} THEN regexp_replace(left(j.description, ${SUMMARY_LENGTH}), '\\s+\\S*$', '') || '…' ELSE j.description END`.as(
+          'summary',
+        ),
+      )
       .where('s.enabled', '=', true)
       .where(sql<boolean>`j.last_seen_at > now() - interval '7 days'`);
   }
