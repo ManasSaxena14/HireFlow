@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { LoginInput, RegisterInput, ResetPasswordInput } from '@hireflow/shared';
 import argon2 from 'argon2';
@@ -45,9 +45,10 @@ const PASSWORD_HASH = {
 } as const;
 
 @Injectable()
-export class AuthService implements OnModuleInit {
+export class AuthService {
   /** Checked when the email is unknown, so both cases take the same time. */
-  private decoyHash = '';
+  // Made on first use, not at start. Hashing is slow on purpose and would slow a wake from sleep.
+  private decoyHash: Promise<string> | undefined;
 
   constructor(
     private readonly db: Database,
@@ -56,10 +57,6 @@ export class AuthService implements OnModuleInit {
     private readonly mail: MailQueue,
     private readonly audit: AuditService,
   ) {}
-
-  async onModuleInit(): Promise<void> {
-    this.decoyHash = await argon2.hash(randomToken(), PASSWORD_HASH);
-  }
 
   async register(input: RegisterInput) {
     const passwordHash = await argon2.hash(input.password, PASSWORD_HASH);
@@ -123,7 +120,10 @@ export class AuthService implements OnModuleInit {
       .where((eb) => eb(eb.fn('lower', ['email']), '=', input.email))
       .executeTakeFirst();
 
-    const valid = await argon2.verify(user?.passwordHash ?? this.decoyHash, input.password);
+    const valid = await argon2.verify(
+      user?.passwordHash ?? (await (this.decoyHash ??= argon2.hash(randomToken(), PASSWORD_HASH))),
+      input.password,
+    );
     if (!user || !valid || !user.isActive) {
       if (user) await this.recordLoginFailure(user.id, meta.ip);
       throw unauthenticated('Wrong email or password.');

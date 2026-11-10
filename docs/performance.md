@@ -17,14 +17,14 @@ The API ran from its production build (`NODE_ENV=production`) on its own databas
 
 ## Start-up
 
-Measured with `pnpm start`, which runs the API and the worker together, three times in a row.
+Measured with `node scripts/start-production.mjs`, which runs the API and then the worker, after `pnpm build:render`, three times in a row.
 
-| What                             | Result                                                    |
-| -------------------------------- | --------------------------------------------------------- |
-| From start to `/ready` answering | 1.9 s, 1.1 s, 1.0 s                                       |
-| API memory once started          | 232 MB                                                    |
-| Worker memory once started       | 100 MB                                                    |
-| Checking one password            | 27 ms with the OWASP settings, 42 ms with the old default |
+| What                              | Result                                                                 |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| From start to `/health` answering | 0.73 s, 0.71 s, 0.71 s (before the start-up work: 1.3 s, 0.9 s, 1.3 s) |
+| API memory once started           | 232 MB                                                                 |
+| Worker memory once started        | 100 MB                                                                 |
+| Checking one password             | 27 ms with the OWASP settings, 42 ms with the old default              |
 
 ## Data in the database
 

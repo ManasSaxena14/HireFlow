@@ -52,37 +52,45 @@ const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\
 
 const DICTIONARY = skills as SkillEntry[];
 
-// The longest goes first and is blanked out once found, so "React Native" is not also "React".
-const ALIASES = DICTIONARY.flatMap(({ name, aliases }) =>
-  aliases.map((alias) => ({ name, alias: normalizeText(alias) })),
-)
-  .sort((a, b) => b.alias.length - a.alias.length || compare(a.alias, b.alias))
-  .map(({ name, alias }) => ({
-    name,
-    pattern: new RegExp(`(?<![\\p{L}\\p{N}+#.])${escapeRegExp(alias)}(?![\\p{L}\\p{N}+#])`, 'gu'),
-  }));
+type SkillPattern = { name: string; pattern: RegExp };
 
-const EXACT = DICTIONARY.flatMap(({ name, exact }) =>
-  (exact ?? []).map((word) => ({
-    name,
-    pattern: new RegExp(
-      `(?<![\\p{L}\\p{N}+#.&-])${escapeRegExp(word)}(?![\\p{L}\\p{N}+#&-])(?! to\\b)`,
-      'u',
-    ),
-  })),
-);
+// The patterns are built on first use, not at start, so the server starts faster after sleep.
+let patterns: { aliases: SkillPattern[]; exact: SkillPattern[] } | undefined;
+
+// The longest goes first and is blanked out once found, so "React Native" is not also "React".
+const buildAliases = (): SkillPattern[] =>
+  DICTIONARY.flatMap(({ name, aliases }) =>
+    aliases.map((alias) => ({ name, alias: normalizeText(alias) })),
+  )
+    .sort((a, b) => b.alias.length - a.alias.length || compare(a.alias, b.alias))
+    .map(({ name, alias }) => ({
+      name,
+      pattern: new RegExp(`(?<![\\p{L}\\p{N}+#.])${escapeRegExp(alias)}(?![\\p{L}\\p{N}+#])`, 'gu'),
+    }));
+
+const buildExact = (): SkillPattern[] =>
+  DICTIONARY.flatMap(({ name, exact }) =>
+    (exact ?? []).map((word) => ({
+      name,
+      pattern: new RegExp(
+        `(?<![\\p{L}\\p{N}+#.&-])${escapeRegExp(word)}(?![\\p{L}\\p{N}+#&-])(?! to\\b)`,
+        'u',
+      ),
+    })),
+  );
 
 /** Every known skill in the text, by its main name, in a fixed order. */
 export function findSkills(text: string): string[] {
+  patterns ??= { aliases: buildAliases(), exact: buildExact() };
   const found = new Set<string>();
   let rest = normalizeText(text);
-  for (const { name, pattern } of ALIASES) {
+  for (const { name, pattern } of patterns.aliases) {
     rest = rest.replace(pattern, (whole) => {
       found.add(name);
       return ' '.repeat(whole.length);
     });
   }
-  for (const { name, pattern } of EXACT) {
+  for (const { name, pattern } of patterns.exact) {
     if (pattern.test(text)) found.add(name);
   }
   return [...found].sort(compare);

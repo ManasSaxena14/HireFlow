@@ -33,13 +33,36 @@ export class PgBossMailQueue extends MailQueue implements OnModuleInit, OnModule
     this.boss.on('error', (err) => this.logger.error({ err }, 'job queue error'));
   }
 
-  async onModuleInit(): Promise<void> {
+  private ready: Promise<void> | undefined;
+
+  /**
+   * Starts the queue without holding up the server. A free host only counts the server as up
+   * once it answers, and a sleeping database can take seconds to wake, so the first job waits
+   * for the queue instead of the whole start.
+   */
+  onModuleInit(): void {
+    this.ready = this.start();
+    // Seen here so a failed start is logged once. The next job tries again.
+    this.ready.catch((err: unknown) => this.logger.warn({ err }, 'job queue not started yet'));
+  }
+
+  private async start(): Promise<void> {
     await this.boss.start();
     await this.boss.createQueue(MAIL_QUEUE, { retryLimit: 5, retryBackoff: true, retryDelay: 30 });
     await this.boss.createQueue(RESUME_PARSE_QUEUE, { retryLimit: 2, retryDelay: 15 });
   }
 
+  private async whenReady(): Promise<void> {
+    try {
+      await (this.ready ??= this.start());
+    } catch {
+      this.ready = this.start();
+      await this.ready;
+    }
+  }
+
   async onModuleDestroy(): Promise<void> {
+    await this.ready?.catch(() => undefined);
     await this.boss.stop({ graceful: false });
   }
 
@@ -48,6 +71,7 @@ export class PgBossMailQueue extends MailQueue implements OnModuleInit, OnModule
   }
 
   async enqueueJob(queue: string, data: object, executor: Executor): Promise<void> {
+    await this.whenReady();
     await this.boss.send(queue, data, {
       db: {
         executeSql: async (text, values) => {

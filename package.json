@@ -12,6 +12,7 @@
     "dev": "pnpm --filter @hireflow/shared build && pnpm --parallel --filter \"./apps/*\" --filter @hireflow/shared dev",
     "build": "pnpm -r build",
     "build:server": "pnpm --filter @hireflow/shared --filter @hireflow/api --filter @hireflow/worker build",
+    "build:render": "pnpm build:server && node scripts/warm-start.mjs",
     "build:web": "pnpm --filter @hireflow/shared build && pnpm --filter @hireflow/web build",
     "start": "node scripts/start-production.mjs",
     "lint": "eslint .",

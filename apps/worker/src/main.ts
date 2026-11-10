@@ -151,7 +151,8 @@ await boss.work(ALERTS_DIGEST_QUEUE, async () => {
 });
 
 // Sources fetched in the last 25 minutes are skipped, so a restart does not call them again.
-await boss.send(FEED_FETCH_QUEUE, {});
+// It waits two minutes so the first visitors after a wake get the small CPU to themselves.
+await boss.send(FEED_FETCH_QUEUE, {}, { startAfter: 120 });
 
 log.info('worker started');
 

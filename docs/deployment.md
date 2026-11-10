@@ -16,7 +16,12 @@ The browser only talks to the web site. The web site passes `/api/v1` requests o
 
 Free web services sleep after about 15 minutes with no visits, and the first visit after that waits for it to wake. The app is built to make this as short and smooth as it can be:
 
-- **Fast start.** The API is ready about 1 to 2 seconds after Node starts, measured on a laptop. Most of a wake is the host starting the machine, which the app cannot change.
+- **Fast start.** The API answers about 0.7 seconds after Node starts, measured on a laptop. A free server has a much smaller CPU, so expect it to be several times slower there. Most of a wake is the host starting the machine, which the app cannot change. The start is kept short by:
+  - starting the API first and the worker only once the API answers, so the two do not share the small CPU at the worst moment
+  - saving Node's compiled code during the build (`pnpm build:render`), so each wake skips that work
+  - starting Node directly instead of through `pnpm`
+  - connecting the job queue in the background, and doing slow one-time work, such as the skill patterns and the spare password hash, on first use instead of at start
+  - waiting two minutes after a wake before fetching the job feed
 - **Waking starts early.** Every page asks the server to wake as soon as it opens, while the person is still reading.
 - **Nothing fails while it wakes.** Reads and session checks wait and try again for up to about 70 seconds, and a small note says the server is starting. A change, like saving a job, is never sent twice.
 - **Small enough for 512 MB.** `pnpm start` caps the API at 256 MB and the worker at 160 MB, and a resume is read on a thread capped at 128 MB. Change them with `API_MEMORY_MB` and `WORKER_MEMORY_MB`.
@@ -46,11 +51,13 @@ Run this again after each release that adds a migration. It is not run on start,
 
 Create a free Node web service from the GitHub repository.
 
-| Setting       | Value                                                                    |
-| ------------- | ------------------------------------------------------------------------ |
-| Build command | `corepack enable && pnpm install --frozen-lockfile && pnpm build:server` |
-| Start command | `pnpm start`                                                             |
-| Health check  | `/api/v1/health`                                                         |
+| Setting       | Value                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------- |
+| Build command | `corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm build:render` |
+| Start command | `node scripts/start-production.mjs`                                                   |
+| Health check  | `/api/v1/health`                                                                      |
+
+The repository has a `render.yaml` with these values, so on Render you can choose New, then Blueprint, and pick the repository. Render then asks only for the settings below that it cannot fill itself, and makes the two JWT secrets for you. `--prod=false` is needed because the build uses developer tools, and Render installs without them when `NODE_ENV` is `production`.
 
 Settings:
 
@@ -64,9 +71,8 @@ Settings:
 | `COOKIE_SECURE`                                                 | `true`. The API will not start without it                     |
 | `TRUST_PROXY_HOPS`                                              | `2`, because requests pass the web host and then the API host |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | A free mail service. The worker will not start without a host |
-| `UPLOAD_DIR`                                                    | A full path on a disk that survives a restart                 |
 
-**About resumes:** a free service usually has no lasting disk, so uploaded resumes are lost when it restarts. To keep them, use a paid disk or add a new `FileStorage` class for a free object store. Everything else works without it.
+**About resumes:** a free service has no lasting disk, so uploaded resumes are lost when it restarts or sleeps. Leave `UPLOAD_DIR` unset to use the default folder. To keep resumes, use a paid disk and point `UPLOAD_DIR` at it, or add a new `FileStorage` class for a free object store. Everything else works without it.
 
 **About `TRUST_PROXY_HOPS`:** sign-in limits count by visitor address. If it is too low, every visitor shares the web host's address, and ten sign-ins a minute would lock everyone out. After deploying, sign in from two networks and check the API log shows two different addresses.
 

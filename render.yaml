@@ -1,0 +1,41 @@
+# Render setup for the API and the worker on the free plan. The web site is hosted separately.
+# Fill in the settings marked sync: false in the Render dashboard.
+services:
+  - type: web
+    name: hireflow-api
+    runtime: node
+    plan: free
+    # Developer tools are needed for the build, even though NODE_ENV is production.
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm build:render
+    # Node is started directly, without pnpm in front, which saves time on every wake.
+    startCommand: node scripts/start-production.mjs
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: NODE_ENV
+        value: production
+      - key: COOKIE_SECURE
+        value: 'true'
+      - key: TRUST_PROXY_HOPS
+        value: '2'
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false
