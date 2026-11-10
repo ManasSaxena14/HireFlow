@@ -1,59 +1,69 @@
-<div align="center">
-
 # HireFlow
 
-**The two-sided hiring platform.**
-Job seekers track every application. Companies run their whole hiring process. Both sides stay in step, by themselves.
+HireFlow is a two-sided hiring platform. Job seekers manage their applications on one board. Companies run their hiring on another. The two boards are connected, so a company's decision shows up on the candidate's board without anyone doing extra work.
 
-[![CI](https://github.com/ManasSaxena14/HireFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/ManasSaxena14/HireFlow/actions/workflows/ci.yml)
-[![Licence: MIT](https://img.shields.io/badge/licence-MIT-2ea44f.svg)](LICENSE)
-![Node](https://img.shields.io/badge/node-%E2%89%A5%2022-5fa04e.svg)
-![TypeScript](https://img.shields.io/badge/typescript-5.9-3178c6.svg)
-![PostgreSQL](https://img.shields.io/badge/postgresql-15%2B-336791.svg)
+|                   |                                                                   |
+| ----------------- | ----------------------------------------------------------------- |
+| **Version**       | 1.1.1                                                             |
+| **Status**        | Feature complete. Not deployed yet. See [Deployment](#deployment) |
+| **Licence**       | [MIT](LICENSE)                                                    |
+| **Runtime**       | Node.js 22 or newer, PostgreSQL 15 or newer                       |
+| **Code language** | TypeScript, in one pnpm workspace                                 |
+| **Maintainer**    | Manas Saxena                                                      |
 
-[Features](#features) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Quick start](#quick-start) · [Quality](#quality-and-results) · [Deployment](#deployment) · [Documentation](#documentation)
+## Contents
 
-<img src="docs/images/landing.jpg" alt="The HireFlow home page" width="100%">
+1. [Product scope](#product-scope)
+2. [System design](#system-design)
+3. [Getting started](#getting-started)
+4. [Configuration](#configuration)
+5. [Development workflow](#development-workflow)
+6. [Testing](#testing)
+7. [Quality targets and results](#quality-targets-and-results)
+8. [Security](#security)
+9. [Operations](#operations)
+10. [Deployment](#deployment)
+11. [Repository layout](#repository-layout)
+12. [Documentation](#documentation)
+13. [Known limits](#known-limits)
 
-</div>
+## Product scope
 
-## Overview
+### Users and roles
 
-Looking for a job and hiring for one are usually two separate tools, and neither side can see the other. HireFlow puts both in one product and joins them.
+| User           | Who they are                       | What they can do                                                       |
+| -------------- | ---------------------------------- | ---------------------------------------------------------------------- |
+| Job seeker     | Anyone with an account             | Track applications, find jobs, check resumes, practise, see interviews |
+| Company admin  | Creates and owns a company         | Everything below, plus the team, roles and the activity log            |
+| Recruiter      | Runs hiring for the company        | Jobs, hiring board, interviews, hiring numbers                         |
+| Hiring manager | Decides with the recruiter         | The same as a recruiter                                                |
+| Interviewer    | Takes part in interviews           | Only the candidates given to them: feedback, comments, their own hours |
+| Candidate      | Applies from a public careers page | No account needed. Books a time from a signed link                     |
 
-- **A job seeker** keeps one job board for every application, with reminders, notes and numbers. When they apply to a company on HireFlow, the card on their board **moves by itself** as the company goes through its hiring.
-- **A company** posts jobs, runs a hiring board with its own steps, scores people with its team, books interviews that can never clash, and reads its hiring numbers.
-- **The platform** finds new jobs from public company job boards every 30 minutes, tells people when one matches, and checks a resume against a job with a clear score that anyone can understand.
+### Capabilities
 
-## Features
+**Job seeker side**
 
-### For job seekers
+- **Job board.** Drag jobs across saved, applied, first round, interview, offer and rejected. Notes, tags, search, archive and a full history for each card.
+- **Live cards.** An application made on HireFlow follows the company's hiring by itself. Each change adds a history line and a notification.
+- **Reminders.** A follow-up reminder 7 days after applying, custom reminders, and a notice a day and an hour before each interview. Sent in the app and by email.
+- **Personal numbers.** Applications each week, reply rate and how far each application got.
+- **Job feed.** New jobs from public company job boards, checked every 30 minutes. Search by words, place and remote. Save any job to the board.
+- **Job alerts.** Keywords, places and remote. One email for each new job, or one daily email at 8 am in the person's own time zone.
+- **Resume check.** Upload a PDF or Word resume. Get a score from 0 to 100 for any job, with the skills found, the skills missing and how the score was made.
+- **Interview practice.** Log practice sessions. Each topic returns for review on the SM-2 schedule. Daily streak and totals by type and topic.
+- **Interviews.** One list of upcoming interviews, calendar files and a page to pick a time when a company offers choices.
 
-| Feature                | What it does                                                                                                             |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Job board**          | Drag jobs across saved, applied, first round, interview, offer and rejected. Add notes and tags, search, archive.        |
-| **Live cards**         | An application made on HireFlow follows the company's hiring on its own, with a history line and a message each time.    |
-| **Reminders**          | A follow-up reminder 7 days after you apply, your own reminders, and a day-and-hour notice before every interview.       |
-| **Your numbers**       | Applications each week, reply rate and how far you got.                                                                  |
-| **Find jobs**          | Search new jobs from public company job boards, filter by place or remote, and save one to your board in a click.        |
-| **Job alerts**         | Pick keywords, places and remote. Get one email for each new job, at once or as a daily note at 8 am your time.          |
-| **Resume check**       | Upload a PDF or Word resume and see a score for any job, with the skills you have, the ones you are missing and the why. |
-| **Interview practice** | Log what you practise. Each topic comes back for review at the right time, using the SM-2 method, with a daily streak.   |
-| **Interviews**         | See your interviews, add them to any calendar and pick your own time when a company offers choices.                      |
+**Company side**
 
-### For companies
+- **Jobs and careers page.** Draft, publish and close jobs. One public page lists open jobs, and people apply there with a resume.
+- **Hiring board.** Steps are set for each job. Move people with drag and drop or the keyboard. A written reason is required to turn someone down.
+- **Team work.** Comments, one score from each interviewer, and role-based access.
+- **Interview booking.** Working hours for each person, free-time search across up to five people, booking by a recruiter, or a signed link for the candidate. Double booking is impossible, because the database refuses it.
+- **Hiring numbers.** Funnel, days to hire and source of applicants, for any job and date range.
+- **Activity log.** A read-only record of who changed what. The database blocks edits and deletes.
 
-| Feature                   | What it does                                                                                                                                                                      |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Jobs and careers page** | Post jobs and share one public page where people apply with a resume.                                                                                                             |
-| **Hiring board**          | Your own steps for each job. Drag people across, or use the keyboard. A reason is needed to turn someone down.                                                                    |
-| **Team and roles**        | Admin, recruiter, hiring manager and interviewer. Interviewers only see the people given to them.                                                                                 |
-| **Feedback**              | Comments, one score and a recommendation from each interviewer.                                                                                                                   |
-| **Interview booking**     | Set working hours, book a free time or let the candidate choose. The database refuses double booking, even when 20 people try at once. Works across time zones and clock changes. |
-| **Hiring numbers**        | How far people get, days to hire, and where people came from, for any job and time.                                                                                               |
-| **Activity log**          | Who changed what. Nobody can edit or delete an entry, because the database stops it.                                                                                              |
-
-### How the two sides join
+### How the two boards connect
 
 ```mermaid
 sequenceDiagram
@@ -61,25 +71,25 @@ sequenceDiagram
   participant S as Job seeker
   participant H as HireFlow
   participant R as Recruiter
-  S->>H: Apply to a job (signed in, email confirmed)
-  H-->>S: A card appears on their job board
-  R->>H: Move the person to Interview
-  H-->>S: The card moves, a history line is added and a message shows
-  R->>H: Book an interview
-  H-->>S: The time appears on their interviews screen
+  S->>H: Applies to a job, signed in with a confirmed email
+  H-->>S: A card appears on the job board
+  R->>H: Moves the person to the interview step
+  H-->>S: The card moves, a history line is added, a message shows
+  R->>H: Books an interview
+  H-->>S: The time appears on the interviews screen
 ```
 
-A card is only made for someone who is signed in with a confirmed email that matches the form, because the apply form itself is open to anyone. The company's reasons for a decision never reach the candidate. Read [the choices made](docs/decisions/013-live-boards.md).
+Rules that keep this safe:
 
-## Screenshots
+- A card is made only when the applicant is signed in, the account's email is confirmed, and it matches the email on the form. The apply form is open to anyone, so an email alone proves nothing.
+- A later move by the company updates an existing card. It never creates one.
+- The company's reasons for a decision are never sent to the candidate.
+- If the person moves a linked card by hand, the company's next move puts it back in step.
+- The screens ask the server again every 15 to 60 seconds while a tab is in view. A new notification refreshes the affected screens at once. Boards being dragged are not refreshed.
 
-|                                                                                                                                               |                                                                                                                                                   |
-| --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <img src="docs/images/job-board.jpg" alt="The job seeker's job board"> <br> **Job board**: every application in one place, with live numbers  | <img src="docs/images/hiring-board.jpg" alt="A company's hiring board"> <br> **Hiring board**: a company's own steps, with a score on each person |
-| <img src="docs/images/resume-match.jpg" alt="A resume match report"> <br> **Resume check**: a clear score, what you have and what is missing  | <img src="docs/images/find-jobs.jpg" alt="The job feed"> <br> **Find jobs**: new jobs from public job boards, ready to save                       |
-| <img src="docs/images/hiring-numbers.jpg" alt="A company's hiring numbers"> <br> **Hiring numbers**: how far people get and how long it takes |                                                                                                                                                   |
+Full reasoning: [decision 013](docs/decisions/013-live-boards.md).
 
-## Architecture
+## System design
 
 ```mermaid
 flowchart LR
@@ -88,43 +98,93 @@ flowchart LR
   A --> P[(PostgreSQL)]
   K[Worker] --> P
   K --> M[Mail server]
-  K -- reads every 30 min --> J[Public job boards]
+  K -- every 30 min --> J[Public job boards]
 ```
 
-- **One database does three jobs.** PostgreSQL holds the data, the background job queue (pg-boss) and the full-text search. There is no second system to run, which keeps hosting free and simple.
-- **The API holds every rule.** The browser only talks to the API, and the web server passes `/api/v1` on, so the login cookie works even when the API lives on another host.
-- **The worker does slow things.** It sends email, scans for reminders, reads job boards, matches alerts, reads resumes on a separate thread with time and memory limits, and cleans up old rows. Every job is safe to run twice.
-- **The database defends the important rules,** not only the code: no overlapping interviews, one application for each person and job, and an activity log that cannot be changed.
+### Principles
 
-| Layer         | Tools                                                                                       |
-| ------------- | ------------------------------------------------------------------------------------------- |
-| Web           | Next.js 16, React 19, Tailwind CSS 4, TanStack Query, dnd-kit, React Hook Form, Luxon       |
-| API           | NestJS 12, Kysely (typed SQL), zod checks shared with the web app, Argon2id, JWT, pino logs |
-| Data          | PostgreSQL 15+, 11 reversible SQL migrations, pg-boss queue                                 |
-| Worker        | Node, nodemailer, unpdf and fflate for resumes                                              |
-| Quality       | Vitest, Supertest, Playwright, k6, ESLint, Prettier, Husky, GitHub Actions                  |
-| Code language | TypeScript, in one shared workspace (pnpm)                                                  |
+- **One datastore.** PostgreSQL holds the data, the job queue (pg-boss) and full-text search. There is no cache or message broker to run, which keeps hosting simple and free.
+- **The API owns the rules.** The browser only talks to the API. The web server forwards `/api/v1`, so the login cookie works even when the API is on another host.
+- **The database enforces the rules that matter.** No overlapping interviews for a person, one application for each person and job, and an activity log that cannot be changed.
+- **Shared checks.** One set of zod schemas validates both the forms and the API.
+- **Safe to repeat.** Every background job can run twice with the same result. Emails are sent once, matched jobs are delivered once, and reminders fire once.
+- **Typed end to end.** Kysely gives typed SQL, and the types are shared with the web app.
 
-More in [docs/architecture.md](docs/architecture.md) and the [13 decision records](docs/decisions).
+### Technology
 
-## Quick start
+| Layer   | Technology                                                                            |
+| ------- | ------------------------------------------------------------------------------------- |
+| Web     | Next.js 16, React 19, Tailwind CSS 4, TanStack Query, dnd-kit, React Hook Form, Luxon |
+| API     | NestJS 12, Kysely, zod, Argon2id, JSON Web Tokens, pino                               |
+| Data    | PostgreSQL 15 or newer, node-pg-migrate (11 reversible SQL migrations), pg-boss       |
+| Worker  | Node.js, nodemailer, unpdf and fflate for reading resumes                             |
+| Tooling | pnpm workspaces, ESLint, Prettier, Husky, Vitest, Supertest, Playwright, k6           |
+| CI      | GitHub Actions                                                                        |
 
-You need Node 22 or newer, Corepack (`corepack enable`) and PostgreSQL 15 or newer. **No Docker.**
+### Background jobs
+
+| Job              | When it runs             | What it does                                                          | Retries          |
+| ---------------- | ------------------------ | --------------------------------------------------------------------- | ---------------- |
+| `mail`           | When any email is needed | Renders and sends one email                                           | 5, with back-off |
+| `reminders-scan` | Every minute             | Turns due reminders into notifications and emails                     | Next minute      |
+| `resume-parse`   | After a resume upload    | Reads the file on its own thread, saves text and skills               | 3                |
+| `feed-fetch`     | Every 30 minutes         | Reads each job board, saves new jobs, marks a failing board as failed | 3 per board      |
+| `alerts-match`   | After each fetch         | Matches new jobs to alerts and saves one delivery for each pair       | 3                |
+| `alerts-digest`  | Every 15 minutes         | Sends instant alerts, and daily alerts at 8 am in each person's zone  | 3                |
+| `cleanup`        | Every day at 03:00       | Removes expired tokens, old delivery rows and jobs gone from boards   | Next day         |
+
+### Data
+
+Migrations are plain SQL files in `apps/api/migrations`. CI applies all of them, undoes all of them and applies them again.
+
+| Migration | Contents                                                            |
+| --------- | ------------------------------------------------------------------- |
+| 001       | Extensions and enums                                                |
+| 002       | Users, companies, memberships, tokens and the activity log          |
+| 003       | Email delivery records                                              |
+| 004       | Job board, history, notes, reminders and notifications              |
+| 005       | Hiring: jobs, steps, candidates, applications, feedback and files   |
+| 006       | Working hours, interviews (with overlap rules) and interview offers |
+| 007       | Job feed, alerts and deliveries                                     |
+| 008       | Resumes and resume checks                                           |
+| 009       | Practice sessions and review items                                  |
+| 010       | Trigram index for searching jobs by place                           |
+| 011       | Link between a job board card and a company application             |
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 22 or newer
+- Corepack, to get the right pnpm version: `corepack enable`
+- PostgreSQL 15 or newer, with the `btree_gist`, `pgcrypto` and `pg_trgm` extensions. The local helper below runs a private copy, so you do not need to install a server yourself.
+- Docker is not used anywhere in this project.
+
+### Run it locally
 
 ```bash
 pnpm install
-cp .env.example .env     # then set the two JWT values: openssl rand -base64 48
-pnpm db:start            # a private database in .pgdata/ on port 5433
-pnpm db:create
-pnpm db:migrate
-pnpm db:seed             # optional: a demo company with people, jobs and an interview
-pnpm feed:sources        # optional: the public job boards the worker reads
-pnpm dev
+cp .env.example .env
 ```
 
-Open <http://localhost:3000>. In development, emails are saved as files in `.mail-preview/`, and you can click the links from there.
+Open `.env` and set `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` to two different long random values. You can make each one with `openssl rand -base64 48`. Then:
 
-**Demo accounts** (development only, password `demo-password-123`):
+```bash
+pnpm db:start        # a private database in .pgdata/ on port 5433
+pnpm db:create       # the development and test databases
+pnpm db:migrate      # apply the schema
+pnpm db:seed         # optional: a demo company with people, jobs and an interview
+pnpm feed:sources    # optional: add the public job boards the worker reads
+pnpm dev             # web on 3000, API on 4000, and the worker
+```
+
+Open <http://localhost:3000>.
+
+Email is not sent in development. With `SMTP_HOST` empty, each email is saved as an HTML file in `.mail-preview/`, so you can open it and follow its links.
+
+### Demo accounts
+
+Created by `pnpm db:seed`. Development only. The password is `demo-password-123`.
 
 | Account                         | Role           |
 | ------------------------------- | -------------- |
@@ -133,73 +193,151 @@ Open <http://localhost:3000>. In development, emails are saved as files in `.mai
 | `manager@northwind.example`     | Hiring manager |
 | `interviewer@northwind.example` | Interviewer    |
 
-Or create a new account to see the job seeker side. The demo company's public careers page is at `/c/northwind-labs`.
+To see the job seeker side, create a new account on the sign-up page. The demo company's public careers page is at `/c/northwind-labs`.
+
+### Check that it works
+
+```bash
+curl http://localhost:4000/api/v1/ready      # {"status":"ready"}
+```
+
+## Configuration
+
+The API and the worker check their settings when they start. They stop with a clear message if one is wrong. The full example is in [.env.example](.env.example).
+
+| Name                      | Used by      | Default                 | Notes                                                                 |
+| ------------------------- | ------------ | ----------------------- | --------------------------------------------------------------------- |
+| `NODE_ENV`                | all          | `development`           | Use `production` when live                                            |
+| `LOG_LEVEL`               | API, worker  | `info`                  |                                                                       |
+| `PORT`                    | API          | `4000`                  | Most hosts set this for you                                           |
+| `APP_URL`                 | API, worker  | none, required          | Public address of the web site. Used in email links                   |
+| `API_URL`                 | web          | `http://localhost:4000` | Address of the API. Set it before the web build                       |
+| `CORS_ORIGINS`            | API          | none, required          | Allowed web addresses, separated by commas                            |
+| `DATABASE_URL`            | API, worker  | none, required          | Use the direct connection, not a pooled one                           |
+| `TEST_DATABASE_URL`       | tests        | none                    | A separate database that tests may erase                              |
+| `JWT_ACCESS_SECRET`       | API          | none, required          | At least 32 characters                                                |
+| `JWT_REFRESH_SECRET`      | API          | none, required          | At least 32 characters, and different from the access secret          |
+| `COOKIE_DOMAIN`           | API          | empty                   | Leave empty unless cookies are shared across subdomains               |
+| `COOKIE_SECURE`           | API          | `false`                 | Must be `true` in production                                          |
+| `TRUST_PROXY_HOPS`        | API          | `1`                     | Use `2` when the web host forwards to an API on another host          |
+| `SMTP_HOST`               | worker       | empty                   | Required in production. Empty in development saves emails as files    |
+| `SMTP_PORT`               | worker       | `587`                   | `465` for a secure connection                                         |
+| `SMTP_USER`, `SMTP_PASS`  | worker       | empty                   | Login for the mail service                                            |
+| `MAIL_FROM`               | API, worker  | none, required          | The sender name and address                                           |
+| `UPLOAD_DIR`              | API, worker  | `uploads`               | Must be a lasting disk in production, and the same for both processes |
+| `RATE_LIMIT_USER_PER_MIN` | API          | `100`                   | Requests for each signed-in person                                    |
+| `RATE_LIMIT_AUTH_PER_MIN` | API          | `10`                    | Sign-in type requests for each address                                |
+| `FOLLOW_UP_DAYS`          | API          | `7`                     | Days before the automatic follow-up reminder                          |
+| `API_MEMORY_MB`           | `pnpm start` | `256`                   | Memory cap for the API process                                        |
+| `WORKER_MEMORY_MB`        | `pnpm start` | `160`                   | Memory cap for the worker process                                     |
+
+In production the API refuses to start if `COOKIE_SECURE` is not `true`, if a secret still holds the example text, or if the two secrets are the same.
+
+## Development workflow
 
 ### Commands
 
-| Command                                | What it does                                                       |
-| -------------------------------------- | ------------------------------------------------------------------ |
-| `pnpm dev`                             | Runs the web app, the API and the worker, and rebuilds as you edit |
-| `pnpm build` / `pnpm start`            | Builds everything, then runs the API and worker for production     |
-| `pnpm test`                            | Code and API tests, against a real database                        |
-| `pnpm build && pnpm test:e2e`          | Browser tests (stop `pnpm dev` first, they use the same ports)     |
-| `pnpm lint` · `pnpm format:check`      | Code rules and formatting                                          |
-| `pnpm typecheck`                       | Types in every package                                             |
-| `pnpm coverage`                        | Test coverage for the API, worker and shared code                  |
-| `pnpm db:migrate` · `pnpm db:rollback` | Apply or undo database changes                                     |
-| `pnpm screenshots`                     | Retakes the pictures in this README, from a running local app      |
-| `k6 run scripts/load/mixed.js`         | Load test, with the plan's speed targets as pass or fail           |
+| Command                               | Purpose                                                               |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| `pnpm dev`                            | Run web, API and worker, and rebuild on every change                  |
+| `pnpm build`                          | Build every package. `build:server` and `build:web` build one side    |
+| `pnpm start`                          | Run the API and worker together, for production                       |
+| `pnpm lint`                           | ESLint                                                                |
+| `pnpm format` / `pnpm format:check`   | Prettier, write or check                                              |
+| `pnpm typecheck`                      | TypeScript in every package                                           |
+| `pnpm test`                           | Code and API tests against a real database                            |
+| `pnpm test:e2e`                       | Browser tests. Stop `pnpm dev` first, because they use the same ports |
+| `pnpm coverage`                       | Test coverage for the API, worker and shared code                     |
+| `pnpm db:migrate` / `db:rollback`     | Apply or undo database changes                                        |
+| `pnpm db:seed`                        | Demo data. Development only                                           |
+| `pnpm feed:sources`                   | Add the starting list of public job boards                            |
+| `pnpm --filter @hireflow/api openapi` | Rebuild `docs/openapi.json` from the code                             |
 
-## Quality and results
+### Conventions
 
-Every number below was measured, on one laptop (Apple M3, 8 cores) with the API, database and test tool all running together. [docs/performance.md](docs/performance.md) has the full tables, and it also says where a target was missed.
+- **Commits** use short, clear messages in the form `type: what changed`, such as `fix:`, `feat:`, `docs:` and `chore:`.
+- **Pre-commit hook.** Husky runs ESLint and Prettier on the files you changed.
+- **CI** runs on every push to `main` and on every pull request. It installs with the lock file, audits packages, lints, checks formatting and types, applies and undoes migrations, runs all tests, builds, and runs the browser tests.
+- **Database changes** are new numbered SQL files with both an up and a down step. Never edit a migration that has been released.
+- **Decisions** that change or fill in the plan get a short record in `docs/decisions`.
+- **Code and text** use plain, easy English, in the screens, errors, emails, comments and documents.
 
-| Area                 | Result                                                                                                                                                                |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tests**            | 418 code and API tests and 26 browser tests, all passing. The API's own code has about 97% of its lines covered                                                       |
-| **Speed, 50 users**  | 95% of requests under 106 ms for reads and 38 ms for a mix of reads and writes, with 0 errors, against a target of 300 ms                                             |
-| **Speed, 200 users** | 95% under 525 ms, which misses the 300 ms target. One Node process on a shared laptop is the limit, and the page says how to scale                                    |
-| **Start-up**         | The API and worker are ready about one second after they start, which matters on hosts that put apps to sleep                                                         |
-| **Queries**          | Every busy query was checked with `EXPLAIN ANALYZE` on large test data (200,000 jobs on boards, 50,000 feed posts). One slow search was found and fixed with an index |
-| **Database changes** | Every migration is applied, undone and applied again in CI                                                                                                            |
-| **Delivery**         | `main` is protected. A change needs a pull request and a passing CI run, with lint, types, tests, audit and browser tests                                             |
+## Testing
 
-### Security
+| Level   | Tool                 | Count | What it covers                                                                              |
+| ------- | -------------------- | ----- | ------------------------------------------------------------------------------------------- |
+| Shared  | Vitest               | 38    | Schemas, the resume score, the SM-2 schedule                                                |
+| API     | Vitest and Supertest | 322   | Every route with every role, other companies' data, bad uploads, booking races, live cards  |
+| Worker  | Vitest               | 58    | Reminders, email delivery, job board adapters from recorded answers, alerts, resume reading |
+| Browser | Playwright           | 26    | Sign-in, the job seeker journey, the recruiter journey, booking, live boards, resumes       |
+| Load    | k6                   | 2     | A read-heavy test and a mixed read and write test, with the speed targets as pass or fail   |
 
-Argon2id passwords. Short-lived access tokens and refresh tokens that change on every use, so a stolen one is caught. Roles checked on every company route, and a test for each role. Resumes are checked by their bytes, saved under random names and shared by short-lived signed links. Rate limits on sign-in and apply. Strict security headers and a list of allowed sites. No known vulnerable packages. The API refuses to start in production with unsafe settings. See the [security checklist](docs/security.md), checked against the plan one rule at a time.
+Tests use a real PostgreSQL database and never call the network. Job board tests use recorded answers. Some tests worth reading first:
+
+- `apps/api/test/ats.test.ts`: every hiring route, with every role
+- `apps/api/test/scheduler.test.ts`: 20 requests racing for one interview time
+- `apps/api/test/live-link.test.ts`: the job board following the hiring process
+- `apps/worker/test/feed.test.ts`: no duplicate jobs, one delivery for each alert
+- `apps/web/e2e/live-board.spec.ts`: a recruiter and a candidate, with both boards updating
+
+## Quality targets and results
+
+Measured on one laptop (Apple M3, 8 cores), with the API, the database and the load tool all running on it. The full tables and the method are in [docs/performance.md](docs/performance.md).
+
+| Target                                  | Result                                                                           | Met |
+| --------------------------------------- | -------------------------------------------------------------------------------- | --- |
+| 95% of requests under 300 ms, 50 users  | 106 ms for reads, 38 ms for reads and writes, with no errors                     | Yes |
+| 95% of requests under 300 ms, 200 users | 525 ms. One Node process on a shared laptop is the limit                         | No  |
+| Errors under 1%                         | 0% in every run                                                                  | Yes |
+| Ready quickly after a cold start        | About 1 second from start to ready                                               | Yes |
+| Query plans reviewed on large data      | Checked on 200,000 board jobs and 50,000 feed jobs. One slow search got an index | Yes |
+| API test coverage                       | 97% of lines                                                                     | Yes |
+| Migrations reversible                   | Applied, undone and applied again in every CI run                                | Yes |
+
+## Security
+
+| Area               | Control                                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Passwords          | Argon2id with the OWASP settings                                                                                           |
+| Sessions           | Access token for 15 minutes. Refresh token for 30 days, replaced on every use. Reusing an old one ends the login           |
+| Access control     | Role checked on every company route. An outsider gets a 404, so company names cannot be guessed                            |
+| Tenant separation  | Every company query uses the company id the guard checked, never one from the request                                      |
+| Uploads            | PDF or Word only, 5 MB, checked by file bytes, saved under random names, shared by short-lived signed links                |
+| Abuse limits       | 100 requests a minute for each person. 10 a minute for each address on sign-in, sign-up, reset and apply                   |
+| Browser protection | Security headers, a list of allowed sites, and cookies that are `Secure` in production                                     |
+| Audit              | Role changes, job publish and close, step moves, feedback, candidate deletion and failed logins. Entries cannot be changed |
+| Dependencies       | `pnpm audit` in every CI run, and automatic update proposals                                                               |
+| Start-up checks    | The API stops in production if a setting is unsafe                                                                         |
+
+The checklist, rule by rule, is in [docs/security.md](docs/security.md). It also says what was left out and why.
+
+## Operations
+
+- **Health.** `GET /api/v1/health` answers while the process is alive. `GET /api/v1/ready` also checks the database.
+- **Logs.** JSON logs with a request id. The same id is in every error body, so one id finds one failure. Passwords, tokens and resume text are never logged.
+- **Releases.** Run `pnpm db:migrate`, then start the new version, then check `/api/v1/ready`.
+- **Clean-up.** A nightly job removes expired tokens, old delivery rows and jobs no longer on their board.
+- **Job boards.** A board that fails is marked as failed and retried in 30 minutes. It never stops the others.
+
+More in [docs/runbook.md](docs/runbook.md).
 
 ## Deployment
 
-HireFlow is built to run on **free hosting** where the backend and the database sleep when nobody uses them.
+The project is built for free hosting where the backend and the database sleep when idle. It has not been deployed yet, so there is no live address.
 
-- The browser wakes the server as soon as a page opens, and waits patiently, with a note on screen, instead of failing or signing anyone out.
-- Closed database connections are handled, memory is capped to fit 512 MB, and the API starts in about a second.
-- A free uptime check that calls `/api/v1/health` every 10 minutes keeps it awake all day.
+- **Waking.** The browser asks the server to wake when any page opens. Reads and session checks wait and retry for about 70 seconds, with a short message on screen. Changes are never sent twice.
+- **Small footprint.** The API and worker fit in 512 MB, with caps set by `pnpm start`. Idle database links that a host closes are handled, and the API is ready about one second after it starts.
+- **Staying awake.** A free uptime check that calls `/api/v1/health` every 10 minutes keeps the server awake all day.
 
-The step-by-step guide for a free web host, a free Node host and a free database is in [docs/deployment.md](docs/deployment.md). The app has not been deployed yet, so there is no live address.
+| Part           | Suggested host                                   | Command                                                        |
+| -------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| Web            | A free Next.js host                              | `pnpm build:web`                                               |
+| API and worker | A free Node host, with a disk that lasts         | Build `pnpm build:server`, start `pnpm start`                  |
+| Database       | A free PostgreSQL host with the three extensions | `pnpm db:migrate`, run from your own computer before a release |
 
-<details>
-<summary><strong>Settings you fill in at deployment</strong></summary>
+Step-by-step instructions are in [docs/deployment.md](docs/deployment.md).
 
-<br>
-
-| Name                                                            | Value                                                           |
-| --------------------------------------------------------------- | --------------------------------------------------------------- |
-| `NODE_ENV`                                                      | `production`                                                    |
-| `APP_URL`, `CORS_ORIGINS`                                       | The public address of the web site                              |
-| `API_URL` (web host, set before the build)                      | The public address of the API                                   |
-| `DATABASE_URL`                                                  | The direct connection string of your database                   |
-| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`                       | Two different random values from `openssl rand -base64 48`      |
-| `COOKIE_SECURE`                                                 | `true` (the API will not start without it)                      |
-| `TRUST_PROXY_HOPS`                                              | `2` when the web host passes requests on to a separate API host |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | Your mail service (the worker will not start without a host)    |
-| `UPLOAD_DIR`                                                    | A full path on a disk that survives restarts                    |
-
-Everything else has a safe default. All settings are in [.env.example](.env.example), and the API and worker check them when they start.
-
-</details>
-
-## Project layout
+## Repository layout
 
 ```
 apps/
@@ -207,33 +345,35 @@ apps/
   web/        Next.js web app and browser tests
   worker/     Background jobs: email, reminders, job feed, alerts, resume reading
 packages/
-  shared/     Checks, types, the skills list and the resume score, used by every app
+  shared/     Schemas, types, the skills list and the resume score, used by every app
   config/     Shared TypeScript settings
-docs/         Architecture, API, security, performance, deployment and decisions
-scripts/      Local database, demo data, job sources, load tests and screenshots
+docs/         Architecture, API, security, performance, deployment and decision records
+scripts/      Local database, demo data, job sources and load tests
 ```
 
 ## Documentation
 
-| Document                                                 | What is in it                                                                            |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| [Architecture](docs/architecture.md)                     | How each part works, with the reasons                                                    |
-| [API list](docs/api.md) and [OpenAPI](docs/openapi.json) | All 95 operations. The OpenAPI file is made from the code, and a test fails if it drifts |
-| [Decision records](docs/decisions)                       | Why the plan was changed or filled in, one record for each area                          |
-| [Speed and test results](docs/performance.md)            | Load tests, query plans and coverage, measured                                           |
-| [Security checklist](docs/security.md)                   | Every security rule, and where the code keeps it                                         |
-| [Deployment](docs/deployment.md)                         | Free hosting, step by step                                                               |
-| [Runbook](docs/runbook.md)                               | Running it, releasing, clean-up jobs and finding an error                                |
+| Document                             | Contents                                                           |
+| ------------------------------------ | ------------------------------------------------------------------ |
+| [Architecture](docs/architecture.md) | How each part works, and why                                       |
+| [API reference](docs/api.md)         | Routes grouped by area                                             |
+| [OpenAPI file](docs/openapi.json)    | 95 operations, made from the code. A test fails if it ever differs |
+| [Decision records](docs/decisions)   | 13 short records of choices that changed or filled in the plan     |
+| [Performance](docs/performance.md)   | Load tests, query plans and coverage, all measured                 |
+| [Security](docs/security.md)         | Every security rule and where the code keeps it                    |
+| [Deployment](docs/deployment.md)     | Free hosting, step by step                                         |
+| [Runbook](docs/runbook.md)           | Running, releasing, clean-up and finding an error                  |
 
 ## Known limits
 
-- Keep the project folder out of iCloud and other sync tools. They create copies like `ats 2.ts` while you work.
-- Rate limits live in memory, so they work for one API server. More servers would need a shared store.
-- Resumes are saved on the server's disk. A host whose disk is wiped on restart needs a lasting folder, or a new storage class.
-- If the worker crashes right after the mail server accepts an email, that one email could be sent twice. No mail client can fully prevent this.
-- An interview has one interviewer. Free times can be checked for up to five people, but panel interviews are not built yet.
+- Keep the project folder out of iCloud and other sync tools. They create copies of files, such as `ats 2.ts`, while you work.
+- Rate limits are kept in memory, so they work for one API server. More servers need a shared store.
+- Resumes are saved on the server's disk. A host that wipes its disk on restart needs a lasting folder, or a new storage class.
+- If the worker stops right after the mail server accepts an email, that one email could be sent twice. No mail client can fully prevent this.
+- An interview has one interviewer. Free times can be searched for up to five people, but panel interviews are not built.
 - Weekly numbers use UTC weeks, not the person's own time zone.
+- The Lighthouse scores for the public pages have not been measured.
 
 ## Licence
 
-[MIT](LICENSE). You may use, change and share this code, also in paid work, as long as you keep the copyright and licence notice.
+Released under the [MIT licence](LICENSE). You may use, change and share the code, also in paid work, if you keep the copyright and licence notice.
