@@ -50,21 +50,21 @@ Run this again after each release that adds a migration. It is not run on start,
 
 ### 2. Sign-in (Neon Auth)
 
-In the Neon console, open the project, then **Auth**, and turn it on. Then, under **Settings, Better Auth**:
+Turn on Auth in the Neon project, under **Auth**. Then set these on the live branch. The `neon` command line tool can do the first four, as shown:
 
-| Setting                 | Value                                                                                                                                                                               |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sign-up with Email      | On                                                                                                                                                                                  |
-| Verify at Sign-up       | On. Live boards only follow confirmed emails                                                                                                                                        |
-| Sign-in with Email      | On                                                                                                                                                                                  |
-| Trusted domains         | Add the web site's address once you have it                                                                                                                                         |
-| Allow Localhost         | Off on the live branch                                                                                                                                                              |
-| Email provider          | Choose "Custom SMTP provider" and enter the same SMTP settings as the API host below, so Neon's codes and reset links come from your address. The shared one works for a quick test |
-| Project Info → Auth URL | Copy it. It is `NEON_AUTH_BASE_URL` for both hosts below                                                                                                                            |
+| Setting                     | Value                                                                                                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Email and password sign-in  | On                                                                                                                                                                             |
+| Email confirmation          | Required, with a 6 digit code: `neon neon-auth config email-password update --require-email-verification --send-verification-email-on-sign-up --email-verification-method otp` |
+| End other sessions on reset | On: `--revoke-sessions-on-password-reset` on the same command                                                                                                                  |
+| Trusted domains             | Add the web site's address once you have it: `neon neon-auth domain add https://<your-site>`                                                                                   |
+| Allow Localhost             | Off once the live site works, under Settings, Better Auth                                                                                                                      |
+| Email provider              | Choose "Custom SMTP provider" under Settings, Better Auth, with the same SMTP settings as the API host below. The shared one works for a quick test                            |
+| Auth URL                    | `neon neon-auth status` shows it as Base URL. It is `NEON_AUTH_BASE_URL` for both hosts below                                                                                  |
 
 ### 3. API and worker
 
-Create a free Node web service from the GitHub repository.
+Create a free Node web service from the GitHub repository, in the same region as the database. The HireFlow Neon project is in Singapore, so `render.yaml` uses Singapore.
 
 | Setting       | Value                                                                                 |
 | ------------- | ------------------------------------------------------------------------------------- |
@@ -72,7 +72,7 @@ Create a free Node web service from the GitHub repository.
 | Start command | `node scripts/start-production.mjs`                                                   |
 | Health check  | `/api/v1/health`                                                                      |
 
-The repository has a `render.yaml` with these values, so on Render you can choose New, then Blueprint, and pick the repository. Render then asks only for the settings below that it cannot fill itself, and makes `LINK_SECRET` for you. `--prod=false` is needed because the build uses developer tools, and Render installs without them when `NODE_ENV` is `production`.
+The repository has a `render.yaml` with these values, so on Render you can choose New, then Blueprint, and pick the repository. Render then asks only for the settings below that it cannot fill itself. It makes `LINK_SECRET` for you, and `render.yaml` already holds the Auth URL and the SMTP port. `--prod=false` is needed because the build uses developer tools, and Render installs without them when `NODE_ENV` is `production`.
 
 Settings:
 
@@ -99,25 +99,20 @@ DATABASE_URL="<the direct connection string>" pnpm feed:sources
 
 ### 4. Web
 
-Create a free Next.js project from the same repository.
-
-| Setting          | Value                                                |
-| ---------------- | ---------------------------------------------------- |
-| Root directory   | The repository root                                  |
-| Install command  | `corepack enable && pnpm install --frozen-lockfile`  |
-| Build command    | `pnpm build:web`                                     |
-| Output directory | `apps/web/.next`                                     |
-| `API_URL`        | The API's address, like https://hireflow-api.example |
+Create a free Next.js project on Vercel from the same repository, and set **Root Directory** to `apps/web`. The `apps/web/vercel.json` file tells Vercel to install from the repository root and to build with `pnpm build:web`, so leave the commands as they are.
 
 Settings on the web host:
 
-| Name                      | Value                                                    |
-| ------------------------- | -------------------------------------------------------- |
-| `API_URL`                 | The API's address. Set it **before the build**           |
-| `NEON_AUTH_BASE_URL`      | The same Auth URL as the API                             |
-| `NEON_AUTH_COOKIE_SECRET` | A value from `openssl rand -base64 32`, at least 32 long |
+| Name                           | Value                                                               |
+| ------------------------------ | ------------------------------------------------------------------- |
+| `API_URL`                      | The API's address on Render, like https://hireflow-api.onrender.com |
+| `NEON_AUTH_BASE_URL`           | The same Auth URL as the API                                        |
+| `NEON_AUTH_COOKIE_SECRET`      | A value from `openssl rand -base64 32`, at least 32 long            |
+| `ENABLE_EXPERIMENTAL_COREPACK` | `1`, so Vercel uses the pnpm version the repository names           |
 
-`API_URL` must be set before the build, because Next.js writes the forwarding rule into the build.
+All of them must be set **before the build**. Next.js writes the forwarding rule for `API_URL` into the build, and the build stops with a clear message if the Neon settings are missing.
+
+When the site is live, put its address in `APP_URL` and `CORS_ORIGINS` on Render, and add it to Neon's trusted domains (step 2).
 
 ### 5. Check it
 

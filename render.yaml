@@ -5,6 +5,8 @@ services:
     name: hireflow-api
     runtime: node
     plan: free
+    # The same region as the Neon database, so every database call stays close.
+    region: singapore
     # Developer tools are needed for the build, even though NODE_ENV is production.
     buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm build:render
     # Node is started directly, without pnpm in front, which saves time on every wake.
@@ -19,8 +21,9 @@ services:
         value: '2'
       - key: LINK_SECRET
         generateValue: true
+      # The Auth URL of the Neon project HireFlow, branch production. It is an address, not a secret.
       - key: NEON_AUTH_BASE_URL
-        sync: false
+        value: https://ep-restless-night-ao2t4qt0.neonauth.c-2.ap-southeast-1.aws.neon.tech/neondb/auth
       - key: DATABASE_URL
         sync: false
       - key: APP_URL
@@ -30,7 +33,7 @@ services:
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
-        sync: false
+        value: '587'
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS

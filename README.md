@@ -335,11 +335,11 @@ The project is built for free hosting where the backend and the database sleep w
 - **Small footprint.** The API and worker fit in 512 MB, with caps set by `pnpm start`. Idle database links that a host closes are handled, and the API answers about 0.7 seconds after it starts, measured on a laptop. The worker starts only after the API answers, and Node's compiled code is saved during the build, so a wake from sleep does less work.
 - **Staying awake.** A free uptime check that calls `/api/v1/health` every 10 minutes keeps the server awake all day.
 
-| Part           | Suggested host                                   | Command                                                              |
-| -------------- | ------------------------------------------------ | -------------------------------------------------------------------- |
-| Web            | A free Next.js host                              | `pnpm build:web`                                                     |
-| API and worker | A free Node host, such as Render (`render.yaml`) | Build `pnpm build:render`, start `node scripts/start-production.mjs` |
-| Database       | A free PostgreSQL host with the three extensions | `pnpm db:migrate`, run from your own computer before a release       |
+| Part           | Suggested host                                         | Command                                                              |
+| -------------- | ------------------------------------------------------ | -------------------------------------------------------------------- |
+| Web            | Vercel, with Root Directory `apps/web` (`vercel.json`) | `pnpm build:web`                                                     |
+| API and worker | Render, Singapore (`render.yaml`)                      | Build `pnpm build:render`, start `node scripts/start-production.mjs` |
+| Database       | A free PostgreSQL host with the three extensions       | `pnpm db:migrate`, run from your own computer before a release       |
 
 Step-by-step instructions are in [docs/deployment.md](docs/deployment.md).
 
