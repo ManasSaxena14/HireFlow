@@ -176,7 +176,12 @@ describe('job feed and alerts', () => {
       const description = `${'long '.repeat(100)}${word}`;
       const id = await addJob({ title: 'Long job', description });
       const list = await search({});
-      expect((list.items.find((job) => job.id === id)?.summary as string).length).toBe(240);
+      const summary = list.items.find((job) => job.id === id)?.summary as string;
+      // Cut at a whole word, with an ellipsis, and never longer than the limit plus the dot.
+      expect(summary.length).toBeLessThanOrEqual(241);
+      expect(summary.endsWith('…')).toBe(true);
+      expect(summary.endsWith(' …')).toBe(false);
+      expect(summary.startsWith('long long')).toBe(true);
       const detail = await ctx.http().get(`${FEED}/${id}`).set(user.auth).expect(200);
       expect(detail.body.description).toBe(description);
       await ctx.http().get(`${FEED}/${randomUUID()}`).set(user.auth).expect(404);
