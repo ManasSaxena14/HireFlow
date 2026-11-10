@@ -21,7 +21,7 @@ export class ApiError extends Error {
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   body?: unknown;
-  /** Set to false for routes that should not try to refresh the session on a 401. */
+  /** Set to false for routes that should not try again with a new token on a 401. */
   auth?: boolean;
 }
 
@@ -90,25 +90,24 @@ export function wakeServer(): void {
   void fetch('/api/v1/health', { cache: 'no-store' }).catch(() => undefined);
 }
 
-// The access token is kept only in memory and is never saved to disk.
-let accessToken: string | null = null;
-let refreshInFlight: Promise<SessionPayload | null> | null = null;
+/**
+ * Gives the short-lived Neon Auth token for the signed-in person. It is set while someone is
+ * signed in, so a visitor who is not signed in never asks Neon Auth for a session.
+ */
+type TokenSource = (fresh: boolean) => Promise<string | null>;
+let tokenSource: TokenSource | null = null;
 
-export interface SessionPayload {
-  accessToken: string;
-  user: { id: string; email: string; fullName: string; timezone: string };
-}
-
-export const setAccessToken = (token: string | null) => {
-  accessToken = token;
+export const setTokenSource = (source: TokenSource | null) => {
+  tokenSource = source;
 };
 
-async function send(path: string, options: RequestOptions): Promise<Response> {
+async function send(path: string, options: RequestOptions, fresh = false): Promise<Response> {
   const headers: Record<string, string> = {};
+  const token = tokenSource ? await tokenSource(fresh).catch(() => null) : null;
   const isForm = options.body instanceof FormData;
   // The browser sets the type itself for a form, because it has to add the boundary.
   if (options.body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
-  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  if (token) headers.Authorization = `Bearer ${token}`;
   return fetch(`/api/v1${path}`, {
     method: options.method ?? 'GET',
     headers,
@@ -133,35 +132,6 @@ async function toError(response: Response): Promise<ApiError> {
   }
 }
 
-async function requestRefresh(): Promise<SessionPayload | null> {
-  // Only a clear "no" from the server ends the session. A 5xx means it is starting up.
-  const response = await whileWaking(
-    () => fetch('/api/v1/auth/refresh', { method: 'POST', credentials: 'same-origin' }),
-    (response) => response.status >= 500,
-  );
-  return response.ok ? ((await response.json()) as SessionPayload) : null;
-}
-
-/**
- * Gets a new access token using the refresh cookie. A refresh token works only once, and
- * using an old one can end the session. So calls in one tab share a single request, and
- * open tabs take turns using a Web Lock.
- */
-export function refreshSession(): Promise<SessionPayload | null> {
-  refreshInFlight ??= (async () => {
-    try {
-      const session = navigator.locks
-        ? await navigator.locks.request('hireflow-refresh', requestRefresh)
-        : await requestRefresh();
-      accessToken = session?.accessToken ?? null;
-      return session;
-    } finally {
-      refreshInFlight = null;
-    }
-  })();
-  return refreshInFlight;
-}
-
 async function request(path: string, options: RequestOptions): Promise<Response> {
   // Reads are safe to repeat. A change is sent once, so it can never be saved twice.
   let response =
@@ -169,9 +139,9 @@ async function request(path: string, options: RequestOptions): Promise<Response>
       ? await whileWaking(() => send(path, options))
       : await send(path, options);
 
-  if (response.status === 401 && options.auth !== false) {
-    const session = await refreshSession();
-    if (session) response = await send(path, options);
+  // The token may have run out a moment ago. Ask Neon Auth for a new one and try once more.
+  if (response.status === 401 && options.auth !== false && tokenSource) {
+    response = await send(path, options, true);
   }
 
   if (!response.ok) throw await toError(response);

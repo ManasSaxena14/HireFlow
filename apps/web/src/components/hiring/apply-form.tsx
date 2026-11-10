@@ -75,8 +75,8 @@ export function ApplyForm({
     if (values.phone) body.set('phone', values.phone);
     body.set('resume', file);
     try {
-      // Someone who is signed in gets this application on their own job board too. The login
-      // is only in memory, so on this public page it is looked up now, once, when they apply.
+      // Someone who is signed in gets this application on their own job board too. On this
+      // public page the session is looked up now, once, when they apply.
       if (status !== 'authenticated') await restore();
       const result = await api<{ onYourBoard?: boolean }>(
         `/public/companies/${companySlug}/jobs/${jobSlug}/apply`,

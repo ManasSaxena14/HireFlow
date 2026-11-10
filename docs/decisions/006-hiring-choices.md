@@ -10,6 +10,6 @@ The plan left a few things open. These are the choices we made.
 - **Scores stay private for interviewers.** An interviewer sees only their own score, and not the average, so other votes do not sway them.
 - **Step emails are simple.** A step has an optional subject and message, stored on `pipeline_stages`. They are off by default, so moving someone never sends a surprise email.
 - **Files are saved on disk.** There is no paid storage here, so resumes go in `UPLOAD_DIR`, under a random name. All code goes through the `FileStorage` class, so another store only needs one new class.
-- **Download links.** A link works for 5 minutes and is signed with its own key, which is made from `JWT_REFRESH_SECRET`. This means one less secret to manage. Changing that secret only ends the links that are open at that moment.
+- **Download links.** A link works for 5 minutes and is signed with its own key, which is made from `LINK_SECRET` (called `JWT_REFRESH_SECRET` before decision 014). This means one less secret to manage. Changing that secret only ends the links that are open at that moment.
 - **Changing steps.** A step with people in it cannot be removed or change type. Otherwise someone could end up in "not selected" with no reason.
 - **Links to user accounts.** `candidates.user_id` stays empty for now. An email on a public form does not prove who someone is, so we will not link them until people can confirm it.

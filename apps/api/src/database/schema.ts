@@ -15,8 +15,9 @@ import type { MatchBreakdown } from '@hireflow/shared/matcher';
 
 export interface UsersTable {
   id: Generated<string>;
+  /** The Neon Auth user this account belongs to. Empty until its first sign-in. */
+  authId: string | null;
   email: string;
-  passwordHash: string;
   fullName: string;
   timezone: Generated<string>;
   emailVerifiedAt: Date | null;
@@ -39,26 +40,6 @@ export interface MembershipsTable {
   userId: string;
   role: MembershipRole;
   createdAt: Generated<Date>;
-}
-
-export interface RefreshTokensTable {
-  id: Generated<string>;
-  userId: string;
-  familyId: string;
-  tokenHash: string;
-  expiresAt: Date;
-  revokedAt: Date | null;
-  userAgent: string | null;
-  createdAt: Generated<Date>;
-}
-
-export interface EmailTokensTable {
-  id: Generated<string>;
-  userId: string;
-  purpose: 'verify_email' | 'reset_password';
-  tokenHash: string;
-  expiresAt: Date;
-  usedAt: Date | null;
 }
 
 export interface AuditLogsTable {
@@ -393,8 +374,6 @@ export interface DB {
   users: UsersTable;
   companies: CompaniesTable;
   memberships: MembershipsTable;
-  refreshTokens: RefreshTokensTable;
-  emailTokens: EmailTokensTable;
   auditLogs: AuditLogsTable;
   trackedApplications: TrackedApplicationsTable;
   applicationEvents: ApplicationEventsTable;

@@ -172,7 +172,14 @@ export function buildOpenApi(version: string): Json {
     },
     servers: [{ url: '/api/v1' }],
     components: {
-      securitySchemes: { bearer: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
+      securitySchemes: {
+        bearer: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'The short-lived token that Neon Auth gives a signed-in browser.',
+        },
+      },
       schemas: {
         Error: {
           type: 'object',

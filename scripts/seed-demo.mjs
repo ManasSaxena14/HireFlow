@@ -15,23 +15,35 @@ if (process.env.NODE_ENV === 'production') {
 const apiRoot = fileURLToPath(new URL('../apps/api/', import.meta.url));
 const require = createRequire(`${apiRoot}package.json`);
 const { Client } = require('pg');
-const argon2 = require('argon2');
 
-const PASSWORD = 'demo-password-123';
+// Sign-in happens in Neon Auth, which wants each address confirmed with an emailed code. On your
+// computer the local stand-in saves those emails in .mail-preview/, so the demo team uses made-up
+// addresses. With the real Neon Auth, set DEMO_EMAIL=you@gmail.com and the team uses your inbox:
+// you+hf-admin@gmail.com and so on.
+const demoEmail = process.env.DEMO_EMAIL?.trim().toLowerCase();
+if (demoEmail && !/^[^@+\s]+@[^@\s]+\.[^@\s]+$/.test(demoEmail)) {
+  console.error('DEMO_EMAIL must be a plain address, like DEMO_EMAIL=you@gmail.com');
+  process.exit(1);
+}
+const teamEmail = (key) => {
+  if (!demoEmail) return `${key}@northwind.example`;
+  const [name, domain] = demoEmail.split('@');
+  return `${name}+hf-${key}@${domain}`;
+};
 const COMPANY = { name: 'Northwind Labs', slug: 'northwind-labs' };
 const TEAM = [
-  { key: 'admin', name: 'Anika Rao', email: 'admin@northwind.example', role: 'admin' },
-  { key: 'recruiter', name: 'Rohan Iyer', email: 'recruiter@northwind.example', role: 'recruiter' },
+  { key: 'admin', name: 'Anika Rao', email: teamEmail('admin'), role: 'admin' },
+  { key: 'recruiter', name: 'Rohan Iyer', email: teamEmail('recruiter'), role: 'recruiter' },
   {
     key: 'manager',
     name: 'Meera Shah',
-    email: 'manager@northwind.example',
+    email: teamEmail('manager'),
     role: 'hiring_manager',
   },
   {
     key: 'interviewer',
     name: 'Dev Kapoor',
-    email: 'interviewer@northwind.example',
+    email: teamEmail('interviewer'),
     role: 'interviewer',
   },
 ];
@@ -192,7 +204,6 @@ if (existing) {
 const savedFiles = [];
 try {
   await client.query('BEGIN');
-  const passwordHash = await argon2.hash(PASSWORD);
   const company = await one('INSERT INTO companies (name, slug) VALUES ($1, $2) RETURNING id', [
     COMPANY.name,
     COMPANY.slug,
@@ -201,11 +212,11 @@ try {
   const users = {};
   for (const person of TEAM) {
     const user = await one(
-      `INSERT INTO users (email, password_hash, full_name, email_verified_at)
-       VALUES ($1, $2, $3, now())
+      `INSERT INTO users (email, full_name, email_verified_at)
+       VALUES ($1, $2, now())
        ON CONFLICT (lower(email)) DO UPDATE SET full_name = EXCLUDED.full_name
        RETURNING id`,
-      [person.email, passwordHash, person.name],
+      [person.email, person.name],
     );
     users[person.key] = user.id;
     await client.query('INSERT INTO memberships (company_id, user_id, role) VALUES ($1, $2, $3)', [
@@ -329,7 +340,7 @@ try {
   await addDemoSchedule(company.id);
   await client.query('COMMIT');
   console.log(`Demo data added. Careers page: /c/${COMPANY.slug}`);
-  console.log(`Sign in with any of these. The password is ${PASSWORD}`);
+  console.log('Sign up with any of these, confirm the code from the email, and you get its role:');
   for (const person of TEAM) console.log(`  ${person.email} (${person.role})`);
 } catch (error) {
   await client.query('ROLLBACK');

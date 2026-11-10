@@ -12,8 +12,6 @@ export interface JobAlertGroup {
 }
 
 export type MailMessage =
-  | { template: 'verify-email'; to: string; dedupeKey: string; name: string; link: string }
-  | { template: 'reset-password'; to: string; dedupeKey: string; name: string; link: string }
   | {
       template: 'reminder';
       to: string;

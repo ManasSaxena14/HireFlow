@@ -1,6 +1,6 @@
 # 003: Choices about access
 
-**Status:** accepted
+**Status:** accepted. Decision 014 replaces two rules here: Neon Auth now runs sessions, so the refresh token rule is gone, and sign-up no longer says when an email is already used.
 
 - **People outside a company get a 404, not a 403.** A 403 would tell them the company exists. A 403 is only for members whose role does not allow the action.
 - **You can sign in before you confirm your email.** Otherwise a slow email would block your first visit. We show a message asking you to confirm.

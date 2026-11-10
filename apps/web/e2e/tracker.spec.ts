@@ -123,11 +123,12 @@ test('a due reminder reaches the notification list and is emailed once', async (
 
   await expect(page.getByRole('link', { name: /Notifications\s*1 unread/ })).toBeVisible();
 
-  // One verification email and one reminder for this address, and no more.
+  // One reminder email for this address, and no more. The sign-up code comes from Neon Auth,
+  // not from the worker, so it is not in this count.
   const prefix = email.replace(/[^a-z0-9]+/gi, '-');
   await expect
     .poll(async () => (await readdir(previewDir)).filter((f) => f.includes(prefix)).length, {
       timeout: 20_000,
     })
-    .toBe(2);
+    .toBe(1);
 });

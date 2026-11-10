@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { AuthFrame, TextLink } from '@/components/auth-frame';
 import { Button } from '@/components/ui/button';
 import { FormError, TextField } from '@/components/ui/field';
-import { api } from '@/lib/api';
+import { authClient, callAuth } from '@/lib/auth-client';
 import { applyServerErrors } from '@/lib/forms';
 
 export default function ForgotPasswordPage() {
@@ -23,7 +23,12 @@ export default function ForgotPasswordPage() {
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
-      await api('/auth/forgot-password', { method: 'POST', body: values, auth: false });
+      await callAuth(() =>
+        authClient.requestPasswordReset({
+          email: values.email,
+          redirectTo: `${window.location.origin}/reset-password`,
+        }),
+      );
       setSentTo(values.email);
     } catch (error) {
       setFormError(applyServerErrors(error, setError));
@@ -34,7 +39,7 @@ export default function ForgotPasswordPage() {
     return (
       <AuthFrame
         title="Check your email"
-        intro={`If ${sentTo} has an account, we sent a link to it. The link works for one hour.`}
+        intro={`If ${sentTo} has an account, we sent a link to it. The link works for 15 minutes.`}
         footer={<TextLink href="/login">Back to sign in</TextLink>}
       >
         {null}

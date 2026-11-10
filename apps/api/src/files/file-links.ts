@@ -11,9 +11,9 @@ export class FileLinks {
   private readonly key: Buffer;
 
   constructor(config: ConfigService) {
-    // Its own key, made from the main secret, so a link can never be used as a login token.
+    // Its own key, made from the link secret, so a file link can never open an interview link.
     this.key = Buffer.from(
-      hkdfSync('sha256', config.env.JWT_REFRESH_SECRET, '', 'hireflow-file-links', 32),
+      hkdfSync('sha256', config.env.LINK_SECRET, '', 'hireflow-file-links', 32),
     );
   }
 

@@ -189,7 +189,13 @@ export default function SettingsPage() {
       </h1>
       {!profile?.emailVerifiedAt && (
         <p className="mb-4 rounded-2xl border border-status-screening/40 bg-status-screening/10 px-5 py-4 text-[15px] font-medium">
-          Please confirm your email. We sent a link to {profile?.email}.
+          Please confirm your email, {profile?.email}.{' '}
+          <Link
+            href={`/verify-email?email=${encodeURIComponent(profile?.email ?? '')}`}
+            className="font-semibold underline underline-offset-4"
+          >
+            Confirm it now
+          </Link>
         </p>
       )}
       <div className="grid flex-1 gap-4 xl:grid-cols-2">

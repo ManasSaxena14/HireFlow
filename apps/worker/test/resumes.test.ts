@@ -16,7 +16,7 @@ const pool = new pg.Pool({
 
 async function addResume() {
   const { rows: users } = await pool.query<{ id: string }>(
-    `INSERT INTO users (email, password_hash, full_name) VALUES ($1, 'x', 'Riya') RETURNING id`,
+    `INSERT INTO users (email, full_name) VALUES ($1, 'Riya') RETURNING id`,
     [`resume-${randomUUID()}@example.com`],
   );
   const { rows: files } = await pool.query<{ id: string }>(

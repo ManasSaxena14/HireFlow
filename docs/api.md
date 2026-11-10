@@ -33,18 +33,14 @@ Lists come in pages: `?limit=20&cursor=…` returns `{ items, nextCursor }`.
 
 ## Account
 
-| Method | Path                    | Who    | What it does                                      |
-| ------ | ----------------------- | ------ | ------------------------------------------------- |
-| POST   | `/auth/register`        | Public | Creates an account and sends a confirm email      |
-| POST   | `/auth/login`           | Public | Returns an access token and sets the login cookie |
-| POST   | `/auth/refresh`         | Public | Swaps the cookie for a new one                    |
-| POST   | `/auth/logout`          | User   | Signs out on this device                          |
-| POST   | `/auth/logout-all`      | User   | Signs out on all devices                          |
-| POST   | `/auth/verify-email`    | Public | Body `{ token }`. Works once                      |
-| POST   | `/auth/forgot-password` | Public | Always answers 200                                |
-| POST   | `/auth/reset-password`  | Public | Body `{ token, password }`. Signs out everywhere  |
-| GET    | `/me`                   | User   | Your profile and companies                        |
-| PATCH  | `/me`                   | User   | Change your name or time zone                     |
+| Method                                                                                                                                                                                                                                                                                                            | Path | Who | What it does |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | --- | ------------ |
+| Sign-up, sign-in, sign-out, email codes and password reset are not API routes. They run in Neon Auth, which the web site reaches at `/api/auth`. The browser sends the short-lived Neon Auth token to this API as `Authorization: Bearer <token>`. The first request with a new token makes the HireFlow account. |
+
+| Method | Path  | Who  | What it does                  |
+| ------ | ----- | ---- | ----------------------------- |
+| GET    | `/me` | User | Your profile and companies    |
+| PATCH  | `/me` | User | Change your name or time zone |
 
 ## Companies
 

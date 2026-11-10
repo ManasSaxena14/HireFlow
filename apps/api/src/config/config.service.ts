@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 
-const flag = z.enum(['true', 'false']).transform((value) => value === 'true');
-
 const PLACEHOLDER_SECRET = 'replace-with';
 
 const envSchema = z
@@ -16,10 +14,10 @@ const envSchema = z
       .min(1)
       .transform((value) => value.split(',').map((origin) => origin.trim())),
     DATABASE_URL: z.string().min(1),
-    JWT_ACCESS_SECRET: z.string().min(32),
-    JWT_REFRESH_SECRET: z.string().min(32),
-    COOKIE_DOMAIN: z.string().optional(),
-    COOKIE_SECURE: flag.default(false),
+    /** The Auth URL from the Neon console, under Settings, Better Auth, Project Info. */
+    NEON_AUTH_BASE_URL: z.url().transform((value) => value.replace(/\/+$/, '')),
+    /** Signs interview booking links and file download links. */
+    LINK_SECRET: z.string().min(32),
     RATE_LIMIT_USER_PER_MIN: z.coerce.number().int().positive().default(100),
     RATE_LIMIT_AUTH_PER_MIN: z.coerce.number().int().positive().default(10),
     FOLLOW_UP_DAYS: z.coerce.number().int().positive().default(7),
@@ -31,25 +29,22 @@ const envSchema = z
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
   })
   .superRefine((env, ctx) => {
-    if (env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['JWT_REFRESH_SECRET'],
-        message: 'must be different from JWT_ACCESS_SECRET',
-      });
-    }
     if (env.NODE_ENV !== 'production') return;
-    if (!env.COOKIE_SECURE) {
+    if (env.LINK_SECRET.startsWith(PLACEHOLDER_SECRET)) {
       ctx.addIssue({
         code: 'custom',
-        path: ['COOKIE_SECURE'],
-        message: 'must be true in production',
+        path: ['LINK_SECRET'],
+        message: 'still has the example value',
       });
     }
-    for (const name of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'] as const) {
-      if (env[name].startsWith(PLACEHOLDER_SECRET)) {
-        ctx.addIssue({ code: 'custom', path: [name], message: 'still has the example value' });
-      }
+    // Plain http is only allowed on this computer, for the load test stand-in.
+    const authUrl = new URL(env.NEON_AUTH_BASE_URL);
+    if (authUrl.protocol !== 'https:' && authUrl.hostname !== '127.0.0.1') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['NEON_AUTH_BASE_URL'],
+        message: 'must start with https:// in production',
+      });
     }
   });
 

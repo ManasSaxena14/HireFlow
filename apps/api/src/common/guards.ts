@@ -1,10 +1,12 @@
 import { type CanActivate, type ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
 import { uuidSchema } from '@hireflow/shared';
+import { Accounts } from '../auth/accounts.service.js';
+import { AuthTokens } from '../auth/auth-tokens.js';
 import { MembershipsRepository } from '../companies/memberships.repository.js';
 import { ACCESS_KEY, type AccessPolicy, type AppRequest } from './access.js';
 import { DomainError, notFound, unauthenticated } from './domain-error.js';
+import { bearerToken } from './optional-user.js';
 
 function policyOf(reflector: Reflector, context: ExecutionContext): AccessPolicy | undefined {
   return reflector.getAllAndOverride<AccessPolicy>(ACCESS_KEY, [
@@ -13,28 +15,26 @@ function policyOf(reflector: Reflector, context: ExecutionContext): AccessPolicy
   ]);
 }
 
-/** Checks the login token on every route that is not marked as public. */
+/** Checks the Neon Auth token on every route that is not marked as public. */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly jwt: JwtService,
+    private readonly tokens: AuthTokens,
+    private readonly accounts: Accounts,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     if (policyOf(this.reflector, context)?.kind === 'public') return true;
 
     const request = context.switchToHttp().getRequest<AppRequest>();
-    const [scheme, token] = (request.headers.authorization ?? '').split(' ');
-    if (scheme !== 'Bearer' || !token) throw unauthenticated();
+    const token = bearerToken(request.headers.authorization);
+    if (!token) throw unauthenticated();
 
-    try {
-      const payload = await this.jwt.verifyAsync<{ sub: string }>(token);
-      request.user = { id: payload.sub };
-      return true;
-    } catch {
-      throw unauthenticated('Please sign in again.');
-    }
+    const claims = await this.tokens.verify(token).catch(() => null);
+    if (!claims) throw unauthenticated('Please sign in again.');
+    request.user = { id: await this.accounts.idFor(claims) };
+    return true;
   }
 }
 

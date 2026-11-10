@@ -1,11 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { Global, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { ACCESS_TOKEN_TTL_SECONDS } from './auth/tokens.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
 import { AuditLogsModule } from './audit/audit-logs.module.js';
 import { AtsModule } from './ats/ats.module.js';
@@ -68,15 +66,6 @@ const ONE_MINUTE_MS = 60_000;
             ? { transport: { target: 'pino-pretty', options: { singleLine: true } } }
             : {}),
         },
-      }),
-    }),
-    JwtModule.registerAsync({
-      global: true,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.env.JWT_ACCESS_SECRET,
-        signOptions: { expiresIn: ACCESS_TOKEN_TTL_SECONDS, algorithm: 'HS256' },
-        verifyOptions: { algorithms: ['HS256'] },
       }),
     }),
     ThrottlerModule.forRootAsync({

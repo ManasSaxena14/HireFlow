@@ -1,43 +1,106 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { type VerifyEmailInput, verifyEmailSchema } from '@hireflow/shared';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { AuthFrame, TextLink } from '@/components/auth-frame';
-import { api } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { FormError, TextField } from '@/components/ui/field';
+import { useAuth } from '@/lib/auth';
+import { applyServerErrors, errorMessage } from '@/lib/forms';
 
 function VerifyEmail() {
-  const token = useSearchParams().get('token');
-  const [state, setState] = useState<'working' | 'done' | 'failed'>(token ? 'working' : 'failed');
-  // A token works only once, so this must not run twice in Strict Mode.
-  const attempted = useRef(false);
+  const router = useRouter();
+  const { confirmEmail, sendCode } = useAuth();
+  const [formError, setFormError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [done, setDone] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    setError,
+    trigger,
+    formState: { errors, isSubmitting },
+  } = useForm<VerifyEmailInput>({
+    resolver: zodResolver(verifyEmailSchema),
+    defaultValues: { email: useSearchParams().get('email') ?? '', code: '' },
+  });
 
-  useEffect(() => {
-    if (!token || attempted.current) return;
-    attempted.current = true;
-    api('/auth/verify-email', { method: 'POST', body: { token }, auth: false })
-      .then(() => setState('done'))
-      .catch(() => setState('failed'));
-  }, [token]);
+  const onSubmit = handleSubmit(async ({ email, code }) => {
+    setFormError(null);
+    try {
+      if (await confirmEmail(email, code)) router.replace('/app');
+      else setDone(true);
+    } catch (error) {
+      setFormError(applyServerErrors(error, setError));
+    }
+  });
 
-  if (state === 'working') return <AuthFrame title="Checking your link…">{null}</AuthFrame>;
-  if (state === 'done') {
+  const resend = async () => {
+    if (!(await trigger('email'))) return;
+    setSending(true);
+    setFormError(null);
+    try {
+      await sendCode(getValues('email'));
+      setNote('We sent a new code. It works for 15 minutes.');
+    } catch (error) {
+      setFormError(errorMessage(error));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (done) {
     return (
       <AuthFrame
         title="Email confirmed!"
-        intro="Thank you. We will send your reminders to this email."
-        footer={<TextLink href="/app">Open HireFlow</TextLink>}
+        intro="Thank you. You can now sign in."
+        footer={<TextLink href="/login">Go to sign in</TextLink>}
       >
         {null}
       </AuthFrame>
     );
   }
+
   return (
     <AuthFrame
-      title="This link does not work"
-      intro="It may be too old, or you may have used it already."
+      title="Confirm your email"
+      intro="We emailed you a 6 digit code. It works for 15 minutes."
       footer={<TextLink href="/login">Back to sign in</TextLink>}
     >
-      {null}
+      <form onSubmit={onSubmit} noValidate className="space-y-5">
+        <FormError>{formError}</FormError>
+        {note && (
+          <p role="status" className="text-[15px] text-muted">
+            {note}
+          </p>
+        )}
+        <TextField
+          label="Email"
+          type="email"
+          autoComplete="email"
+          error={errors.email?.message}
+          {...register('email')}
+        />
+        <TextField
+          label="Code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          error={errors.code?.message}
+          {...register('code')}
+        />
+        <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
+          Confirm email
+        </Button>
+        <Button type="button" variant="secondary" loading={sending} onClick={resend}>
+          Send me a new code
+        </Button>
+      </form>
     </AuthFrame>
   );
 }

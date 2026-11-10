@@ -1,27 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { expect, type Page, test } from '@playwright/test';
-import pg from 'pg';
 import { registerNewUser } from './helpers';
-
-const connectionString =
-  process.env.E2E_DATABASE_URL ?? 'postgresql://hireflow@localhost:5433/hireflow_e2e';
 
 const PDF = {
   name: 'resume.pdf',
   mimeType: 'application/pdf',
   buffer: Buffer.from('%PDF-1.7\nA test resume\n'),
 };
-
-/** Stands in for clicking the link in the confirmation email. */
-async function confirmEmail(email: string) {
-  const client = new pg.Client({ connectionString });
-  await client.connect();
-  try {
-    await client.query('UPDATE users SET email_verified_at = now() WHERE email = $1', [email]);
-  } finally {
-    await client.end();
-  }
-}
 
 async function createCompanyAndLiveJob(page: Page, jobTitle: string) {
   await page.getByRole('link', { name: 'Hiring' }).first().click();
@@ -48,12 +33,10 @@ test('both job boards follow the hiring process, with no reload', async ({ brows
   const { jobPath } = await createCompanyAndLiveJob(page, 'Backend Developer');
   await expect(page.getByRole('region', { name: 'New', exact: true })).toBeVisible();
 
-  // The candidate has a confirmed account and watches their own job board.
+  // The candidate signed up with the email code, so the account is confirmed.
   const candidate = await browser.newContext();
   const board = await candidate.newPage();
   const email = await registerNewUser(board);
-  await confirmEmail(email);
-  await board.reload();
   await expect(board.getByTestId('board-card')).toHaveCount(0);
 
   // They apply on the public page, using the same email.

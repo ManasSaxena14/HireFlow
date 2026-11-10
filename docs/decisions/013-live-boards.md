@@ -6,7 +6,7 @@ Before this, a person's own job board and a company's hiring pipeline were two s
 
 - **A card on the job board can follow a company application.** `tracked_applications.company_application_id` links the two. When a company moves a candidate, the card is changed in the same transaction, so the two can never disagree. Each change writes a history line, cancels the follow-up reminder when it should, and adds a notification.
 - **Only a person who proves their email gets a card.** The apply form is public, and anyone can type any email. If that alone made cards, anyone could put text of their choosing on a stranger's board. So a card is made only when the applicant is signed in, the account's email is confirmed, and it is the email on the form. Later moves by the company only change a card that already exists. They never make one.
-- **The web form signs the person in at that moment.** The login is kept only in memory, so on the public page it is looked up once, when they press send. The form says so, and the thank-you page says if the card was made.
+- **The web form signs the person in at that moment.** On the public page the session is looked up once, when they press send. The form says so, and the thank-you page says if the card was made.
 - **A card the person made by hand is joined, not copied.** The same job, company and place gives one card.
 - **The company wins.** If the person moves a linked card by hand, the next move by the company puts it back in step. The card is marked "Live" so this is not a surprise.
 - **Hired shows as an offer.** The job board has no hired status, so the card stays on "Offer", and the person still gets a history line and a notification once.

@@ -34,13 +34,15 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'packages/local-auth/**/*.mjs'],
     languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly' } },
   },
   {
     // The load tests run inside k6, which gives them these globals.
     files: ['scripts/load/**/*.js'],
-    languageOptions: { globals: { __ENV: 'readonly', __VU: 'readonly', __ITER: 'readonly' } },
+    languageOptions: {
+      globals: { __ENV: 'readonly', __VU: 'readonly', __ITER: 'readonly', open: 'readonly' },
+    },
   },
   prettier,
 );

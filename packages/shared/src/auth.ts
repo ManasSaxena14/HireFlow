@@ -22,7 +22,14 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
-export const verifyEmailSchema = z.object({ token: z.string().min(1) });
+/** The code Neon Auth emails to confirm an address. */
+export const verifyEmailSchema = z.object({
+  email,
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Enter the 6 digit code from the email'),
+});
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 
 export const forgotPasswordSchema = z.object({ email });

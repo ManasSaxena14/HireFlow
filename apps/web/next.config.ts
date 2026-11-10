@@ -1,5 +1,12 @@
 import type { NextConfig } from 'next';
 
+// In development the settings live in the .env file at the root, shared with the API.
+try {
+  process.loadEnvFile(new URL('../../.env', import.meta.url));
+} catch {
+  // No file, as on a host. The host's own settings are used.
+}
+
 const apiUrl = process.env.API_URL ?? 'http://localhost:4000';
 
 const SECURITY_HEADERS = [
