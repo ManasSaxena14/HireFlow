@@ -100,4 +100,4 @@ Create a free Next.js project from the same repository.
 
 ## After each release
 
-CI runs on every pull request, and `main` only takes changes that pass it. If the release adds a migration, run `pnpm db:migrate` against the live database first, then let the hosts deploy.
+CI runs on every push to `main` and on every pull request. Check that it is green before you release. If the release adds a migration, run `pnpm db:migrate` against the live database first, then let the hosts deploy.

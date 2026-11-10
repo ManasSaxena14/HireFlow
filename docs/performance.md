@@ -114,7 +114,7 @@ From `pnpm coverage`, counting lines in each part's own `src` folder.
 
 The worker's start-up file and the thread that reads files are covered by the browser tests, not these. Many shared checks are tested through the API tests, which this number does not count.
 
-There are also 24 browser tests, which run in CI on every pull request.
+There are also 26 browser tests, which run in CI on every push to `main` and on every pull request.
 
 ## Not measured
 
