@@ -11,7 +11,7 @@ export class SchedulerLinks {
 
   constructor(config: ConfigService) {
     this.key = Buffer.from(
-      hkdfSync('sha256', config.env.JWT_REFRESH_SECRET, '', 'hireflow-interview-links', 32),
+      hkdfSync('sha256', config.env.LINK_SECRET, '', 'hireflow-interview-links', 32),
     );
     this.appUrl = config.env.APP_URL;
   }

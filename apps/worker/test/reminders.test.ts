@@ -15,7 +15,7 @@ const APP_URL = 'http://localhost:3000';
 
 async function seedUser(): Promise<string> {
   const { rows } = await pool.query<{ id: string }>(
-    `INSERT INTO users (email, password_hash, full_name) VALUES ($1, 'x', 'Test User') RETURNING id`,
+    `INSERT INTO users (email, full_name) VALUES ($1, 'Test User') RETURNING id`,
     [`worker-${randomUUID()}@example.com`],
   );
   return (rows[0] as { id: string }).id;
@@ -269,25 +269,24 @@ describe('reminders scan', () => {
 
   describe('clean up', () => {
     it('removes only the rows nobody can use any more', async () => {
-      const userId = await seedUser();
-      const token = (hash: string, expires: string) =>
+      const delivery = (key: string, sentAt: string) =>
         pool.query(
-          `INSERT INTO refresh_tokens (user_id, family_id, token_hash, expires_at)
-           VALUES ($1, gen_random_uuid(), $2, ${expires})`,
-          [userId, hash],
+          `INSERT INTO email_deliveries (dedupe_key, template, sent_at)
+           VALUES ($1, 'reminder', ${sentAt})`,
+          [key],
         );
-      const oldHash = randomUUID();
-      const liveHash = randomUUID();
-      await token(oldHash, "now() - interval '2 days'");
-      await token(liveHash, "now() + interval '2 days'");
+      const oldKey = `old-${randomUUID()}`;
+      const liveKey = `live-${randomUUID()}`;
+      await delivery(oldKey, "now() - interval '31 days'");
+      await delivery(liveKey, "now() - interval '1 day'");
 
       await cleanUp(pool);
 
-      const { rows } = await pool.query<{ token_hash: string }>(
-        'SELECT token_hash FROM refresh_tokens WHERE user_id = $1',
-        [userId],
+      const { rows } = await pool.query<{ dedupe_key: string }>(
+        'SELECT dedupe_key FROM email_deliveries WHERE dedupe_key = ANY($1)',
+        [[oldKey, liveKey]],
       );
-      expect(rows.map((row) => row.token_hash)).toEqual([liveHash]);
+      expect(rows.map((row) => row.dedupe_key)).toEqual([liveKey]);
     });
   });
 });

@@ -55,8 +55,8 @@ const count = async (table: string, where = 'true') => {
 
 async function addUser(timezone = 'UTC', verified = true) {
   const { rows } = await pool.query<{ id: string }>(
-    `INSERT INTO users (email, password_hash, full_name, timezone, email_verified_at)
-     VALUES ($1, 'x', 'Riya Menon', $2, $3) RETURNING id`,
+    `INSERT INTO users (email, full_name, timezone, email_verified_at)
+     VALUES ($1, 'Riya Menon', $2, $3) RETURNING id`,
     [`feed-${randomUUID()}@example.com`, timezone, verified ? new Date() : null],
   );
   return (rows[0] as { id: string }).id;

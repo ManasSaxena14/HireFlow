@@ -15,24 +15,18 @@
       "bearer": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT"
+        "bearerFormat": "JWT",
+        "description": "The short-lived token that Neon Auth gives a signed-in browser."
       }
     },
     "schemas": {
       "Error": {
         "type": "object",
-        "required": [
-          "error"
-        ],
+        "required": ["error"],
         "properties": {
           "error": {
             "type": "object",
-            "required": [
-              "code",
-              "message",
-              "details",
-              "requestId"
-            ],
+            "required": ["code", "message", "details", "requestId"],
             "properties": {
               "code": {
                 "type": "string"
@@ -57,9 +51,7 @@
     "/alerts": {
       "post": {
         "operationId": "Alerts_create",
-        "tags": [
-          "Alerts"
-        ],
+        "tags": ["Alerts"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -119,16 +111,10 @@
                   "frequency": {
                     "default": "daily",
                     "type": "string",
-                    "enum": [
-                      "instant",
-                      "daily"
-                    ]
+                    "enum": ["instant", "daily"]
                   }
                 },
-                "required": [
-                  "name",
-                  "keywords"
-                ]
+                "required": ["name", "keywords"]
               }
             }
           }
@@ -136,9 +122,7 @@
       },
       "get": {
         "operationId": "Alerts_list",
-        "tags": [
-          "Alerts"
-        ],
+        "tags": ["Alerts"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -166,9 +150,7 @@
     "/alerts/{id}": {
       "delete": {
         "operationId": "Alerts_remove",
-        "tags": [
-          "Alerts"
-        ],
+        "tags": ["Alerts"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -203,9 +185,7 @@
       },
       "patch": {
         "operationId": "Alerts_update",
-        "tags": [
-          "Alerts"
-        ],
+        "tags": ["Alerts"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -272,10 +252,7 @@
                   },
                   "frequency": {
                     "type": "string",
-                    "enum": [
-                      "instant",
-                      "daily"
-                    ]
+                    "enum": ["instant", "daily"]
                   },
                   "active": {
                     "type": "boolean"
@@ -287,341 +264,10 @@
         }
       }
     },
-    "/auth/forgot-password": {
-      "post": {
-        "operationId": "Auth_forgotPassword",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Who: Anyone",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "default": {
-            "description": "An error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "email"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/login": {
-      "post": {
-        "operationId": "Auth_login",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Who: Anyone",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "default": {
-            "description": "An error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 200
-                  }
-                },
-                "required": [
-                  "email",
-                  "password"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/logout": {
-      "post": {
-        "operationId": "Auth_logout",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Who: Signed-in user",
-        "parameters": [],
-        "responses": {
-          "204": {
-            "description": "Done, with no content"
-          },
-          "default": {
-            "description": "An error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/auth/logout-all": {
-      "post": {
-        "operationId": "Auth_logoutAll",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Who: Signed-in user",
-        "parameters": [],
-        "responses": {
-          "204": {
-            "description": "Done, with no content"
-          },
-          "default": {
-            "description": "An error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "operationId": "Auth_refresh",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Who: Anyone",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "default": {
-            "description": "An error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/register": {
-      "post": {
-        "operationId": "Auth_register",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Who: Anyone",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "Success"
-          },
-          "default": {
-            "description": "An error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 10,
-                    "maxLength": 200
-                  },
-                  "fullName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 120
-                  },
-                  "timezone": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "email",
-                  "password",
-                  "fullName"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/reset-password": {
-      "post": {
-        "operationId": "Auth_resetPassword",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Who: Anyone",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "default": {
-            "description": "An error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "token": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 10,
-                    "maxLength": 200
-                  }
-                },
-                "required": [
-                  "token",
-                  "password"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/verify-email": {
-      "post": {
-        "operationId": "Auth_verifyEmail",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Who: Anyone",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "default": {
-            "description": "An error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "token": {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                },
-                "required": [
-                  "token"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
     "/companies": {
       "post": {
         "operationId": "Companies_create",
-        "tags": [
-          "Companies"
-        ],
+        "tags": ["Companies"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -663,9 +309,7 @@
                     "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
                   }
                 },
-                "required": [
-                  "name"
-                ]
+                "required": ["name"]
               }
             }
           }
@@ -675,9 +319,7 @@
     "/companies/{cid}": {
       "get": {
         "operationId": "Companies_get",
-        "tags": [
-          "Companies"
-        ],
+        "tags": ["Companies"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -712,9 +354,7 @@
       },
       "patch": {
         "operationId": "Companies_update",
-        "tags": [
-          "Companies"
-        ],
+        "tags": ["Companies"],
         "description": "Who: Company admin",
         "parameters": [
           {
@@ -771,9 +411,7 @@
     "/companies/{cid}/analytics/funnel": {
       "get": {
         "operationId": "Analytics_funnel",
-        "tags": [
-          "Analytics"
-        ],
+        "tags": ["Analytics"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -838,9 +476,7 @@
     "/companies/{cid}/analytics/sources": {
       "get": {
         "operationId": "Analytics_sources",
-        "tags": [
-          "Analytics"
-        ],
+        "tags": ["Analytics"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -905,9 +541,7 @@
     "/companies/{cid}/analytics/time-to-hire": {
       "get": {
         "operationId": "Analytics_timeToHire",
-        "tags": [
-          "Analytics"
-        ],
+        "tags": ["Analytics"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -972,9 +606,7 @@
     "/companies/{cid}/applications": {
       "get": {
         "operationId": "Applications_list",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -1071,9 +703,7 @@
     "/companies/{cid}/applications/{aid}": {
       "get": {
         "operationId": "Applications_get",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -1118,9 +748,7 @@
     "/companies/{cid}/applications/{aid}/assignees": {
       "post": {
         "operationId": "Applications_assign",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -1173,9 +801,7 @@
                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   }
                 },
-                "required": [
-                  "userId"
-                ]
+                "required": ["userId"]
               }
             }
           }
@@ -1185,9 +811,7 @@
     "/companies/{cid}/applications/{aid}/assignees/{userId}": {
       "delete": {
         "operationId": "Applications_unassign",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -1240,9 +864,7 @@
     "/companies/{cid}/applications/{aid}/comments": {
       "post": {
         "operationId": "Applications_addComment",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -1295,9 +917,7 @@
                     "maxLength": 5000
                   }
                 },
-                "required": [
-                  "body"
-                ]
+                "required": ["body"]
               }
             }
           }
@@ -1307,9 +927,7 @@
     "/companies/{cid}/applications/{aid}/move": {
       "post": {
         "operationId": "Applications_move",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -1367,9 +985,7 @@
                     "maxLength": 1000
                   }
                 },
-                "required": [
-                  "toStageId"
-                ]
+                "required": ["toStageId"]
               }
             }
           }
@@ -1379,9 +995,7 @@
     "/companies/{cid}/applications/{aid}/resume": {
       "get": {
         "operationId": "Applications_resumeLink",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -1426,9 +1040,7 @@
     "/companies/{cid}/applications/{aid}/scorecards": {
       "post": {
         "operationId": "Applications_addScorecard",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -1482,12 +1094,7 @@
                   },
                   "recommendation": {
                     "type": "string",
-                    "enum": [
-                      "strong_no",
-                      "no",
-                      "yes",
-                      "strong_yes"
-                    ]
+                    "enum": ["strong_no", "no", "yes", "strong_yes"]
                   },
                   "comments": {
                     "anyOf": [
@@ -1501,10 +1108,7 @@
                     ]
                   }
                 },
-                "required": [
-                  "rating",
-                  "recommendation"
-                ]
+                "required": ["rating", "recommendation"]
               }
             }
           }
@@ -1514,9 +1118,7 @@
     "/companies/{cid}/applications/{id}/interviews": {
       "get": {
         "operationId": "CompanyScheduler_forApplication",
-        "tags": [
-          "CompanyScheduler"
-        ],
+        "tags": ["CompanyScheduler"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -1561,9 +1163,7 @@
     "/companies/{cid}/audit-logs": {
       "get": {
         "operationId": "AuditLogs_list",
-        "tags": [
-          "AuditLogs"
-        ],
+        "tags": ["AuditLogs"],
         "description": "Who: Company admin",
         "parameters": [
           {
@@ -1669,9 +1269,7 @@
     "/companies/{cid}/candidates/{id}": {
       "delete": {
         "operationId": "Applications_deleteCandidate",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "description": "Who: Company admin",
         "parameters": [
           {
@@ -1716,9 +1314,7 @@
     "/companies/{cid}/interview-offers": {
       "post": {
         "operationId": "CompanyScheduler_createOffer",
-        "tags": [
-          "CompanyScheduler"
-        ],
+        "tags": ["CompanyScheduler"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -1811,12 +1407,7 @@
                     "maximum": 30
                   }
                 },
-                "required": [
-                  "applicationId",
-                  "interviewerId",
-                  "durationMin",
-                  "slots"
-                ]
+                "required": ["applicationId", "interviewerId", "durationMin", "slots"]
               }
             }
           }
@@ -1826,9 +1417,7 @@
     "/companies/{cid}/interview-offers/{id}/withdraw": {
       "post": {
         "operationId": "CompanyScheduler_withdrawOffer",
-        "tags": [
-          "CompanyScheduler"
-        ],
+        "tags": ["CompanyScheduler"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -1873,9 +1462,7 @@
     "/companies/{cid}/interviews": {
       "post": {
         "operationId": "Interviews_create",
-        "tags": [
-          "Interviews"
-        ],
+        "tags": ["Interviews"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -1957,12 +1544,7 @@
                     ]
                   }
                 },
-                "required": [
-                  "applicationId",
-                  "interviewerId",
-                  "start",
-                  "durationMin"
-                ]
+                "required": ["applicationId", "interviewerId", "start", "durationMin"]
               }
             }
           }
@@ -1970,9 +1552,7 @@
       },
       "get": {
         "operationId": "Interviews_list",
-        "tags": [
-          "Interviews"
-        ],
+        "tags": ["Interviews"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -2010,10 +1590,7 @@
             "schema": {
               "default": "upcoming",
               "type": "string",
-              "enum": [
-                "upcoming",
-                "past"
-              ]
+              "enum": ["upcoming", "past"]
             }
           }
         ],
@@ -2042,9 +1619,7 @@
     "/companies/{cid}/interviews/suggest-slots": {
       "post": {
         "operationId": "Interviews_suggest",
-        "tags": [
-          "Interviews"
-        ],
+        "tags": ["Interviews"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -2119,13 +1694,7 @@
                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   }
                 },
-                "required": [
-                  "applicationId",
-                  "interviewerIds",
-                  "durationMin",
-                  "from",
-                  "to"
-                ]
+                "required": ["applicationId", "interviewerIds", "durationMin", "from", "to"]
               }
             }
           }
@@ -2135,9 +1704,7 @@
     "/companies/{cid}/interviews/{id}/cancel": {
       "post": {
         "operationId": "Interviews_cancel",
-        "tags": [
-          "Interviews"
-        ],
+        "tags": ["Interviews"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -2182,9 +1749,7 @@
     "/companies/{cid}/interviews/{id}/reschedule": {
       "post": {
         "operationId": "Interviews_reschedule",
-        "tags": [
-          "Interviews"
-        ],
+        "tags": ["Interviews"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -2242,9 +1807,7 @@
                     "maximum": 480
                   }
                 },
-                "required": [
-                  "start"
-                ]
+                "required": ["start"]
               }
             }
           }
@@ -2254,9 +1817,7 @@
     "/companies/{cid}/jobs": {
       "post": {
         "operationId": "Jobs_create",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -2342,10 +1903,7 @@
                     }
                   }
                 },
-                "required": [
-                  "title",
-                  "description"
-                ]
+                "required": ["title", "description"]
               }
             }
           }
@@ -2353,9 +1911,7 @@
       },
       "get": {
         "operationId": "Jobs_list",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -2392,11 +1948,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "draft",
-                "open",
-                "closed"
-              ]
+              "enum": ["draft", "open", "closed"]
             }
           }
         ],
@@ -2425,9 +1977,7 @@
     "/companies/{cid}/jobs/{id}": {
       "get": {
         "operationId": "Jobs_get",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -2470,9 +2020,7 @@
       },
       "patch": {
         "operationId": "Jobs_update",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -2573,9 +2121,7 @@
     "/companies/{cid}/jobs/{id}/close": {
       "post": {
         "operationId": "Jobs_close",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -2620,9 +2166,7 @@
     "/companies/{cid}/jobs/{id}/publish": {
       "post": {
         "operationId": "Jobs_publish",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -2667,9 +2211,7 @@
     "/companies/{cid}/jobs/{id}/stages": {
       "put": {
         "operationId": "Jobs_replaceStages",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -2768,16 +2310,11 @@
                           ]
                         }
                       },
-                      "required": [
-                        "name",
-                        "kind"
-                      ]
+                      "required": ["name", "kind"]
                     }
                   }
                 },
-                "required": [
-                  "stages"
-                ]
+                "required": ["stages"]
               }
             }
           }
@@ -2785,9 +2322,7 @@
       },
       "get": {
         "operationId": "Jobs_stages",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "description": "Who: Company admin, recruiter, hiring manager, interviewer",
         "parameters": [
           {
@@ -2832,9 +2367,7 @@
     "/companies/{cid}/members": {
       "post": {
         "operationId": "Companies_addMember",
-        "tags": [
-          "Companies"
-        ],
+        "tags": ["Companies"],
         "description": "Who: Company admin",
         "parameters": [
           {
@@ -2878,18 +2411,10 @@
                   },
                   "role": {
                     "type": "string",
-                    "enum": [
-                      "admin",
-                      "recruiter",
-                      "hiring_manager",
-                      "interviewer"
-                    ]
+                    "enum": ["admin", "recruiter", "hiring_manager", "interviewer"]
                   }
                 },
-                "required": [
-                  "email",
-                  "role"
-                ]
+                "required": ["email", "role"]
               }
             }
           }
@@ -2897,9 +2422,7 @@
       },
       "get": {
         "operationId": "Companies_listMembers",
-        "tags": [
-          "Companies"
-        ],
+        "tags": ["Companies"],
         "description": "Who: Company admin, recruiter, hiring manager",
         "parameters": [
           {
@@ -2936,9 +2459,7 @@
     "/companies/{cid}/members/{userId}": {
       "delete": {
         "operationId": "Companies_removeMember",
-        "tags": [
-          "Companies"
-        ],
+        "tags": ["Companies"],
         "description": "Who: Company admin",
         "parameters": [
           {
@@ -2981,9 +2502,7 @@
       },
       "patch": {
         "operationId": "Companies_updateMember",
-        "tags": [
-          "Companies"
-        ],
+        "tags": ["Companies"],
         "description": "Who: Company admin",
         "parameters": [
           {
@@ -3032,17 +2551,10 @@
                 "properties": {
                   "role": {
                     "type": "string",
-                    "enum": [
-                      "admin",
-                      "recruiter",
-                      "hiring_manager",
-                      "interviewer"
-                    ]
+                    "enum": ["admin", "recruiter", "hiring_manager", "interviewer"]
                   }
                 },
-                "required": [
-                  "role"
-                ]
+                "required": ["role"]
               }
             }
           }
@@ -3052,9 +2564,7 @@
     "/feed/jobs": {
       "get": {
         "operationId": "Feed_list",
-        "tags": [
-          "Feed"
-        ],
+        "tags": ["Feed"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3101,10 +2611,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -3133,9 +2640,7 @@
     "/feed/jobs/{id}": {
       "get": {
         "operationId": "Feed_get",
-        "tags": [
-          "Feed"
-        ],
+        "tags": ["Feed"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3172,9 +2677,7 @@
     "/feed/jobs/{id}/save": {
       "post": {
         "operationId": "Feed_save",
-        "tags": [
-          "Feed"
-        ],
+        "tags": ["Feed"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3211,9 +2714,7 @@
     "/files/{id}": {
       "get": {
         "operationId": "Files_download",
-        "tags": [
-          "Files"
-        ],
+        "tags": ["Files"],
         "description": "Who: Anyone",
         "parameters": [
           {
@@ -3265,9 +2766,7 @@
     "/health": {
       "get": {
         "operationId": "Health_health",
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "description": "Who: Anyone",
         "parameters": [],
         "responses": {
@@ -3290,9 +2789,7 @@
     "/interview-offers/{token}": {
       "get": {
         "operationId": "PublicOffers_get",
-        "tags": [
-          "PublicOffers"
-        ],
+        "tags": ["PublicOffers"],
         "description": "Who: Anyone",
         "parameters": [
           {
@@ -3324,9 +2821,7 @@
     "/interview-offers/{token}/book": {
       "post": {
         "operationId": "PublicOffers_book",
-        "tags": [
-          "PublicOffers"
-        ],
+        "tags": ["PublicOffers"],
         "description": "Who: Anyone",
         "parameters": [
           {
@@ -3369,9 +2864,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "start"
-                ]
+                "required": ["start"]
               }
             }
           }
@@ -3381,9 +2874,7 @@
     "/interviews/{id}/ics": {
       "get": {
         "operationId": "InterviewCalendar_ics",
-        "tags": [
-          "InterviewCalendar"
-        ],
+        "tags": ["InterviewCalendar"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3420,9 +2911,7 @@
     "/me": {
       "get": {
         "operationId": "Users_me",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -3448,9 +2937,7 @@
       },
       "patch": {
         "operationId": "Users_update",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -3498,9 +2985,7 @@
     "/me/availability": {
       "get": {
         "operationId": "MyScheduler_getAvailability",
-        "tags": [
-          "MyScheduler"
-        ],
+        "tags": ["MyScheduler"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3537,9 +3022,7 @@
       },
       "put": {
         "operationId": "MyScheduler_putAvailability",
-        "tags": [
-          "MyScheduler"
-        ],
+        "tags": ["MyScheduler"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3627,11 +3110,7 @@
                           ]
                         }
                       },
-                      "required": [
-                        "weekday",
-                        "startTime",
-                        "endTime"
-                      ]
+                      "required": ["weekday", "startTime", "endTime"]
                     }
                   },
                   "blocks": {
@@ -3662,18 +3141,11 @@
                           ]
                         }
                       },
-                      "required": [
-                        "start",
-                        "end"
-                      ]
+                      "required": ["start", "end"]
                     }
                   }
                 },
-                "required": [
-                  "timezone",
-                  "rules",
-                  "blocks"
-                ]
+                "required": ["timezone", "rules", "blocks"]
               }
             }
           }
@@ -3683,9 +3155,7 @@
     "/me/interviews": {
       "get": {
         "operationId": "MyScheduler_myInterviews",
-        "tags": [
-          "MyScheduler"
-        ],
+        "tags": ["MyScheduler"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -3713,9 +3183,7 @@
     "/notifications": {
       "get": {
         "operationId": "Notifications_list",
-        "tags": [
-          "Notifications"
-        ],
+        "tags": ["Notifications"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3764,9 +3232,7 @@
     "/notifications/read-all": {
       "post": {
         "operationId": "Notifications_readAll",
-        "tags": [
-          "Notifications"
-        ],
+        "tags": ["Notifications"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -3794,9 +3260,7 @@
     "/notifications/{id}/read": {
       "post": {
         "operationId": "Notifications_read",
-        "tags": [
-          "Notifications"
-        ],
+        "tags": ["Notifications"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3833,9 +3297,7 @@
     "/prep/reviews": {
       "get": {
         "operationId": "Prep_reviews",
-        "tags": [
-          "Prep"
-        ],
+        "tags": ["Prep"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -3863,9 +3325,7 @@
     "/prep/reviews/due": {
       "get": {
         "operationId": "Prep_due",
-        "tags": [
-          "Prep"
-        ],
+        "tags": ["Prep"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -3893,9 +3353,7 @@
     "/prep/reviews/{id}": {
       "delete": {
         "operationId": "Prep_removeReview",
-        "tags": [
-          "Prep"
-        ],
+        "tags": ["Prep"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3932,9 +3390,7 @@
     "/prep/reviews/{id}/grade": {
       "post": {
         "operationId": "Prep_grade",
-        "tags": [
-          "Prep"
-        ],
+        "tags": ["Prep"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -3979,9 +3435,7 @@
                     "maximum": 5
                   }
                 },
-                "required": [
-                  "quality"
-                ]
+                "required": ["quality"]
               }
             }
           }
@@ -3991,9 +3445,7 @@
     "/prep/sessions": {
       "get": {
         "operationId": "Prep_list",
-        "tags": [
-          "Prep"
-        ],
+        "tags": ["Prep"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -4040,9 +3492,7 @@
       },
       "post": {
         "operationId": "Prep_log",
-        "tags": [
-          "Prep"
-        ],
+        "tags": ["Prep"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -4079,13 +3529,7 @@
                   },
                   "kind": {
                     "type": "string",
-                    "enum": [
-                      "dsa",
-                      "system_design",
-                      "behavioral",
-                      "mock",
-                      "other"
-                    ]
+                    "enum": ["dsa", "system_design", "behavioral", "mock", "other"]
                   },
                   "difficulty": {
                     "anyOf": [
@@ -4115,11 +3559,7 @@
                     "anyOf": [
                       {
                         "type": "string",
-                        "enum": [
-                          "solved",
-                          "partial",
-                          "failed"
-                        ]
+                        "enum": ["solved", "partial", "failed"]
                       },
                       {
                         "type": "null"
@@ -4138,10 +3578,7 @@
                     ]
                   }
                 },
-                "required": [
-                  "topic",
-                  "kind"
-                ]
+                "required": ["topic", "kind"]
               }
             }
           }
@@ -4151,9 +3588,7 @@
     "/prep/sessions/{id}": {
       "delete": {
         "operationId": "Prep_removeSession",
-        "tags": [
-          "Prep"
-        ],
+        "tags": ["Prep"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -4190,9 +3625,7 @@
     "/prep/stats": {
       "get": {
         "operationId": "Prep_stats",
-        "tags": [
-          "Prep"
-        ],
+        "tags": ["Prep"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -4220,9 +3653,7 @@
     "/public/companies/{slug}/jobs": {
       "get": {
         "operationId": "Careers_list",
-        "tags": [
-          "Careers"
-        ],
+        "tags": ["Careers"],
         "description": "Who: Anyone",
         "parameters": [
           {
@@ -4274,9 +3705,7 @@
     "/public/companies/{slug}/jobs/{jobSlug}": {
       "get": {
         "operationId": "Careers_get",
-        "tags": [
-          "Careers"
-        ],
+        "tags": ["Careers"],
         "description": "Who: Anyone",
         "parameters": [
           {
@@ -4316,9 +3745,7 @@
     "/public/companies/{slug}/jobs/{jobSlug}/apply": {
       "post": {
         "operationId": "Careers_apply",
-        "tags": [
-          "Careers"
-        ],
+        "tags": ["Careers"],
         "description": "Who: Anyone",
         "parameters": [
           {
@@ -4395,9 +3822,7 @@
                     "format": "binary"
                   }
                 },
-                "required": [
-                  "resume"
-                ]
+                "required": ["resume"]
               }
             }
           }
@@ -4407,9 +3832,7 @@
     "/public/interviews/{id}/calendar": {
       "get": {
         "operationId": "PublicCalendar_calendar",
-        "tags": [
-          "PublicCalendar"
-        ],
+        "tags": ["PublicCalendar"],
         "description": "Who: Anyone",
         "parameters": [
           {
@@ -4441,9 +3864,7 @@
     "/ready": {
       "get": {
         "operationId": "Health_ready",
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "description": "Who: Anyone",
         "parameters": [],
         "responses": {
@@ -4466,9 +3887,7 @@
     "/resumes": {
       "get": {
         "operationId": "Resumes_list",
-        "tags": [
-          "Resumes"
-        ],
+        "tags": ["Resumes"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -4494,9 +3913,7 @@
       },
       "post": {
         "operationId": "Resumes_upload",
-        "tags": [
-          "Resumes"
-        ],
+        "tags": ["Resumes"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -4535,9 +3952,7 @@
                     "format": "binary"
                   }
                 },
-                "required": [
-                  "resume"
-                ]
+                "required": ["resume"]
               }
             }
           }
@@ -4547,9 +3962,7 @@
     "/resumes/{id}": {
       "get": {
         "operationId": "Resumes_get",
-        "tags": [
-          "Resumes"
-        ],
+        "tags": ["Resumes"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -4584,9 +3997,7 @@
       },
       "delete": {
         "operationId": "Resumes_remove",
-        "tags": [
-          "Resumes"
-        ],
+        "tags": ["Resumes"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -4623,9 +4034,7 @@
     "/resumes/{id}/file": {
       "get": {
         "operationId": "Resumes_fileLink",
-        "tags": [
-          "Resumes"
-        ],
+        "tags": ["Resumes"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -4662,9 +4071,7 @@
     "/resumes/{id}/match": {
       "post": {
         "operationId": "Resumes_match",
-        "tags": [
-          "Resumes"
-        ],
+        "tags": ["Resumes"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -4727,9 +4134,7 @@
     "/resumes/{id}/matches": {
       "get": {
         "operationId": "Resumes_listMatches",
-        "tags": [
-          "Resumes"
-        ],
+        "tags": ["Resumes"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -4766,9 +4171,7 @@
     "/tracker/applications": {
       "post": {
         "operationId": "Tracker_create",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {
@@ -4918,10 +4321,7 @@
                     ]
                   }
                 },
-                "required": [
-                  "title",
-                  "companyName"
-                ]
+                "required": ["title", "companyName"]
               }
             }
           }
@@ -4929,9 +4329,7 @@
       },
       "get": {
         "operationId": "Tracker_list",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -4995,10 +4393,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -5027,9 +4422,7 @@
     "/tracker/applications/{id}": {
       "delete": {
         "operationId": "Tracker_archive",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -5064,9 +4457,7 @@
       },
       "get": {
         "operationId": "Tracker_get",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -5101,9 +4492,7 @@
       },
       "patch": {
         "operationId": "Tracker_update",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -5262,9 +4651,7 @@
     "/tracker/applications/{id}/events": {
       "get": {
         "operationId": "Tracker_listEvents",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -5301,9 +4688,7 @@
     "/tracker/applications/{id}/move": {
       "post": {
         "operationId": "Tracker_move",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -5366,9 +4751,7 @@
                     ]
                   }
                 },
-                "required": [
-                  "toStatus"
-                ]
+                "required": ["toStatus"]
               }
             }
           }
@@ -5378,9 +4761,7 @@
     "/tracker/applications/{id}/notes": {
       "post": {
         "operationId": "Tracker_addNote",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -5425,9 +4806,7 @@
                     "maxLength": 10000
                   }
                 },
-                "required": [
-                  "body"
-                ]
+                "required": ["body"]
               }
             }
           }
@@ -5435,9 +4814,7 @@
       },
       "get": {
         "operationId": "Tracker_listNotes",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -5474,9 +4851,7 @@
     "/tracker/applications/{id}/reminders": {
       "post": {
         "operationId": "Tracker_addReminder",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [
           {
@@ -5526,10 +4901,7 @@
                     "maxLength": 500
                   }
                 },
-                "required": [
-                  "remindAt",
-                  "message"
-                ]
+                "required": ["remindAt", "message"]
               }
             }
           }
@@ -5539,9 +4911,7 @@
     "/tracker/stats": {
       "get": {
         "operationId": "Tracker_stats",
-        "tags": [
-          "Tracker"
-        ],
+        "tags": ["Tracker"],
         "description": "Who: Signed-in user",
         "parameters": [],
         "responses": {

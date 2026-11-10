@@ -104,7 +104,7 @@ flowchart LR
 ### Principles
 
 - **One datastore.** PostgreSQL holds the data, the job queue (pg-boss) and full-text search. There is no cache or message broker to run, which keeps hosting simple and free.
-- **The API owns the rules.** The browser only talks to the API. The web server forwards `/api/v1`, so the login cookie works even when the API is on another host.
+- **The API owns the rules.** The browser only talks to the API. The web server forwards `/api/v1`, so the browser never talks to another host. Neon Auth is reached the same way, through `/api/auth`.
 - **The database enforces the rules that matter.** No overlapping interviews for a person, one application for each person and job, and an activity log that cannot be changed.
 - **Shared checks.** One set of zod schemas validates both the forms and the API.
 - **Safe to repeat.** Every background job can run twice with the same result. Emails are sent once, matched jobs are delivered once, and reminders fire once.
@@ -115,7 +115,7 @@ flowchart LR
 | Layer   | Technology                                                                            |
 | ------- | ------------------------------------------------------------------------------------- |
 | Web     | Next.js 16, React 19, Tailwind CSS 4, TanStack Query, dnd-kit, React Hook Form, Luxon |
-| API     | NestJS 12, Kysely, zod, Argon2id, JSON Web Tokens, pino                               |
+| API     | NestJS 12, Kysely, zod, jose (checks Neon Auth tokens), pino                          |
 | Data    | PostgreSQL 15 or newer, node-pg-migrate (11 reversible SQL migrations), pg-boss       |
 | Worker  | Node.js, nodemailer, unpdf and fflate for reading resumes                             |
 | Tooling | pnpm workspaces, ESLint, Prettier, Husky, Vitest, Supertest, Playwright, k6           |
@@ -167,7 +167,11 @@ pnpm install
 cp .env.example .env
 ```
 
-Open `.env` and set `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` to two different long random values. You can make each one with `openssl rand -base64 48`. Then:
+Open `.env` and set `NEON_AUTH_COOKIE_SECRET` and `LINK_SECRET` to long random values. Make each one with `openssl rand -base64 48`.
+
+Sign-up and sign-in run in [Neon Auth](https://neon.com/docs/auth/overview) when live, which is free for up to 60,000 users a month. On your computer, `pnpm dev` starts a stand-in for it from `packages/local-auth`. It is the same Better Auth that Neon runs, with the same cookies and tokens, so you need no internet and no Neon project. To use the real Neon Auth instead, put its Auth URL in `NEON_AUTH_BASE_URL`.
+
+Then:
 
 ```bash
 pnpm db:start        # a private database in .pgdata/ on port 5433
@@ -175,16 +179,16 @@ pnpm db:create       # the development and test databases
 pnpm db:migrate      # apply the schema
 pnpm db:seed         # optional: a demo company with people, jobs and an interview
 pnpm feed:sources    # optional: add the public job boards the worker reads
-pnpm dev             # web on 3000, API on 4000, and the worker
+pnpm dev             # web on 3000, API on 4000, the worker, and sign-in on 4300
 ```
 
 Open <http://localhost:3000>.
 
-Email is not sent in development. With `SMTP_HOST` empty, each email is saved as an HTML file in `.mail-preview/`, so you can open it and follow its links.
+Email is not sent in development. With `SMTP_HOST` empty, each email is saved as an HTML file in `.mail-preview/`, so you can open it and follow its links. The sign-in stand-in saves its email codes and reset links there too, and also prints them in the terminal.
 
 ### Demo accounts
 
-Created by `pnpm db:seed`. Development only. The password is `demo-password-123`.
+Created by `pnpm db:seed`. Development only.
 
 | Account                         | Role           |
 | ------------------------------- | -------------- |
@@ -192,6 +196,8 @@ Created by `pnpm db:seed`. Development only. The password is `demo-password-123`
 | `recruiter@northwind.example`   | Recruiter      |
 | `manager@northwind.example`     | Hiring manager |
 | `interviewer@northwind.example` | Interviewer    |
+
+Sign up with one of these addresses, with any password of 10 or more characters, and type the code from `.mail-preview/` or the terminal. The first confirmed sign-in takes over the demo account with its role. An address that is not confirmed never takes over an account. With the real Neon Auth, run `DEMO_EMAIL=you@gmail.com pnpm db:seed` instead, so the codes reach your inbox at `you+hf-admin@gmail.com` and so on.
 
 To see the job seeker side, create a new account on the sign-up page. The demo company's public careers page is at `/c/northwind-labs`.
 
@@ -205,33 +211,33 @@ curl http://localhost:4000/api/v1/ready      # {"status":"ready"}
 
 The API and the worker check their settings when they start. They stop with a clear message if one is wrong. The full example is in [.env.example](.env.example).
 
-| Name                      | Used by      | Default                 | Notes                                                                 |
-| ------------------------- | ------------ | ----------------------- | --------------------------------------------------------------------- |
-| `NODE_ENV`                | all          | `development`           | Use `production` when live                                            |
-| `LOG_LEVEL`               | API, worker  | `info`                  |                                                                       |
-| `PORT`                    | API          | `4000`                  | Most hosts set this for you                                           |
-| `APP_URL`                 | API, worker  | none, required          | Public address of the web site. Used in email links                   |
-| `API_URL`                 | web          | `http://localhost:4000` | Address of the API. Set it before the web build                       |
-| `CORS_ORIGINS`            | API          | none, required          | Allowed web addresses, separated by commas                            |
-| `DATABASE_URL`            | API, worker  | none, required          | Use the direct connection, not a pooled one                           |
-| `TEST_DATABASE_URL`       | tests        | none                    | A separate database that tests may erase                              |
-| `JWT_ACCESS_SECRET`       | API          | none, required          | At least 32 characters                                                |
-| `JWT_REFRESH_SECRET`      | API          | none, required          | At least 32 characters, and different from the access secret          |
-| `COOKIE_DOMAIN`           | API          | empty                   | Leave empty unless cookies are shared across subdomains               |
-| `COOKIE_SECURE`           | API          | `false`                 | Must be `true` in production                                          |
-| `TRUST_PROXY_HOPS`        | API          | `1`                     | Use `2` when the web host forwards to an API on another host          |
-| `SMTP_HOST`               | worker       | empty                   | Required in production. Empty in development saves emails as files    |
-| `SMTP_PORT`               | worker       | `587`                   | `465` for a secure connection                                         |
-| `SMTP_USER`, `SMTP_PASS`  | worker       | empty                   | Login for the mail service                                            |
-| `MAIL_FROM`               | API, worker  | none, required          | The sender name and address                                           |
-| `UPLOAD_DIR`              | API, worker  | `uploads`               | Must be a lasting disk in production, and the same for both processes |
-| `RATE_LIMIT_USER_PER_MIN` | API          | `100`                   | Requests for each signed-in person                                    |
-| `RATE_LIMIT_AUTH_PER_MIN` | API          | `10`                    | Sign-in type requests for each address                                |
-| `FOLLOW_UP_DAYS`          | API          | `7`                     | Days before the automatic follow-up reminder                          |
-| `API_MEMORY_MB`           | `pnpm start` | `256`                   | Memory cap for the API process                                        |
-| `WORKER_MEMORY_MB`        | `pnpm start` | `160`                   | Memory cap for the worker process                                     |
+| Name                      | Used by          | Default                 | Notes                                                                 |
+| ------------------------- | ---------------- | ----------------------- | --------------------------------------------------------------------- |
+| `NODE_ENV`                | all              | `development`           | Use `production` when live                                            |
+| `LOG_LEVEL`               | API, worker      | `info`                  |                                                                       |
+| `PORT`                    | API              | `4000`                  | Most hosts set this for you                                           |
+| `APP_URL`                 | API, worker      | none, required          | Public address of the web site. Used in email links                   |
+| `API_URL`                 | web              | `http://localhost:4000` | Address of the API. Set it before the web build                       |
+| `CORS_ORIGINS`            | API              | none, required          | Allowed web addresses, separated by commas                            |
+| `DATABASE_URL`            | API, worker      | none, required          | Use the direct connection, not a pooled one                           |
+| `TEST_DATABASE_URL`       | tests            | none                    | A separate database that tests may erase                              |
+| `NEON_AUTH_BASE_URL`      | API, web         | none, required          | The Auth URL from Neon. Must be `https://` in production              |
+| `NEON_AUTH_COOKIE_SECRET` | web              | none, required          | Signs the session cookie. At least 32 characters                      |
+| `LINK_SECRET`             | API              | none, required          | Signs interview booking links and file links. At least 32 characters  |
+| `LOCAL_AUTH_VERIFY_EMAIL` | sign-in stand-in | `true`                  | Set to `false` to skip the email code on your computer                |
+| `TRUST_PROXY_HOPS`        | API              | `1`                     | Use `2` when the web host forwards to an API on another host          |
+| `SMTP_HOST`               | worker           | empty                   | Required in production. Empty in development saves emails as files    |
+| `SMTP_PORT`               | worker           | `587`                   | `465` for a secure connection                                         |
+| `SMTP_USER`, `SMTP_PASS`  | worker           | empty                   | Login for the mail service                                            |
+| `MAIL_FROM`               | API, worker      | none, required          | The sender name and address                                           |
+| `UPLOAD_DIR`              | API, worker      | `uploads`               | Must be a lasting disk in production, and the same for both processes |
+| `RATE_LIMIT_USER_PER_MIN` | API              | `100`                   | Requests for each signed-in person                                    |
+| `RATE_LIMIT_AUTH_PER_MIN` | API              | `10`                    | Sign-in type requests for each address                                |
+| `FOLLOW_UP_DAYS`          | API              | `7`                     | Days before the automatic follow-up reminder                          |
+| `API_MEMORY_MB`           | `pnpm start`     | `256`                   | Memory cap for the API process                                        |
+| `WORKER_MEMORY_MB`        | `pnpm start`     | `160`                   | Memory cap for the worker process                                     |
 
-In production the API refuses to start if `COOKIE_SECURE` is not `true`, if a secret still holds the example text, or if the two secrets are the same.
+In production the API refuses to start if `LINK_SECRET` still holds the example text or if `NEON_AUTH_BASE_URL` is not `https://`.
 
 ## Development workflow
 
@@ -264,13 +270,13 @@ In production the API refuses to start if `COOKIE_SECURE` is not `true`, if a se
 
 ## Testing
 
-| Level   | Tool                 | Count | What it covers                                                                              |
-| ------- | -------------------- | ----- | ------------------------------------------------------------------------------------------- |
-| Shared  | Vitest               | 38    | Schemas, the resume score, the SM-2 schedule                                                |
-| API     | Vitest and Supertest | 322   | Every route with every role, other companies' data, bad uploads, booking races, live cards  |
-| Worker  | Vitest               | 58    | Reminders, email delivery, job board adapters from recorded answers, alerts, resume reading |
-| Browser | Playwright           | 26    | Sign-in, the job seeker journey, the recruiter journey, booking, live boards, resumes       |
-| Load    | k6                   | 2     | A read-heavy test and a mixed read and write test, with the speed targets as pass or fail   |
+| Level   | Tool                 | Count | What it covers                                                                                                            |
+| ------- | -------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------- |
+| Shared  | Vitest               | 38    | Schemas, the resume score, the SM-2 schedule                                                                              |
+| API     | Vitest and Supertest | 315   | Every route with every role, other companies' data, bad uploads, booking races, live cards, Neon Auth tokens              |
+| Worker  | Vitest               | 58    | Reminders, email delivery, job board adapters from recorded answers, alerts, resume reading                               |
+| Browser | Playwright           | 30    | Sign-up with the email code, password reset, the job seeker journey, the recruiter journey, booking, live boards, resumes |
+| Load    | k6                   | 2     | A read-heavy test and a mixed read and write test, with the speed targets as pass or fail                                 |
 
 Tests use a real PostgreSQL database and never call the network. Job board tests use recorded answers. Some tests worth reading first:
 
@@ -296,18 +302,18 @@ Measured on one laptop (Apple M3, 8 cores), with the API, the database and the l
 
 ## Security
 
-| Area               | Control                                                                                                                    |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| Passwords          | Argon2id with the OWASP settings                                                                                           |
-| Sessions           | Access token for 15 minutes. Refresh token for 30 days, replaced on every use. Reusing an old one ends the login           |
-| Access control     | Role checked on every company route. An outsider gets a 404, so company names cannot be guessed                            |
-| Tenant separation  | Every company query uses the company id the guard checked, never one from the request                                      |
-| Uploads            | PDF or Word only, 5 MB, checked by file bytes, saved under random names, shared by short-lived signed links                |
-| Abuse limits       | 100 requests a minute for each person. 10 a minute for each address on sign-in, sign-up, reset and apply                   |
-| Browser protection | Security headers, a list of allowed sites, and cookies that are `Secure` in production                                     |
-| Audit              | Role changes, job publish and close, step moves, feedback, candidate deletion and failed logins. Entries cannot be changed |
-| Dependencies       | `pnpm audit` in every CI run, and automatic update proposals                                                               |
-| Start-up checks    | The API stops in production if a setting is unsafe                                                                         |
+| Area               | Control                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Sign-in            | Neon Auth runs sign-up, sign-in, passwords, email codes and password reset. HireFlow stores no passwords                 |
+| Sessions           | The API accepts only Neon Auth tokens signed with Ed25519, for the right issuer and audience, valid for 15 minutes       |
+| Access control     | Role checked on every company route. An outsider gets a 404, so company names cannot be guessed                          |
+| Tenant separation  | Every company query uses the company id the guard checked, never one from the request                                    |
+| Uploads            | PDF or Word only, 5 MB, checked by file bytes, saved under random names, shared by short-lived signed links              |
+| Abuse limits       | 100 requests a minute for each person. 10 a minute for each address on apply and booking. Neon Auth limits sign-in tries |
+| Browser protection | Security headers, a list of allowed sites, and cookies that are `Secure` in production                                   |
+| Audit              | Role changes, job publish and close, step moves, feedback and candidate deletion. Entries cannot be changed              |
+| Dependencies       | `pnpm audit` in every CI run, and automatic update proposals                                                             |
+| Start-up checks    | The API stops in production if a setting is unsafe                                                                       |
 
 The checklist, rule by rule, is in [docs/security.md](docs/security.md). It also says what was left out and why.
 
@@ -347,6 +353,7 @@ apps/
 packages/
   shared/     Schemas, types, the skills list and the resume score, used by every app
   config/     Shared TypeScript settings
+  local-auth/ A stand-in for Neon Auth for development and browser tests. Never deployed
 docs/         Architecture, API, security, performance, deployment and decision records
 scripts/      Local database, demo data, job sources and load tests
 ```

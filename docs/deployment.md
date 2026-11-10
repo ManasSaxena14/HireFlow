@@ -9,8 +9,9 @@ This is a guide. The app has not been deployed yet, so there is no live address,
 | Web (Next.js)  | A free Next.js host, such as Vercel       | Pages are served fast from many places and do not sleep     |
 | API and worker | One free Node web service, such as Render | `pnpm start` runs both in one service                       |
 | Database       | A free PostgreSQL host, such as Neon      | Needs the `btree_gist`, `pgcrypto` and `pg_trgm` extensions |
+| Sign-in        | Neon Auth, in the same Neon project       | Free for up to 60,000 users a month                         |
 
-The browser only talks to the web site. The web site passes `/api/v1` requests on to the API, so the login cookie works without any cross-site setup.
+The browser only talks to the web site. The web site passes `/api/v1` requests on to the API, and `/api/auth` requests on to Neon Auth, so nothing needs cross-site setup.
 
 ## Keeping the free backend fast
 
@@ -47,7 +48,21 @@ DATABASE_URL="<the direct connection string>" pnpm db:migrate
 
 Run this again after each release that adds a migration. It is not run on start, so that waking from sleep stays fast.
 
-### 2. API and worker
+### 2. Sign-in (Neon Auth)
+
+In the Neon console, open the project, then **Auth**, and turn it on. Then, under **Settings, Better Auth**:
+
+| Setting                 | Value                                                                                                                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sign-up with Email      | On                                                                                                                                                                                  |
+| Verify at Sign-up       | On. Live boards only follow confirmed emails                                                                                                                                        |
+| Sign-in with Email      | On                                                                                                                                                                                  |
+| Trusted domains         | Add the web site's address once you have it                                                                                                                                         |
+| Allow Localhost         | Off on the live branch                                                                                                                                                              |
+| Email provider          | Choose "Custom SMTP provider" and enter the same SMTP settings as the API host below, so Neon's codes and reset links come from your address. The shared one works for a quick test |
+| Project Info → Auth URL | Copy it. It is `NEON_AUTH_BASE_URL` for both hosts below                                                                                                                            |
+
+### 3. API and worker
 
 Create a free Node web service from the GitHub repository.
 
@@ -57,7 +72,7 @@ Create a free Node web service from the GitHub repository.
 | Start command | `node scripts/start-production.mjs`                                                   |
 | Health check  | `/api/v1/health`                                                                      |
 
-The repository has a `render.yaml` with these values, so on Render you can choose New, then Blueprint, and pick the repository. Render then asks only for the settings below that it cannot fill itself, and makes the two JWT secrets for you. `--prod=false` is needed because the build uses developer tools, and Render installs without them when `NODE_ENV` is `production`.
+The repository has a `render.yaml` with these values, so on Render you can choose New, then Blueprint, and pick the repository. Render then asks only for the settings below that it cannot fill itself, and makes `LINK_SECRET` for you. `--prod=false` is needed because the build uses developer tools, and Render installs without them when `NODE_ENV` is `production`.
 
 Settings:
 
@@ -67,14 +82,14 @@ Settings:
 | `APP_URL`                                                       | The web site's address, like https://hireflow.example         |
 | `CORS_ORIGINS`                                                  | The same address                                              |
 | `DATABASE_URL`                                                  | The direct connection string                                  |
-| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`                       | Two different values from `openssl rand -base64 48`           |
-| `COOKIE_SECURE`                                                 | `true`. The API will not start without it                     |
+| `NEON_AUTH_BASE_URL`                                            | The Auth URL from step 2                                      |
+| `LINK_SECRET`                                                   | Made by Render. Or any value from `openssl rand -base64 48`   |
 | `TRUST_PROXY_HOPS`                                              | `2`, because requests pass the web host and then the API host |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | A free mail service. The worker will not start without a host |
 
 **About resumes:** a free service has no lasting disk, so uploaded resumes are lost when it restarts or sleeps. Leave `UPLOAD_DIR` unset to use the default folder. To keep resumes, use a paid disk and point `UPLOAD_DIR` at it, or add a new `FileStorage` class for a free object store. Everything else works without it.
 
-**About `TRUST_PROXY_HOPS`:** sign-in limits count by visitor address. If it is too low, every visitor shares the web host's address, and ten sign-ins a minute would lock everyone out. After deploying, sign in from two networks and check the API log shows two different addresses.
+**About `TRUST_PROXY_HOPS`:** the limits on the public apply and booking forms count by visitor address. If it is too low, every visitor shares the web host's address, and ten applications a minute would lock everyone out. After deploying, apply from two networks and check the API log shows two different addresses.
 
 Then add the job boards once, from your own computer:
 
@@ -82,7 +97,7 @@ Then add the job boards once, from your own computer:
 DATABASE_URL="<the direct connection string>" pnpm feed:sources
 ```
 
-### 3. Web
+### 4. Web
 
 Create a free Next.js project from the same repository.
 
@@ -94,12 +109,20 @@ Create a free Next.js project from the same repository.
 | Output directory | `apps/web/.next`                                     |
 | `API_URL`        | The API's address, like https://hireflow-api.example |
 
-`API_URL` must be set **before the build**, because Next.js writes the forwarding rule into the build.
+Settings on the web host:
 
-### 4. Check it
+| Name                      | Value                                                    |
+| ------------------------- | -------------------------------------------------------- |
+| `API_URL`                 | The API's address. Set it **before the build**           |
+| `NEON_AUTH_BASE_URL`      | The same Auth URL as the API                             |
+| `NEON_AUTH_COOKIE_SECRET` | A value from `openssl rand -base64 32`, at least 32 long |
+
+`API_URL` must be set before the build, because Next.js writes the forwarding rule into the build.
+
+### 5. Check it
 
 1. Open `https://<your-api>/api/v1/ready`. It should say `{"status":"ready"}`.
-2. Open the web site, sign up, and confirm the email.
+2. Open the web site, sign up, and type the code Neon Auth emails you.
 3. Add the uptime check from above.
 
 `pnpm db:seed` only runs in development, so a live site has no demo accounts until you add them yourself.

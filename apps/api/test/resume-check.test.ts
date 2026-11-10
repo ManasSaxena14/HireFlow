@@ -52,7 +52,7 @@ describe('checkResume', () => {
 
 describe('FileLinks', () => {
   const links = new FileLinks({
-    env: { JWT_REFRESH_SECRET: 'a-secret-that-is-long-enough-for-this-test' },
+    env: { LINK_SECRET: 'a-secret-that-is-long-enough-for-this-test' },
   } as ConfigService);
   const id = '4e7f6c1e-0d8e-4a53-8a55-1a2b3c4d5e6f';
 

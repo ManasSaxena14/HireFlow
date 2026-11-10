@@ -10,7 +10,6 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   type ApplyToJob,
@@ -20,6 +19,8 @@ import {
 } from '@hireflow/shared';
 import type { z } from 'zod';
 import { Public } from '../common/access.js';
+import { Accounts } from '../auth/accounts.service.js';
+import { AuthTokens } from '../auth/auth-tokens.js';
 import { optionalUserId } from '../common/optional-user.js';
 import { AuthRateLimit } from '../common/rate-limit.js';
 import { ZodPipe } from '../common/zod.pipe.js';
@@ -34,7 +35,8 @@ const PUBLIC_CACHE = 'public, max-age=60';
 export class CareersController {
   constructor(
     private readonly careers: CareersService,
-    private readonly jwt: JwtService,
+    private readonly tokens: AuthTokens,
+    private readonly accounts: Accounts,
   ) {}
 
   @Get()
@@ -68,7 +70,7 @@ export class CareersController {
     @Headers('authorization') authorization: string | undefined,
   ) {
     // Signed in people get their application on their own job board. It is checked in the service.
-    const signedInUserId = await optionalUserId(this.jwt, authorization);
+    const signedInUserId = await optionalUserId(this.tokens, this.accounts, authorization);
     return this.careers.apply(slug, jobSlug, body, file, signedInUserId);
   }
 }

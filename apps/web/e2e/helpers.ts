@@ -1,10 +1,45 @@
 import { randomUUID } from 'node:crypto';
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { expect, type Locator, type Page } from '@playwright/test';
 
 export const PASSWORD = 'end-to-end-password';
 
-export async function registerNewUser(page: Page): Promise<string> {
-  const email = `e2e-${randomUUID()}@example.com`;
+const previewDir = fileURLToPath(new URL('../../../.mail-preview/', import.meta.url));
+
+interface AuthEmail {
+  kind: string;
+  to: string;
+  code?: string;
+  link?: string;
+}
+
+/** The newest email of this kind that the local sign-in stand-in saved for this address. */
+export async function authEmail(to: string, kind: string): Promise<AuthEmail> {
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const files = (await readdir(previewDir).catch(() => [])).filter((name) =>
+      name.startsWith('auth-'),
+    );
+    for (const name of files.sort().reverse()) {
+      const email = JSON.parse(await readFile(join(previewDir, name), 'utf8')) as AuthEmail;
+      if (email.to === to && email.kind === kind) return email;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`no ${kind} email for ${to}`);
+}
+
+/** Types the code from the email on the confirm page. */
+export async function confirmWithCode(page: Page, email: string): Promise<void> {
+  await expect(page).toHaveURL(/\/verify-email/);
+  const { code } = await authEmail(email, 'email-verification');
+  await page.getByLabel('Code').fill(code ?? '');
+  await page.getByRole('button', { name: 'Confirm email' }).click();
+}
+
+/** Signs up, confirms the email with the code, and lands on the job board. */
+export async function registerNewUser(page: Page, email = `e2e-${randomUUID()}@example.com`) {
   await page.goto('/register');
   // A click before the page is ready does nothing, so wait for it to finish loading.
   await page.waitForLoadState('networkidle');
@@ -12,6 +47,7 @@ export async function registerNewUser(page: Page): Promise<string> {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Create account' }).click();
+  await confirmWithCode(page, email);
   await expect(page).toHaveURL(/\/app\/tracker$/);
   return email;
 }

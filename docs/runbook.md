@@ -50,11 +50,11 @@ A source marked `failed` does not stop the others, and it is tried again 30 minu
 
 ## Settings the app refuses in production
 
-The API will not start in production if `COOKIE_SECURE` is not `true`, or if a secret still has the example value. The two secrets must always be different.
+The API will not start in production if `LINK_SECRET` still has the example value, or if `NEON_AUTH_BASE_URL` does not start with `https://`.
 
 ## Old rows
 
-Each night at 03:00 the worker removes login tokens and email links that ran out over a day ago, email delivery rows older than 30 days, and jobs not seen at their source for 30 days. The log line is `old rows removed`.
+Each night at 03:00 the worker removes email delivery rows older than 30 days and jobs not seen at their source for 30 days. The log line is `old rows removed`.
 
 ## Finding an error
 
@@ -71,6 +71,10 @@ Every error a person sees has a `requestId`. Search the API logs for it to find 
 
 **Reminders are late.** The worker checks for reminders once a minute. If the worker was down, reminders go out when it comes back, once each. Reminders for an interview that has already started are skipped.
 
-**Someone keeps getting signed out.** Look for `auth.refresh_reuse_detected` in `audit_logs`. It means an old login token was used, which can mean a stolen cookie.
+**Nobody can sign in.** Sign-in runs in Neon Auth. Check that Auth is on in the Neon console, that `NEON_AUTH_BASE_URL` is the same on the web host and the API host, and that your site's address is in the trusted domains under Settings, Better Auth. An API log full of 401 answers usually means the two hosts have different Auth URLs.
+
+**Someone sees "An older account uses this email".** An account with that email was made before Neon Auth, or by the demo data. It is taken over once the person confirms their email with the code Neon Auth sends.
+
+**Confirmation codes or reset emails are not arriving.** Neon Auth sends these, not the worker. Its shared mail service has a send limit. For a real launch, add your own mail service under Settings, Better Auth, in the Neon console.
 
 **PostgreSQL will not start on a Mac.** Read `.pgdata/server.log`. A locale error means `LC_ALL` is not set correctly. `scripts/local-db.sh` sets a default for you.

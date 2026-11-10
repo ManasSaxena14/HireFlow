@@ -2,8 +2,8 @@
 -- Run it on its own database, never on real data: psql "$LOAD_DATABASE_URL" -f scripts/load/seed-volume.sql
 BEGIN;
 
-INSERT INTO users (email, password_hash, full_name, email_verified_at)
-SELECT 'bulk-' || n || '@example.com', 'not-a-real-hash', 'Bulk User ' || n, now()
+INSERT INTO users (email, full_name, email_verified_at)
+SELECT 'bulk-' || n || '@example.com', 'Bulk User ' || n, now()
 FROM generate_series(1, 5000) AS n;
 
 -- 40 jobs on each person's board.

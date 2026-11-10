@@ -142,26 +142,6 @@ export function renderMail(message: MailMessage): RenderedMail {
   switch (message.template) {
     case 'job-alert':
       return renderJobAlert(message);
-    case 'verify-email':
-      return compose(
-        'Confirm your email for HireFlow',
-        'Confirm your email',
-        [
-          `Hi ${message.name},`,
-          'Please confirm your email so we can send you reminders. This link works for 24 hours.',
-        ],
-        { label: 'Confirm email', href: message.link },
-      );
-    case 'reset-password':
-      return compose(
-        'Reset your HireFlow password',
-        'Reset your password',
-        [
-          `Hi ${message.name},`,
-          'Click the button below to set a new password. This link works for one hour. If you did not ask for this, you can ignore this email.',
-        ],
-        { label: 'Set a new password', href: message.link },
-      );
     case 'reminder':
       return compose(
         'Your HireFlow reminder',

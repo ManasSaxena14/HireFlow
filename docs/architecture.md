@@ -41,8 +41,8 @@ The API is one app split into modules, one for each feature. Only the API and th
 
 Every request goes through the same checks, in this order:
 
-1. **AuthGuard** checks the login token, unless the route is marked `@Public()`.
-2. **AppThrottlerGuard** checks the rate limit. Sign-in routes have a stricter limit.
+1. **AuthGuard** checks the Neon Auth token, unless the route is marked `@Public()`, and finds the HireFlow account for it.
+2. **AppThrottlerGuard** checks the rate limit. Public form routes have a stricter limit.
 3. **TenantGuard** runs when the route has `:cid`. It finds the user's role in that company. If they are not a member, they get a 404, so they cannot find out which companies exist.
 4. **RolesGuard** checks if this role may use the route. A route that does not say who may use it is blocked. A test also checks that every route says this.
 
@@ -50,12 +50,13 @@ All errors have the same format and include a request id that matches the logs.
 
 ## How login works
 
-- The access token lasts 15 minutes. The browser keeps it only in memory.
-- The refresh token is a random value. The database stores only a hash of it. The browser keeps it in an `httpOnly` cookie that scripts cannot read.
-- Each time the refresh token is used, it is swapped for a new one.
-- If an old token is used again, it may be stolen, so all tokens in that family are cancelled. A token swapped in the last 10 seconds is the one exception. See [decision 003](decisions/003-access-behaviour.md).
-- Browser tabs take turns refreshing, using a Web Lock. Otherwise two tabs at once would look like a stolen token.
-- The web app sends `/api/v1` calls through Next.js, so the cookie keeps working even when the API is on another domain.
+- [Neon Auth](https://neon.com/docs/auth/overview) runs sign-up, sign-in, sessions, email codes and password reset. HireFlow stores no passwords. See [decision 014](decisions/014-neon-auth.md).
+- The web site passes `/api/auth` on to Neon Auth, so the session cookie belongs to the site.
+- For API calls, the browser gets a short-lived signed token from `/api/auth/token` and sends it as a bearer token. It lasts 15 minutes. The browser keeps it in memory and gets a new one a minute before it runs out.
+- The API checks the token with Neon Auth's public keys: Ed25519 only, and the issuer and audience must be the Neon Auth address. The keys are fetched once and kept.
+- The first request with a new token makes the HireFlow account, linked by `users.auth_id`. The account's email and confirmed state follow the token after that.
+- An older account with the same email, such as a demo account, is taken over only when the email is confirmed.
+- The web app sends `/api/v1` calls through Next.js, so the browser only talks to one site.
 
 ## Background jobs and email
 
@@ -78,7 +79,7 @@ Jobs are stored in PostgreSQL using pg-boss. The big benefit is that a job can b
 - A person moves through the steps of one job. Each move writes a history row and an audit log entry in the same transaction, and any step email is added to the queue in that transaction too.
 - Interviewers are limited in one place: `findVisible` in `applications.service.ts`. It gives a 404 for anyone not given to them.
 - The apply route checks the rate limit first, then keeps the file in memory with a 5 MB limit, then checks its bytes. The file is saved under a random name before the transaction, and it is removed again if the transaction fails.
-- Resumes are downloaded through short-lived signed links, so the browser can save the file without sending the login token.
+- Resumes are downloaded through short-lived signed links, so the browser can save the file without sending the Neon Auth token. They are signed with `LINK_SECRET`.
 
 ## How interview booking works
 

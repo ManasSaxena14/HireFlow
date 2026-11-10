@@ -55,8 +55,8 @@ describe('platform', () => {
       APP_URL: 'http://localhost:3000',
       CORS_ORIGINS: 'http://localhost:3000',
       DATABASE_URL: 'postgresql://x',
-      JWT_ACCESS_SECRET: 'a'.repeat(40),
-      JWT_REFRESH_SECRET: 'b'.repeat(40),
+      NEON_AUTH_BASE_URL: 'https://auth.example.com/neondb/auth',
+      LINK_SECRET: 'a'.repeat(40),
       MAIL_FROM: 'x',
     };
     expect(parseEnv(base).TRUST_PROXY_HOPS).toBe(1);
@@ -99,10 +99,10 @@ describe('platform', () => {
         APP_URL: 'http://localhost:3000',
         CORS_ORIGINS: 'http://localhost:3000',
         DATABASE_URL: 'postgresql://x',
-        JWT_ACCESS_SECRET: 'short',
-        JWT_REFRESH_SECRET: 'short',
+        NEON_AUTH_BASE_URL: 'https://auth.example.com/neondb/auth',
+        LINK_SECRET: 'short',
       }),
-    ).toThrow(/JWT_ACCESS_SECRET/);
+    ).toThrow(/LINK_SECRET/);
   });
 
   it('a stack trace never reaches the client', async () => {
@@ -113,8 +113,7 @@ describe('platform', () => {
     try {
       const response = await ctx
         .http()
-        .post('/api/v1/auth/login')
-        .send({ email: 'x@example.com', password: 'whatever' })
+        .get('/api/v1/public/companies/any-company/jobs')
         .expect(500);
       expect(response.body.error.code).toBe('INTERNAL');
       expect(JSON.stringify(response.body)).not.toContain('secret internal detail');
@@ -124,16 +123,17 @@ describe('platform', () => {
   });
 
   describe('rate limits', () => {
-    it('limits credential endpoints per IP', async () => {
+    it('limits public form routes per IP', async () => {
       const previous = process.env.RATE_LIMIT_AUTH_PER_MIN;
       process.env.RATE_LIMIT_AUTH_PER_MIN = '3';
       const limited = await createTestApp();
       process.env.RATE_LIMIT_AUTH_PER_MIN = previous;
 
+      // A form with no file is refused, but each try still counts against the limit.
       const attempt = () =>
-        limited.http().post('/api/v1/auth/forgot-password').send({ email: 'someone@example.com' });
+        limited.http().post('/api/v1/public/companies/no-such-company/jobs/no-such-job/apply');
 
-      for (let i = 0; i < 3; i++) await attempt().expect(200);
+      for (let i = 0; i < 3; i++) await attempt().expect((r) => expect(r.status).not.toBe(429));
       const blocked = await attempt().expect(429);
       expect(blocked.body.error.code).toBe('RATE_LIMITED');
       await limited.app.close();
@@ -146,22 +146,25 @@ describe('settings and odd requests', () => {
     APP_URL: 'https://example.com/',
     CORS_ORIGINS: 'https://example.com',
     DATABASE_URL: 'postgresql://x',
-    JWT_ACCESS_SECRET: 'a'.repeat(40),
-    JWT_REFRESH_SECRET: 'b'.repeat(40),
+    NEON_AUTH_BASE_URL: 'https://auth.example.com/neondb/auth/',
+    LINK_SECRET: 'a'.repeat(40),
   };
-  const production = { ...good, NODE_ENV: 'production', COOKIE_SECURE: 'true' };
+  const production = { ...good, NODE_ENV: 'production' };
 
   it('accepts good production settings and removes the slash at the end of the address', () => {
     expect(parseEnv(production).APP_URL).toBe('https://example.com');
+    expect(parseEnv(production).NEON_AUTH_BASE_URL).toBe('https://auth.example.com/neondb/auth');
   });
 
   it('refuses unsafe production settings', () => {
-    expect(() => parseEnv({ ...production, COOKIE_SECURE: 'false' })).toThrow(/COOKIE_SECURE/);
     expect(() =>
-      parseEnv({ ...production, JWT_ACCESS_SECRET: `replace-with-${'x'.repeat(40)}` }),
-    ).toThrow(/JWT_ACCESS_SECRET/);
-    expect(() => parseEnv({ ...good, JWT_REFRESH_SECRET: good.JWT_ACCESS_SECRET })).toThrow(
-      /JWT_REFRESH_SECRET/,
+      parseEnv({ ...production, LINK_SECRET: `replace-with-${'x'.repeat(40)}` }),
+    ).toThrow(/LINK_SECRET/);
+    expect(() =>
+      parseEnv({ ...production, NEON_AUTH_BASE_URL: 'http://auth.example.com/neondb/auth' }),
+    ).toThrow(/NEON_AUTH_BASE_URL/);
+    expect(() => parseEnv({ ...good, NEON_AUTH_BASE_URL: undefined })).toThrow(
+      /NEON_AUTH_BASE_URL/,
     );
   });
 

@@ -8,12 +8,13 @@ import { useForm } from 'react-hook-form';
 import { AuthFrame, TextLink } from '@/components/auth-frame';
 import { Button } from '@/components/ui/button';
 import { FormError, TextField } from '@/components/ui/field';
+import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { applyServerErrors } from '@/lib/forms';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, sendCode } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
@@ -28,6 +29,12 @@ export default function LoginPage() {
       await signIn(email, password);
       router.replace('/app');
     } catch (error) {
+      // The account is there, but its email is not confirmed yet. Send a code and ask for it.
+      if (error instanceof ApiError && error.code === 'FORBIDDEN') {
+        await sendCode(email).catch(() => undefined);
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        return;
+      }
       setFormError(applyServerErrors(error, setError));
     }
   });

@@ -14,13 +14,11 @@ describe('API docs', () => {
   });
 
   it('lists routes with their bodies, queries and who may call them', () => {
-    const login = paths['/auth/login']?.post;
-    expect(login?.description).toBe('Who: Anyone');
-    expect(login?.security).toBeUndefined();
-    const body = login?.requestBody as {
-      content: Record<string, { schema: { required: string[] } }>;
-    };
-    expect(body.content['application/json']?.schema.required).toEqual(['email', 'password']);
+    const apply = paths['/public/companies/{slug}/jobs/{jobSlug}/apply']?.post;
+    expect(apply?.description).toBe('Who: Anyone');
+    expect(apply?.security).toBeUndefined();
+    expect(paths['/me']?.get?.security).toBeDefined();
+    expect(paths['/auth/login']).toBeUndefined();
 
     const feed = paths['/feed/jobs']?.get;
     expect((feed?.parameters as { name: string }[]).map((p) => p.name)).toEqual(

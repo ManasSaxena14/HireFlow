@@ -24,7 +24,6 @@ Measured with `node scripts/start-production.mjs`, which runs the API and then t
 | From start to `/health` answering | 0.73 s, 0.71 s, 0.71 s (before the start-up work: 1.3 s, 0.9 s, 1.3 s) |
 | API memory once started           | 232 MB                                                                 |
 | Worker memory once started        | 100 MB                                                                 |
-| Checking one password             | 27 ms with the OWASP settings, 42 ms with the old default              |
 
 ## Data in the database
 
@@ -33,6 +32,17 @@ Measured with `node scripts/start-production.mjs`, which runs the API and then t
 ## Load tests
 
 The plan's target is that 95% of requests finish in under 300 ms, with under 1% errors. Each test ramps up for 20 seconds, holds for 1 minute and ramps down for 10 seconds. Every person waits 1 second between rounds. The numbers below are for 95% of requests.
+
+### After sign-in moved to Neon Auth, 50 people at once: passed
+
+Measured on 2026-11-10 with the token stand-in, on the same laptop and the same data. The API now checks an Ed25519 signature on every request and remembers each account for a minute.
+
+| Test                   | Requests | Errors | 95% under |
+| ---------------------- | -------- | ------ | --------- |
+| Read-heavy             | 25,303   | 0      | 23 ms     |
+| Mixed reads and writes | 20,015   | 0      | 13 ms     |
+
+The laptop was quieter than in the earlier runs below, so the drop from 106 ms is mostly the machine, not the change. The point is that checking the new tokens did not make anything slower. Start a new token stand-in for each run: the setup adds the same jobs again for the same people, and those answers count as errors.
 
 ### Read-heavy, 50 people at once: passed
 
@@ -73,15 +83,16 @@ An earlier run of the same test, before the place index below, gave 57 ms for al
 
 The CPU was the limit. One Node process uses one core, and k6 and PostgreSQL were on the same laptop. The query plans below stay under a few milliseconds, so the time was spent waiting for the process, not in the database. Running two or more API processes behind a load balancer is the next step if this many people use it at once. Rate limits would then need a shared store, as the README says.
 
-To run the tests yourself, start the API on a database you can throw away, then:
+To run the tests yourself, start the stand-in for sign-in, which serves a test key and writes tokens for k6. Start the API on a database you can throw away with `NEON_AUTH_BASE_URL=http://127.0.0.1:4199/auth`, then run k6 with `TOKENS_FILE` set to the path the stand-in prints:
 
 ```bash
-k6 run scripts/load/read-heavy.js
-k6 run scripts/load/mixed.js
-VUS=200 k6 run scripts/load/read-heavy.js
+node scripts/load/auth-stub.mjs
+TOKENS_FILE=<path> k6 run scripts/load/read-heavy.js
+TOKENS_FILE=<path> k6 run scripts/load/mixed.js
+TOKENS_FILE=<path> VUS=200 k6 run scripts/load/read-heavy.js
 ```
 
-`API_URL` sets the address, and the default is http://localhost:4100. `VUS` and `DURATION` change the load.
+`API_URL` sets the address, and the default is http://localhost:4100. `VUS` and `DURATION` change the load, and `USERS` on the stand-in sets how many people sign in. These numbers were measured before sign-in moved to Neon Auth. The API now checks a token's signature instead of a shared secret, which costs a little more on each request.
 
 ## Query plans
 
@@ -108,13 +119,13 @@ From `pnpm coverage`, counting lines in each part's own `src` folder.
 
 | Part        | Tests | Lines | Branches |
 | ----------- | ----- | ----- | -------- |
-| API         | 309   | 97.4% | 91.5%    |
-| Worker      | 58    | 70.1% | 72.1%    |
-| Shared code | 38    | 65.1% | 66.9%    |
+| API         | 315   | 96.7% | 91.3%    |
+| Worker      | 58    | 70.3% | 72.7%    |
+| Shared code | 38    | 65.5% | 66.9%    |
 
 The worker's start-up file and the thread that reads files are covered by the browser tests, not these. Many shared checks are tested through the API tests, which this number does not count.
 
-There are also 26 browser tests, which run in CI on every push to `main` and on every pull request.
+There are also 30 browser tests, which run in CI on every push to `main` and on every pull request. They sign up through the local Neon Auth stand-in and type the real email code.
 
 ## Not measured
 

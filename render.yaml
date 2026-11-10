@@ -15,14 +15,12 @@ services:
         value: '22'
       - key: NODE_ENV
         value: production
-      - key: COOKIE_SECURE
-        value: 'true'
       - key: TRUST_PROXY_HOPS
         value: '2'
-      - key: JWT_ACCESS_SECRET
+      - key: LINK_SECRET
         generateValue: true
-      - key: JWT_REFRESH_SECRET
-        generateValue: true
+      - key: NEON_AUTH_BASE_URL
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: APP_URL

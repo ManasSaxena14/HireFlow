@@ -3,8 +3,9 @@ import http from 'k6/http';
 import { check, fail } from 'k6';
 
 export const BASE = `${__ENV.API_URL || 'http://localhost:4100'}/api/v1`;
-const PASSWORD = 'load-test-password-1';
-const USERS = Number(__ENV.USERS || 20);
+// Made by scripts/load/auth-stub.mjs, which stands in for Neon Auth during a load test.
+if (!__ENV.TOKENS_FILE) throw new Error('Run scripts/load/auth-stub.mjs and set TOKENS_FILE.');
+const TOKENS = JSON.parse(open(__ENV.TOKENS_FILE));
 
 const json = (token) => ({
   headers: {
@@ -25,12 +26,10 @@ export function get(path, token, tags) {
 export function prepare() {
   const run = Date.now();
   const tokens = [];
-  for (let index = 0; index < USERS; index++) {
-    const email = `load-${run}-${index}@example.com`;
-    post('/auth/register', { email, password: PASSWORD, fullName: `Load User ${index}` });
-    const login = post('/auth/login', { email, password: PASSWORD });
-    if (login.status !== 200) fail(`login failed with ${login.status}`);
-    const token = login.json('accessToken');
+  for (const [index, token] of TOKENS.entries()) {
+    // The first request makes the account, as it does for a real person.
+    const me = get('/me', token);
+    if (me.status !== 200) fail(`sign-in failed with ${me.status}`);
     for (let job = 0; job < 10; job++) {
       post(
         '/tracker/applications',

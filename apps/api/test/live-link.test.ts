@@ -23,15 +23,7 @@ describe('the job board follows the hiring process', () => {
   let companyName: string;
   const api = () => `/api/v1/companies/${companyId}`;
 
-  const verified = async () => {
-    const user = await signUp(ctx);
-    await ctx.db
-      .updateTable('users')
-      .set({ emailVerifiedAt: new Date() })
-      .where('id', '=', user.id)
-      .execute();
-    return user;
-  };
+  const verified = () => signUp(ctx, { emailVerified: true });
 
   const openJob = async (title = 'Backend Developer', location = 'Pune') => {
     const { body } = await ctx

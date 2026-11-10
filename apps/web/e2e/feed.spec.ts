@@ -71,7 +71,8 @@ test('sets up, changes, pauses and deletes a job alert', async ({ page }) => {
   await registerNewUser(page);
   await page.getByRole('link', { name: 'Job alerts' }).first().click();
   await expect(page.getByRole('heading', { name: 'No alerts yet' })).toBeVisible();
-  await expect(page.getByText('Please confirm your email to get alerts.')).toBeVisible();
+  // The account was confirmed with the email code, so there is no reminder to confirm it.
+  await expect(page.getByText('Please confirm your email to get alerts.')).toBeHidden();
 
   await page.getByRole('button', { name: 'Set up your first alert' }).click();
   const dialog = page.getByRole('dialog', { name: 'New job alert' });

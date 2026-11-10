@@ -8,13 +8,12 @@ import { useForm } from 'react-hook-form';
 import { AuthFrame, TextLink } from '@/components/auth-frame';
 import { Button } from '@/components/ui/button';
 import { FormError, TextField } from '@/components/ui/field';
-import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { applyServerErrors } from '@/lib/forms';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signUp } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
@@ -26,14 +25,9 @@ export default function RegisterPage() {
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      await api('/auth/register', {
-        method: 'POST',
-        body: { ...values, timezone },
-        auth: false,
-      });
-      await signIn(values.email, values.password);
-      router.replace('/app');
+      const outcome = await signUp(values);
+      if (outcome === 'signed-in') router.replace('/app');
+      else router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
     } catch (error) {
       setFormError(applyServerErrors(error, setError));
     }
@@ -42,7 +36,7 @@ export default function RegisterPage() {
   return (
     <AuthFrame
       title="Start for free"
-      intro="It is free. We will send you one email to confirm your address."
+      intro="It is free. We will email you a code to confirm your address."
       footer={
         <>
           Already have an account? <TextLink href="/login">Sign in</TextLink>
