@@ -21,6 +21,7 @@ The app runs on free plans, so the first visit after a quiet spell can take up t
 - [Deployment](#deployment)
 - [Project structure](#project-structure)
 - [Known limits](#known-limits)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Features
@@ -261,7 +262,7 @@ Run `pnpm db:migrate` against the live database when a release adds a migration.
 │   ├── config/           Shared TypeScript settings
 │   └── local-auth/       Offline stand-in for Neon Auth, for development and tests only
 ├── scripts/              Local database, seeding, production start, keep-alive and load tests
-├── .github/workflows/    CI and the keep-alive schedule
+├── .github/              CI, keep-alive schedule, issue and pull request templates
 └── render.yaml           Render Blueprint
 ```
 
@@ -274,6 +275,10 @@ The API spec in `apps/api/openapi.json` is generated from the code with `pnpm --
 - Outside the keep-alive hours, reminders and alerts wait until the server next wakes.
 - Interviews have one interviewer. Free-time search covers up to five people, but panel interviews are not built.
 - Weekly numbers use UTC weeks.
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, conventions and the pull request checklist. To report a security problem, follow [SECURITY.md](SECURITY.md).
 
 ## License
 
