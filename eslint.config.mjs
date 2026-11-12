@@ -35,7 +35,15 @@ export default tseslint.config(
   },
   {
     files: ['scripts/**/*.mjs', 'packages/local-auth/**/*.mjs'],
-    languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly' } },
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        URL: 'readonly',
+        fetch: 'readonly',
+        AbortSignal: 'readonly',
+      },
+    },
   },
   {
     // The load tests run inside k6, which gives them these globals.

@@ -333,7 +333,7 @@ The project is built for free hosting where the backend and the database sleep w
 
 - **Waking.** The browser asks the server to wake when any page opens. Reads and session checks wait and retry for about 70 seconds, with a short message on screen. Changes are never sent twice.
 - **Small footprint.** The API and worker fit in 512 MB, with caps set by `pnpm start`. Idle database links that a host closes are handled, and the API answers about 0.7 seconds after it starts, measured on a laptop. The worker starts only after the API answers, and Node's compiled code is saved during the build, so a wake from sleep does less work.
-- **Staying awake.** A free uptime check that calls `/api/v1/health` every 10 minutes keeps the server awake all day.
+- **Staying awake.** A GitHub Actions workflow reads Neon's usage every 12 minutes and keeps the server and the database awake for as many hours a day as the free plans allow, about 12 at the start of a month. Setup is in [docs/deployment.md](docs/deployment.md).
 
 | Part           | Suggested host                                         | Command                                                              |
 | -------------- | ------------------------------------------------------ | -------------------------------------------------------------------- |
