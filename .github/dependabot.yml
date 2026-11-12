@@ -9,7 +9,7 @@ updates:
       all-minor-and-patch:
         update-types: [minor, patch]
     ignore:
-      # See docs/decisions/004-typescript-version.md
+      # TypeScript 7 breaks Next.js and typescript-eslint, so major versions are taken by hand.
       - dependency-name: typescript
         update-types: [version-update:semver-major]
   - package-ecosystem: github-actions

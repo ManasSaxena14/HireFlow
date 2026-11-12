@@ -9,8 +9,8 @@ describe('API docs', () => {
   const document = buildOpenApi(read('package.json').version);
   const paths = document.paths as Record<string, Record<string, Record<string, unknown>>>;
 
-  it('matches docs/openapi.json, so the docs never drift from the code', () => {
-    expect(read('docs/openapi.json')).toEqual(document);
+  it('matches apps/api/openapi.json, so the spec never drifts from the code', () => {
+    expect(read('apps/api/openapi.json')).toEqual(document);
   });
 
   it('lists routes with their bodies, queries and who may call them', () => {

@@ -45,7 +45,7 @@ export interface ReviewState {
 }
 
 /**
- * One SM-2 step, exactly as in the plan. Quality is 0 to 5, and under 3 means the person
+ * One SM-2 step, as the method defines it. Quality is 0 to 5, and under 3 means the person
  * did not remember, so the topic starts again tomorrow. Ease never goes under 1.3.
  */
 export function sm2(state: ReviewState, quality: number): ReviewState {

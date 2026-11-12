@@ -3,6 +3,12 @@
   "version": "1.1.1",
   "private": true,
   "description": "Two-sided hiring platform",
+  "homepage": "https://hire-flow-opal-five.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ManasSaxena14/HireFlow.git"
+  },
+  "author": "Manas Saxena",
   "license": "MIT",
   "packageManager": "pnpm@10.34.9",
   "engines": {

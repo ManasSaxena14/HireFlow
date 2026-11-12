@@ -59,7 +59,7 @@ export function ok(response, name) {
 
 export const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
-/** The plan's targets, overall and for each kind of request, so a slow one cannot hide. */
+/** The speed targets, overall and for each kind of request, so a slow one cannot hide. */
 export const thresholds = (names) => ({
   http_req_duration: ['p(95)<300'],
   http_req_failed: ['rate<0.01'],

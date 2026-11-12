@@ -6,7 +6,7 @@ const { version } = JSON.parse(readFileSync(new URL('package.json', root), 'utf8
   version: string;
 };
 writeFileSync(
-  new URL('docs/openapi.json', root),
+  new URL('apps/api/openapi.json', root),
   `${JSON.stringify(buildOpenApi(version), null, 2)}\n`,
 );
-console.log('docs/openapi.json is up to date.');
+console.log('apps/api/openapi.json is up to date.');

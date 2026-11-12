@@ -3,7 +3,7 @@ import { sm2 } from './prep.js';
 
 const fresh = { easeFactor: 2.5, intervalDays: 0, repetitions: 0 };
 
-/** The plan's formula written out again, step by step, to check the code against. */
+/** The SM-2 formula written out again, step by step, to check the code against. */
 function byTheBook(state: typeof fresh, q: number) {
   let { repetitions, intervalDays } = state;
   if (q < 3) {
