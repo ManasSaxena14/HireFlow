@@ -1,3 +1,10 @@
 packages:
   - apps/*
   - packages/*
+
+# picomatch <= 4.0.7 (GHSA-fc5q-39xc-vjpf) has no fixed release yet. It only comes in through
+# vitest, a test runner that better-auth lists, and only matches test file patterns, never user
+# input. Remove this once a patched picomatch is out.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
