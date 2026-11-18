@@ -12,7 +12,7 @@ on:
   # Lets you run it by hand from the Actions tab to check the setup.
   workflow_dispatch:
 
-# It reads one script from the repository and makes web requests, nothing more.
+# It reads one script (and .nvmrc) from the repository and makes web requests, nothing more.
 permissions:
   contents: read
 
@@ -28,7 +28,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          sparse-checkout: scripts/keep-alive.mjs
+          # setup-node below reads the Node version from .nvmrc, so it has to come along too.
+          sparse-checkout: |
+            scripts/keep-alive.mjs
+            .nvmrc
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v7
         with:
