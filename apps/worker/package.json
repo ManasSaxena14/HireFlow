@@ -13,19 +13,19 @@
   "dependencies": {
     "@hireflow/shared": "workspace:*",
     "fflate": "0.8.3",
-    "nodemailer": "^10.5.0",
+    "nodemailer": "^10.6.1",
     "pg": "^8.23.1",
-    "pg-boss": "^12.38.2",
+    "pg-boss": "^12.39.0",
     "pino": "^10.4.0",
-    "unpdf": "2.1.0",
+    "unpdf": "2.2.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@hireflow/config": "workspace:*",
-    "@types/node": "^26.6.6",
+    "@types/node": "^26.6.7",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "typescript": "~5.9.3",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   }
 }
